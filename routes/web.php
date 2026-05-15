@@ -54,6 +54,12 @@ Route::prefix('documentation')->group(function () {
     Route::get('getting-started/changelog', [PagesController::class, 'index']);
 });
 
+// Absensi profile pages (not in menu, linked via action buttons)
+Route::get('absensi/profil-siswa', [PagesController::class, 'index']);
+Route::get('absensi/profil-guru', [PagesController::class, 'index']);
+Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
+
+
 Route::group([], function () {
     // Account pages
     Route::prefix('account')->group(function () {

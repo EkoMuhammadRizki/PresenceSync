@@ -1,7 +1,5 @@
 # Dokumentasi Kustomisasi Sidebar Leveling - PresenceSync
 
-Dokumen ini menjelaskan langkah-langkah teknis untuk mengubah template standar Metronic menjadi sistem navigasi sidebar dengan dukungan leveling (multi-level menu) dan routing dinamis.
-
 ## 1. Struktur Folder Utama
 
 | Fitur | Lokasi File / Folder | Deskripsi |

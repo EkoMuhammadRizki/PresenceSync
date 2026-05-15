@@ -1,3 +1,18 @@
+@php
+    $hariId = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    $bulanId = [
+        1  => 'Januari', 2  => 'Februari', 3  => 'Maret',
+        4  => 'April',   5  => 'Mei',       6  => 'Juni',
+        7  => 'Juli',    8  => 'Agustus',   9  => 'September',
+        10 => 'Oktober', 11 => 'November',  12 => 'Desember',
+    ];
+
+    $now        = now();
+    $namaHari   = $hariId[$now->dayOfWeek];
+    $namaBulan  = $bulanId[$now->month];
+    $tanggalStr = $namaHari . ', ' . $now->day . ' ' . $namaBulan . ' ' . $now->year;
+@endphp
+
 <!--begin::Header-->
 <div id="kt_header" style="" class="header {{ theme()->printHtmlClasses('header', false) }} align-items-stretch" {{ theme()->printHtmlAttributes('header') }}>
 	<!--begin::Container-->
@@ -32,17 +47,12 @@
 
 		<!--begin::Wrapper-->
 		<div class="d-flex align-items-stretch justify-content-between flex-lg-grow-1">
-			<!--begin::Navbar-->
-			@if(theme()->getOption('layout', 'header/left') === 'menu')
-				<div class="d-flex align-items-stretch" id="kt_header_nav">
-                    {{ theme()->getView('layout/header/_menu') }}
-				</div>
-			@elseif(theme()->getOption('layout', 'header/left') === 'page-title')
-				<div class="d-flex align-items-center" id="kt_header_nav">
-					{{ theme()->getView('layout/page-title/_' . theme()->getOption('layout', 'page-title/layout')) }}
-				</div>
-			@endif
-			<!--end::Navbar-->
+			<!--begin::Page Title & Date-->
+            <div class="d-flex flex-column justify-content-center ms-5">
+                <h1 class="text-dark fw-bolder fs-3 mb-0">Dashboard Admin</h1>
+                <span class="text-gray-400 fs-7 fw-bold">{{ $tanggalStr }}</span>
+            </div>
+			<!--end::Page Title & Date-->
 
 			<!--begin::Topbar-->
 	        <div class="d-flex align-items-stretch flex-shrink-0">
