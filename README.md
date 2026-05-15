@@ -1,86 +1,47 @@
-# Metronic - Bootstrap 5 HTML, React, Angular, VueJS & Laravel Admin Dashboard Theme
+# PresenceSync
 
-- For a quick start please check [Online documentation page](//preview.keenthemes.com/metronic8/laravel/documentation/getting-started/build)
+**PresenceSync** adalah platform absensi dan monitoring sekolah modern yang mengintegrasikan sistem sidik jari (fingerprint) dengan manajemen data pendidikan secara real-time.
 
+---
 
-- All demos assets are included in the package. To switch the demo please check [Switch demo documentation](//https://preview.keenthemes.com/metronic8/laravel/documentation/getting-started/multi-demo/build)
+## 🌟 Tentang PresenceSync
 
+PresenceSync dirancang untuk mempermudah sekolah dalam mengelola kehadiran siswa dan guru secara akurat serta memberikan sistem monitoring yang transparan bagi pihak manajemen sekolah dan orang tua. 
 
-- The offline documentation is available within the theme [Offline documentation page](//localhost:8000/documentation/getting-started/build)
+Dengan antarmuka yang responsif, aplikasi ini dapat diakses dengan mulus dari perangkat apa pun:
+*   💻 **Desktop / Laptop** (Dashboard Admin Lengkap)
+*   📱 **Smartphone / Tablet** (Monitoring Mobile & Cepat)
+*   🖥️ **Device khusus Fingerprint** (Sinkronisasi Data Langsung)
 
+---
 
-- For any theme related questions please contact our [Theme Support](//keenthemes.com/support/)
+## 🚀 Fitur Utama
 
+-   **Integrasi Fingerprint**: Sinkronisasi otomatis dari perangkat sidik jari ke server pusat.
+-   **Dashboard Admin Professional**: UI premium menggunakan Metronic 8 untuk manajemen data yang efisien.
+-   **Monitoring Multi-Level**: Akses khusus untuk Admin, Guru, Siswa, dan (mendatang) Orang Tua.
+-   **Manajemen Data Master**: Kelola Siswa, Guru, Jurusan, Kelas, Mata Pelajaran, hingga Jadwal Pelajaran dalam satu tempat.
+-   **Log Aktivitas & Audit**: Lacak setiap perubahan data untuk keamanan dan transparansi.
+-   **Responsivitas Tinggi**: Desain layout yang adaptif untuk berbagai ukuran layar.
 
-- Using Metronic in a new project or for a new client? Purchase a new license https://1.envato.market/EA4JP or watch https://youtu.be/HJ3RNhoI24A to find out more information about licenses.
+---
 
+## 🛠️ Teknologi yang Digunakan
 
-- Stay tuned for updates via [Twitter](//www.twitter.com/keenthemes) and [Instagram](//www.instagram.com/keenthemes) and 
-  check our marketplace for more amazing products: [Keenthemes Marketplace](//keenthemes.com/)
+-   **Core**: Laravel 11 / PHP 8.x
+-   **Frontend**: Metronic 8 Dashboard Template
+-   **Database**: MySQL / SQLite (Development)
+-   **Table Engine**: DataTables.net for interactive data management
+-   **Version Control**: Git
 
+---
 
-Happy coding with Metronic!
+## 📁 Dokumentasi Tambahan
 
+Untuk detail teknis lebih mendalam, silakan lihat dokumen berikut:
+-   [**Dokumentasi DataTables & Header**](datatables.md): Penjelasan teknis implementasi tabel dan header dinamis.
+-   [**Kustomisasi Sidebar**](SidebarLevel.md): Penjelasan struktur menu multi-level dan leveling akses.
 
+---
 
-### Laravel Quick Start
-
-1. Download the latest theme source from the Marketplace.
-
-
-2. Download and install `Node.js` from Nodejs. The suggested version to install is `14.16.x LTS`.
-
-
-3. Start a command prompt window or terminal and change directory to [unpacked path]:
-
-
-4. Install the latest `NPM`:
-   
-        npm install --global npm@latest
-
-
-5. To install `Composer` globally, download the installer from https://getcomposer.org/download/ Verify that Composer in successfully installed, and version of installed Composer will appear:
-   
-        composer --version
-
-
-6. Install `Composer` dependencies.
-   
-        composer install
-
-
-7. Install `NPM` dependencies.
-   
-        npm install
-
-
-8. The below command will compile all the assets(sass, js, media) to public folder:
-   
-        npm run dev
-
-
-9. Copy `.env.example` file and create duplicate. Use `cp` command for Linux or Max user.
-
-        cp .env.example .env
-
-    If you are using `Windows`, use `copy` instead of `cp`.
-   
-        copy .env.example .env
-   
-
-10. Create a table in MySQL database and fill the database details `DB_DATABASE` in `.env` file.
-
-
-12. The below command will create tables into database using Laravel migration and seeder.
-
-        php artisan migrate:fresh --seed
-
-
-13. Generate your application encryption key:
-
-        php artisan key:generate
-
-
-14. Start the localhost server:
-    
-        php artisan serve
+© 2026 PresenceSync Development Team. All Rights Reserved.
