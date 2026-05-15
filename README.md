@@ -36,12 +36,4 @@ Dengan antarmuka yang responsif, aplikasi ini dapat diakses dengan mulus dari pe
 
 ---
 
-## 📁 Dokumentasi Tambahan
-
-Untuk detail teknis lebih mendalam, silakan lihat dokumen berikut:
--   [**Dokumentasi DataTables & Header**](datatables.md): Penjelasan teknis implementasi tabel dan header dinamis.
--   [**Kustomisasi Sidebar**](SidebarLevel.md): Penjelasan struktur menu multi-level dan leveling akses.
-
----
-
 © 2026 PresenceSync Development Team. All Rights Reserved.
