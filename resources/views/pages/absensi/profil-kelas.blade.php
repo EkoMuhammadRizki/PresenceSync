@@ -86,6 +86,16 @@
                             <td class="d-flex align-items-center"><div class="symbol symbol-circle symbol-35px overflow-hidden me-3"><div class="symbol-label fs-6 bg-light-primary text-primary fw-bolder">C</div></div><span>Candra Wijaya</span></td>
                             <td>Laki-laki</td><td><span class="badge badge-light-warning fw-bolder">78%</span></td>
                         </tr>
+                        <tr>
+                            <td>4</td><td>1234567893</td>
+                            <td class="d-flex align-items-center"><div class="symbol symbol-circle symbol-35px overflow-hidden me-3"><div class="symbol-label fs-6 bg-light-info text-info fw-bolder">D</div></div><span>Dedi Kurniawan</span></td>
+                            <td>Laki-laki</td><td><span class="badge badge-light-success fw-bolder">94%</span></td>
+                        </tr>
+                        <tr>
+                            <td>5</td><td>1234567894</td>
+                            <td class="d-flex align-items-center"><div class="symbol symbol-circle symbol-35px overflow-hidden me-3"><div class="symbol-label fs-6 bg-light-success text-success fw-bolder">E</div></div><span>Erna Lestari</span></td>
+                            <td>Perempuan</td><td><span class="badge badge-light-success fw-bolder">88%</span></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -96,7 +106,7 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#kt_table_siswa_kelas').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:false, order:[], pageLength:10, lengthChange:false, columnDefs:[{orderable:false,targets:0}] });
+    $('#kt_table_siswa_kelas').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:true, order:[], pageLength:5, lengthChange:true, columnDefs:[{orderable:false,targets:0}] });
 });
 </script>
 @endsection

@@ -104,7 +104,10 @@ class SystemLogsDataTable extends DataTable
             ->orderBy(3)
             ->responsive()
             ->autoWidth(false)
-            ->parameters(['scrollX' => true])
+            ->parameters([
+                'scrollX'    => true,
+                'pageLength' => 5,
+            ])
             ->addTableClass('align-middle table-row-dashed fs-6 gy-5');
     }
 
@@ -136,7 +139,7 @@ class SystemLogsDataTable extends DataTable
      *
      * @return string
      */
-    protected function filename()
+    protected function filename(): string
     {
         return 'SystemLogs_'.date('YmdHis');
     }

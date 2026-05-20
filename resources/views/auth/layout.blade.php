@@ -40,3 +40,7 @@
         <!--end::Authentication-->
     </div>
 @endsection
+
+@section('scripts')
+{{ $scripts ?? '' }}
+@endsection

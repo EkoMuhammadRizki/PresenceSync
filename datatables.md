@@ -42,9 +42,10 @@ Setiap halaman tabel (contoh: `siswa.blade.php`, `guru.blade.php`, dll) mengikut
         // Inisialisasi DataTable
         var table = $('#kt_table_data').DataTable({
             dom: "<'table-responsive'tr><'row'<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'li><'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>>",
-            info: false,
+            info: true,
+            lengthChange: true,
             order: [],
-            pageLength: 10,
+            pageLength: 5,
             columnDefs: [
                 { orderable: false, targets: [0, -1] } // Nonaktifkan sorting pada kolom No dan Aksi
             ]
@@ -76,8 +77,41 @@ Agar library DataTables dimuat secara otomatis, setiap path halaman didaftarkan 
         ),
     ),
     // ... modul lainnya
-),
+);
 ```
+
+### C. Lokalisasi Bahasa Indonesia
+Untuk memberikan pengalaman pengguna terbaik, seluruh interface DataTables telah disesuaikan ke Bahasa Indonesia secara global di master template `resources/views/base/base.blade.php`.
+
+Konfigurasi global ini menggunakan `$.extend` pada default options DataTable:
+```javascript
+if (window.jQuery && $.fn.dataTable) {
+    $.extend(true, $.fn.dataTable.defaults, {
+        pageLength: 5,
+        lengthMenu: [5, 10, 25, 50, 100],
+        language: {
+            search: "Cari:",
+            lengthMenu: "_MENU_",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+            infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+            infoFiltered: "(disaring dari _MAX_ total data)",
+            infoPostFix: "",
+            loadingRecords: "Memuat...",
+            zeroRecords: "Tidak ditemukan data yang sesuai",
+            emptyTable: "Tidak ada data di dalam tabel",
+            paginate: {
+                first: "Pertama",
+                previous: "Sebelumnya",
+                next: "Selanjutnya",
+                last: "Terakhir"
+                // Desain pagination panah Metronic tetap dipertahankan
+            }
+        }
+    });
+}
+```
+
+Ini berarti pengembang tidak perlu menambahkan properti `language` secara manual di setiap halaman/view baru saat melakukan inisialisasi DataTable.
 
 ---
 
@@ -144,8 +178,3 @@ Berikut adalah 11 modul yang telah menggunakan standar DataTables ini:
 
 ---
 
-## 4. Keunggulan Implementasi Ini
-*   **Zero PHP Error**: Semua tag breadcrumb dan toolbar yang rusak telah dibersihkan.
-*   **Server-Side Ready**: Struktur tabel sudah siap untuk dihubungkan ke Controller Laravel/Yajra DataTables.
-*   **Clean UI**: Tidak ada duplikasi judul halaman karena semua dipusatkan di Header.
-*   **Lokalitas**: Tanggal otomatis menyesuaikan dengan waktu server dan menggunakan format Indonesia.

@@ -14,7 +14,7 @@
 
 ## 2. Definisi Menu (Leveling)
 
-Struktur menu diatur di `config/absensi/menu.php`. Anda bisa membuat menu satu tingkat atau bersarang (nested).
+Struktur menu diatur di `config/absensi/menu.php`. 
 
 ### Contoh Menu Single Level
 ```php
@@ -119,10 +119,3 @@ public function index()
     return redirect('/'); // Fallback jika view tidak ditemukan
 }
 ```
-
----
-
-## Tips Kustomisasi
-- **Ikon**: Gunakan `theme()->getSvgIcon("path/to/svg", "class")` untuk ikon yang konsisten.
-- **Accordion**: Pastikan menambahkan `'classes' => array('item' => 'menu-accordion')` pada item induk jika ingin memiliki sub-menu.
-- **Breadcrumb**: Breadcrumb akan dihasilkan secara otomatis oleh `BootstrapAbsensi` berdasarkan struktur hirarki di `menu.php`.

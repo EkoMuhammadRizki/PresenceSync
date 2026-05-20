@@ -58,7 +58,7 @@
             <div class="card-header border-0 pt-6">
                 <div class="card-title"><h3 class="fw-bolder">Jadwal Mengajar</h3></div>
                 <div class="card-toolbar">
-                    <select class="form-select form-select-solid form-select-sm fw-bolder w-200px">
+                    <select class="form-select form-select-solid form-select-sm fw-bolder w-200px" data-control="select2" data-hide-search="true">
                         <option>2025/2026 - Genap</option>
                         <option>2025/2026 - Ganjil</option>
                     </select>
@@ -84,6 +84,12 @@
                         </tr>
                         <tr>
                             <td>3</td><td>Jumat</td><td>Matematika</td><td>XII IPA 1</td><td>07:30 – 09:00</td>
+                        </tr>
+                        <tr>
+                            <td>4</td><td>Kamis</td><td>Matematika</td><td>X IPA 1</td><td>10:45 – 12:15</td>
+                        </tr>
+                        <tr>
+                            <td>5</td><td>Selasa</td><td>Matematika</td><td>XI IPA 2</td><td>07:30 – 09:00</td>
                         </tr>
                     </tbody>
                 </table>
@@ -116,7 +122,7 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#kt_table_jadwal_guru').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:false, order:[], pageLength:10, lengthChange:false, columnDefs:[{orderable:false,targets:0}] });
+    $('#kt_table_jadwal_guru').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:true, order:[], pageLength:5, lengthChange:true, columnDefs:[{orderable:false,targets:0}] });
 });
 </script>
 @endsection

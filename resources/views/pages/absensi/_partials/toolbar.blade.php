@@ -6,7 +6,7 @@
 <!--begin::Toolbar-->
 @if (!empty($breadcrumb))
 <div class="toolbar py-2 py-lg-3" id="kt_toolbar">
-    <div id="kt_toolbar_container" class="{{ theme()->printHtmlClasses('toolbar-container', false) }} d-flex flex-stack">
+    <div id="kt_toolbar_container" class="container-xxl d-flex flex-stack">
         <div class="page-title d-flex flex-column me-3">
             <ul class="breadcrumb breadcrumb-separatorless fw-bold fs-7 my-1">
                 @foreach ($breadcrumb as $item)

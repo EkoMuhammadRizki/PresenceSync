@@ -11,16 +11,6 @@
                 {{ __('Sign In to PresenceSync') }}
             </h1>
             <!--end::Title-->
-
-            <!--begin::Link-->
-            <div class="text-gray-400 fw-bold fs-4">
-                {{ __('New Here?') }}
-
-                <a href="{{ theme()->getPageUrl('register') }}" class="link-primary fw-bolder">
-                    {{ __('Create an Account') }}
-                </a>
-            </div>
-            <!--end::Link-->
         </div>
         <!--begin::Heading-->
 
@@ -75,9 +65,9 @@
         <!--begin::Actions-->
         <div class="text-center">
             <!--begin::Submit button-->
-            <a href="{{ url('/prototype-login') }}" id="kt_sign_in_submit" class="btn btn-lg btn-primary w-100 mb-5">
+            <button type="submit" id="kt_sign_in_submit" class="btn btn-lg btn-primary w-100 mb-5">
                 @include('partials.general._button-indicator', ['label' => __('Continue')])
-            </a>
+            </button>
             <!--end::Submit button-->
 
             <!--begin::Separator-->
@@ -101,5 +91,97 @@
         <!--end::Actions-->
     </form>
     <!--end::Signin Form-->
+
+    {{-- Named slot: scripts → diteruskan ke @section('scripts') di auth/layout.blade.php --}}
+    <x-slot:scripts>
+    <script>
+    (function () {
+        // Tunggu sampai jQuery & Swal siap
+        function initLoginHandler() {
+            if (typeof $ === 'undefined' || typeof Swal === 'undefined') {
+                return setTimeout(initLoginHandler, 50);
+            }
+
+            // Sembunyikan spinner saat pertama load
+            $('#kt_sign_in_submit .indicator-progress').hide();
+
+            $('#kt_sign_in_form').off('submit').on('submit', function (e) {
+                e.preventDefault();
+
+                var $form  = $(this);
+                var $btn   = $('#kt_sign_in_submit');
+                var $label = $btn.find('.indicator-label');
+                var $spin  = $btn.find('.indicator-progress');
+
+                // Tampilkan loading spinner
+                $btn.prop('disabled', true);
+                $label.hide();
+                $spin.show();
+
+                // Kirim via AJAX dengan header JSON agar Laravel return 422 JSON saat error
+                axios.post($form.attr('action'), {
+                    email    : $form.find('[name=email]').val(),
+                    password : $form.find('[name=password]').val(),
+                    remember : $form.find('[name=remember]').is(':checked') ? 'on' : '',
+                    _token   : $form.find('[name=_token]').val(),
+                }, {
+                    headers: {
+                        'Accept'           : 'application/json',
+                        'X-Requested-With' : 'XMLHttpRequest',
+                    },
+                    maxRedirects: 5,
+                })
+                .then(function () {
+                    // Login berhasil → tampil SwalSuccess lalu redirect
+                    Swal.fire({
+                        icon             : 'success',
+                        title            : 'Login Berhasil!',
+                        text             : 'Selamat datang kembali di PresenceSync 🎉',
+                        timer            : 1800,
+                        timerProgressBar : true,
+                        showConfirmButton : false,
+                        allowOutsideClick : false,
+                    }).then(function () {
+                        window.location.href = '/absensi/dashboard';
+                    });
+                })
+                .catch(function (error) {
+                    // Reset tombol
+                    $btn.prop('disabled', false);
+                    $label.show();
+                    $spin.hide();
+
+                    var errorMsg = 'Terjadi kesalahan. Silakan coba lagi.';
+
+                    if (error.response) {
+                        if (error.response.status === 422) {
+                            var data = error.response.data;
+                            if (data.errors) {
+                                var firstKey = Object.keys(data.errors)[0];
+                                errorMsg = data.errors[firstKey][0];
+                            } else if (data.message) {
+                                errorMsg = data.message;
+                            }
+                        } else if (error.response.status === 429) {
+                            errorMsg = 'Terlalu banyak percobaan login. Silakan tunggu beberapa menit.';
+                        }
+                    }
+
+                    Swal.fire({
+                        icon             : 'error',
+                        title            : 'Login Gagal!',
+                        text             : errorMsg,
+                        confirmButtonText: 'Coba Lagi',
+                        customClass      : { confirmButton: 'btn btn-primary fw-bold px-6' },
+                        buttonsStyling   : false,
+                    });
+                });
+            });
+        }
+
+        initLoginHandler();
+    })();
+    </script>
+    </x-slot:scripts>
 
 </x-auth-layout>

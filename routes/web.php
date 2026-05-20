@@ -17,15 +17,7 @@ Route::get('/', function () {
     return app(PagesController::class)->index();
 });
 
-Route::get('/prototype-login', function () {
-    if (app()->environment('local')) {
-        $user = \App\Models\User::where('email', 'admin@demo.com')->first() ?? \App\Models\User::first();
-        if ($user) {
-            auth()->login($user);
-        }
-    }
-    return redirect('absensi/dashboard');
-});
+
 
 $menu = theme()->getMenu();
 array_walk($menu, function ($val) {
@@ -40,10 +32,10 @@ array_walk($menu, function ($val) {
         } else {
             $route = Route::get($val['path'], [PagesController::class, 'index']);
 
-            // Exclude documentation from auth middleware
-            // if (!Str::contains($val['path'], 'documentation')) {
-            //    $route->middleware('auth');
-            // }
+            // Protect all non-documentation pages with auth
+            if (!str_contains($val['path'], 'documentation')) {
+                $route->middleware('auth');
+            }
         }
     }
 });
@@ -55,12 +47,30 @@ Route::prefix('documentation')->group(function () {
 });
 
 // Absensi profile pages (not in menu, linked via action buttons)
-Route::get('absensi/profil-siswa', [PagesController::class, 'index']);
-Route::get('absensi/profil-guru', [PagesController::class, 'index']);
-Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
+Route::middleware('auth')->group(function () {
+    // Absensi Modules Resource Routes
+    Route::resource('absensi/master/tahun-ajaran', \App\Http\Controllers\Absensi\TahunAjaranController::class)->names('tahun-ajaran');
+    Route::post('absensi/master/semester', [\App\Http\Controllers\Absensi\SemesterController::class, 'store'])->name('semester.store');
+    Route::put('absensi/master/semester/{semester}', [\App\Http\Controllers\Absensi\SemesterController::class, 'update'])->name('semester.update');
+    Route::delete('absensi/master/semester/{semester}', [\App\Http\Controllers\Absensi\SemesterController::class, 'destroy'])->name('semester.destroy');
+    
+    Route::resource('absensi/master/jurusan', \App\Http\Controllers\Absensi\JurusanController::class)->names('jurusan');
+    Route::resource('absensi/master/guru', \App\Http\Controllers\Absensi\GuruController::class)->names('guru');
+    Route::resource('absensi/master/kelas/data', \App\Http\Controllers\Absensi\KelasController::class)->names('kelas');
+    Route::resource('absensi/master/siswa', \App\Http\Controllers\Absensi\SiswaController::class)->names('siswa');
+    Route::resource('absensi/master/mata-pelajaran', \App\Http\Controllers\Absensi\MataPelajaranController::class)->names('mata-pelajaran');
+    Route::resource('absensi/master/jadwal-pelajaran', \App\Http\Controllers\Absensi\JadwalPelajaranController::class)->names('jadwal-pelajaran');
+    Route::resource('absensi/master/aturan-jam', \App\Http\Controllers\Absensi\AturanJamController::class)->names('aturan-jam');
+    Route::resource('absensi/kehadiran', \App\Http\Controllers\Absensi\KehadiranController::class)->names('kehadiran');
+
+    Route::get('absensi/profil-siswa', [PagesController::class, 'index']);
+    Route::get('absensi/profil-guru', [PagesController::class, 'index']);
+    Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
+});
 
 
-Route::group([], function () {
+
+Route::middleware('auth')->group(function () {
     // Account pages
     Route::prefix('account')->group(function () {
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -76,7 +86,7 @@ Route::group([], function () {
     });
 });
 
-Route::resource('users', UsersController::class);
+Route::middleware('auth')->resource('users', UsersController::class);
 
 /**
  * Socialite login using Google service

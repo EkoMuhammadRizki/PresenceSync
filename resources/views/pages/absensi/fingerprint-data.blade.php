@@ -44,7 +44,7 @@
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
                             <div class="menu-item px-3"><a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#modal_ubah_fp">Ubah</a></div>
-                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger">Hapus</a></div>
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger btn-hapus">Hapus</a></div>
                         </div>
                     </td>
                 </tr>
@@ -59,7 +59,52 @@
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
                             <div class="menu-item px-3"><a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#modal_ubah_fp">Ubah</a></div>
-                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger">Hapus</a></div>
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger btn-hapus">Hapus</a></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3</td><td>FP-003</td><td>Fingerprint Ruang Guru</td>
+                    <td>Gedung A Lt. 1</td><td>192.168.1.103</td><td>4370</td>
+                    <td><code class="text-gray-600 fs-8">m3n4o5p6q7r8...</code></td>
+                    <td><span class="badge badge-light-success fw-bolder">Online</span></td>
+                    <td class="text-end">
+                        <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                            Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
+                        </a>
+                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#modal_ubah_fp">Ubah</a></div>
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger btn-hapus">Hapus</a></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>4</td><td>FP-004</td><td>Fingerprint Perpustakaan</td>
+                    <td>Gedung C Lt. 1</td><td>192.168.1.104</td><td>4370</td>
+                    <td><code class="text-gray-600 fs-8">s9t0u1v2w3x4...</code></td>
+                    <td><span class="badge badge-light-success fw-bolder">Online</span></td>
+                    <td class="text-end">
+                        <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                            Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
+                        </a>
+                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#modal_ubah_fp">Ubah</a></div>
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger btn-hapus">Hapus</a></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>5</td><td>FP-005</td><td>Fingerprint Lab Biologi</td>
+                    <td>Gedung D Lt. 2</td><td>192.168.1.105</td><td>4370</td>
+                    <td><code class="text-gray-600 fs-8">y5z6a7b8c9d0...</code></td>
+                    <td><span class="badge badge-light-danger fw-bolder">Offline</span></td>
+                    <td class="text-end">
+                        <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                            Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
+                        </a>
+                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#modal_ubah_fp">Ubah</a></div>
+                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger btn-hapus">Hapus</a></div>
                         </div>
                     </td>
                 </tr>
@@ -85,7 +130,7 @@
                         <div class="col-md-4 fv-row"><label class="required fw-bold fs-6 mb-2">Port</label><input type="number" class="form-control form-control-solid" value="4370" /></div>
                     </div>
                     <div class="fv-row mb-7"><label class="fw-bold fs-6 mb-2">Token API</label><input type="text" class="form-control form-control-solid" placeholder="Token otentikasi API" /></div>
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder"><option value="online">Online</option><option value="offline">Offline</option></select></div>
+                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_fp" data-hide-search="true"><option value="online">Online</option><option value="offline">Offline</option></select></div>
                     <div class="text-center pt-5"><button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
                 </form>
             </div>
@@ -109,7 +154,7 @@
                         <div class="col-md-4 fv-row"><label class="required fw-bold fs-6 mb-2">Port</label><input type="number" class="form-control form-control-solid" value="4370" /></div>
                     </div>
                     <div class="fv-row mb-7"><label class="fw-bold fs-6 mb-2">Token API</label><input type="text" class="form-control form-control-solid" value="a1b2c3d4e5f6..." /></div>
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder"><option value="online" selected>Online</option><option value="offline">Offline</option></select></div>
+                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_fp" data-hide-search="true"><option value="online" selected>Online</option><option value="offline">Offline</option></select></div>
                     <div class="text-center pt-5"><button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>
                 </form>
             </div>
@@ -120,7 +165,7 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    var table = $('#kt_table_fingerprint').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:false, order:[], pageLength:10, lengthChange:false, columnDefs:[{orderable:false,targets:[0,8]}] });
+    var table = $('#kt_table_fingerprint').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:true, order:[], pageLength:5, lengthChange:true, columnDefs:[{orderable:false,targets:[0,8]}] });
     $('#search_fp').on('keyup', function() { table.search(this.value).draw(); });
 });
 </script>

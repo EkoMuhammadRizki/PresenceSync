@@ -3,7 +3,7 @@
 
 
 <!--begin::Placeholder Content-->
-<div class="card">
+<div class="card mt-2">
     <div class="card-body">
         <div class="text-center py-10">
             <div class="mb-5">

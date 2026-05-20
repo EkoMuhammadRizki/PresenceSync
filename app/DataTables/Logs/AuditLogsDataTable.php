@@ -79,6 +79,7 @@ class AuditLogsDataTable extends DataTable
             ->autoWidth(false)
             ->parameters([
                 'scrollX'      => true,
+                'pageLength'   => 5,
                 'drawCallback' => 'function() { KTMenu.createInstances(); }',
             ])
             ->addTableClass('align-middle table-row-dashed fs-6 gy-5');
@@ -113,7 +114,7 @@ class AuditLogsDataTable extends DataTable
      *
      * @return string
      */
-    protected function filename()
+    protected function filename(): string
     {
         return 'DataLogs_'.date('YmdHis');
     }

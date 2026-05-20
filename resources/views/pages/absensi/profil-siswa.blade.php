@@ -71,7 +71,7 @@
             <div class="card-header border-0 pt-6">
                 <div class="card-title"><h3 class="fw-bolder">Riwayat Kehadiran</h3></div>
                 <div class="card-toolbar">
-                    <select class="form-select form-select-solid form-select-sm fw-bolder w-200px">
+                    <select class="form-select form-select-solid form-select-sm fw-bolder w-200px" data-control="select2" data-hide-search="true">
                         <option>2025/2026 - Genap</option>
                         <option>2025/2026 - Ganjil</option>
                     </select>
@@ -123,7 +123,7 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#kt_table_riwayat').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:false, order:[], pageLength:10, lengthChange:false, columnDefs:[{orderable:false,targets:0}] });
+    $('#kt_table_riwayat').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:true, order:[], pageLength:5, lengthChange:true, columnDefs:[{orderable:false,targets:0}] });
 });
 </script>
 @endsection

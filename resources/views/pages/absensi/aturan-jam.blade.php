@@ -1,7 +1,42 @@
 <x-base-layout>
 @include('pages.absensi._partials.toolbar')
 
+@if(session('success'))
+    <div class="alert alert-success d-flex align-items-center p-5 mb-10">
+        <span class="svg-icon svg-icon-2hx svg-icon-success me-4">
+            {!! theme()->getSvgIcon("icons/duotune/general/gen048.svg") !!}
+        </span>
+        <div class="d-flex flex-column">
+            <h4 class="mb-1 text-dark">Sukses</h4>
+            <span>{{ session('success') }}</span>
+        </div>
+    </div>
+@endif
 
+@if(session('error'))
+    <div class="alert alert-danger d-flex align-items-center p-5 mb-10">
+        <span class="svg-icon svg-icon-2hx svg-icon-danger me-4">
+            {!! theme()->getSvgIcon("icons/duotune/general/gen040.svg") !!}
+        </span>
+        <div class="d-flex flex-column">
+            <h4 class="mb-1 text-dark">Error</h4>
+            <span>{{ session('error') }}</span>
+        </div>
+    </div>
+@endif
+
+@if ($errors->any())
+    <div class="alert alert-danger p-5 mb-10">
+        <div class="d-flex flex-column">
+            <h4 class="mb-1 text-dark">Validasi Gagal</h4>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+@endif
 
 <div class="card mt-2">
     <div class="card-header border-0 pt-6">
@@ -17,44 +52,52 @@
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                     <th class="w-30px">No</th>
-                    <th class="min-w-120px">Hari</th>
+                    <th class="min-w-150px">Nama Aturan</th>
                     <th class="min-w-120px">Jam Masuk</th>
+                    <th class="min-w-120px">Toleransi (Menit)</th>
                     <th class="min-w-120px">Jam Pulang</th>
                     <th class="min-w-100px">Status Aktif</th>
                     <th class="text-end min-w-70px">Aksi</th>
                 </tr>
             </thead>
             <tbody class="text-gray-600 fw-bold">
-                @php
-                    $hariData = [
-                        ['Senin', '07:00', '15:30', true],
-                        ['Selasa', '07:00', '15:30', true],
-                        ['Rabu', '07:00', '15:30', true],
-                        ['Kamis', '07:00', '15:30', true],
-                        ['Jumat', '07:00', '11:30', true],
-                        ['Sabtu', '-', '-', false],
-                    ];
-                @endphp
-                @foreach ($hariData as $i => $hari)
+                @foreach ($aturanJams as $i => $item)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td><strong>{{ $hari[0] }}</strong></td>
-                    <td>{{ $hari[1] }}</td>
-                    <td>{{ $hari[2] }}</td>
+                    <td><strong>{{ $item->nama }}</strong></td>
+                    <td>{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}</td>
+                    <td>{{ $item->toleransi_keterlambatan }} menit</td>
+                    <td>{{ \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') }}</td>
                     <td>
-                        @if ($hari[3])
+                        @if ($item->is_aktif)
                             <span class="badge badge-light-success fw-bolder">Aktif</span>
                         @else
-                            <span class="badge badge-light-danger fw-bolder">Libur</span>
+                            <span class="badge badge-light-danger fw-bolder">Nonaktif</span>
                         @endif
                     </td>
                     <td class="text-end">
                         <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                             Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
                         </a>
-                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
-                            <div class="menu-item px-3"><a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#modal_ubah_jam">Ubah</a></div>
-                            <div class="menu-item px-3"><a href="#" class="menu-link px-3 text-danger">Hapus</a></div>
+                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-150px py-4" data-kt-menu="true">
+                            <div class="menu-item px-3">
+                                <a href="#" class="menu-link px-3 btn-edit" 
+                                   data-id="{{ $item->id }}"
+                                   data-nama="{{ $item->nama }}"
+                                   data-masuk="{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}"
+                                   data-toleransi="{{ $item->toleransi_keterlambatan }}"
+                                   data-pulang="{{ \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') }}"
+                                   data-aktif="{{ $item->is_aktif ? '1' : '0' }}">
+                                    Ubah
+                                </a>
+                            </div>
+                            <div class="menu-item px-3">
+                                <form action="{{ route('aturan-jam.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aturan jam ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
+                                </form>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -68,35 +111,89 @@
 <div class="modal fade" id="modal_tambah_jam" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered mw-500px">
         <div class="modal-content">
-            <div class="modal-header"><h2 class="fw-bolder">Tambah Aturan Jam</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header">
+                <h2 class="fw-bolder">Tambah Aturan Jam</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body mx-5 my-7">
-                <form class="form">
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Hari</label><select class="form-select form-select-solid fw-bolder"><option>Pilih hari...</option><option>Senin</option><option>Selasa</option><option>Rabu</option><option>Kamis</option><option>Jumat</option><option>Sabtu</option></select></div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row"><label class="required fw-bold fs-6 mb-2">Jam Masuk</label><input type="time" class="form-control form-control-solid" /></div>
-                        <div class="col-md-6 fv-row"><label class="required fw-bold fs-6 mb-2">Jam Pulang</label><input type="time" class="form-control form-control-solid" /></div>
+                <form class="form" action="{{ route('aturan-jam.store') }}" method="POST">
+                    @csrf
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Nama Aturan</label>
+                        <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Contoh: Jadwal Normal, Jadwal Ujian" required />
                     </div>
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status Aktif</label><select class="form-select form-select-solid fw-bolder"><option value="1">Aktif</option><option value="0">Libur</option></select></div>
-                    <div class="text-center pt-5"><button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
+                    <div class="row g-9 mb-7">
+                        <div class="col-md-6 fv-row">
+                            <label class="required fw-bold fs-6 mb-2">Jam Masuk</label>
+                            <input type="time" name="jam_masuk" class="form-control form-control-solid" required />
+                        </div>
+                        <div class="col-md-6 fv-row">
+                            <label class="required fw-bold fs-6 mb-2">Toleransi (Menit)</label>
+                            <input type="number" name="toleransi_keterlambatan" class="form-control form-control-solid" value="15" min="0" required />
+                        </div>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Jam Pulang</label>
+                        <input type="time" name="jam_pulang" class="form-control form-control-solid" required />
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
+                        <select name="is_aktif" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jam" data-hide-search="true">
+                            <option value="1">Aktif</option>
+                            <option value="0">Nonaktif</option>
+                        </select>
+                    </div>
+                    <div class="text-center pt-5">
+                        <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
 <!-- Modal Ubah Jam -->
 <div class="modal fade" id="modal_ubah_jam" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered mw-500px">
         <div class="modal-content">
-            <div class="modal-header"><h2 class="fw-bolder">Ubah Aturan Jam</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header">
+                <h2 class="fw-bolder">Ubah Aturan Jam</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
             <div class="modal-body mx-5 my-7">
-                <form class="form">
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Hari</label><select class="form-select form-select-solid fw-bolder"><option selected>Senin</option><option>Selasa</option><option>Rabu</option></select></div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row"><label class="required fw-bold fs-6 mb-2">Jam Masuk</label><input type="time" class="form-control form-control-solid" value="07:00" /></div>
-                        <div class="col-md-6 fv-row"><label class="required fw-bold fs-6 mb-2">Jam Pulang</label><input type="time" class="form-control form-control-solid" value="15:30" /></div>
+                <form class="form" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Nama Aturan</label>
+                        <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" required />
                     </div>
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status Aktif</label><select class="form-select form-select-solid fw-bolder"><option value="1" selected>Aktif</option><option value="0">Libur</option></select></div>
-                    <div class="text-center pt-5"><button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>
+                    <div class="row g-9 mb-7">
+                        <div class="col-md-6 fv-row">
+                            <label class="required fw-bold fs-6 mb-2">Jam Masuk</label>
+                            <input type="time" name="jam_masuk" class="form-control form-control-solid" required />
+                        </div>
+                        <div class="col-md-6 fv-row">
+                            <label class="required fw-bold fs-6 mb-2">Toleransi (Menit)</label>
+                            <input type="number" name="toleransi_keterlambatan" class="form-control form-control-solid" min="0" required />
+                        </div>
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Jam Pulang</label>
+                        <input type="time" name="jam_pulang" class="form-control form-control-solid" required />
+                    </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
+                        <select name="is_aktif" class="form-select form-select-solid fw-bolder" id="edit_is_aktif">
+                            <option value="1">Aktif</option>
+                            <option value="0">Nonaktif</option>
+                        </select>
+                    </div>
+                    <div class="text-center pt-5">
+                        <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -106,7 +203,34 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#kt_table_jam').DataTable({ dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', info:false, order:[], pageLength:10, lengthChange:false, columnDefs:[{orderable:false,targets:[0,5]}] });
+    $('#kt_table_jam').DataTable({ 
+        dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', 
+        info:true, 
+        order:[], 
+        pageLength:5, 
+        lengthChange:true, 
+        columnDefs:[{orderable:false,targets:[0,6]}] 
+    });
+
+    $('.btn-edit').on('click', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        var nama = $(this).data('nama');
+        var masuk = $(this).data('masuk');
+        var toleransi = $(this).data('toleransi');
+        var pulang = $(this).data('pulang');
+        var aktif = $(this).data('aktif');
+        
+        var form = $('#modal_ubah_jam form');
+        form.attr('action', '{{ url("absensi/master/aturan-jam") }}/' + id);
+        form.find('input[name="nama"]').val(nama);
+        form.find('input[name="jam_masuk"]').val(masuk);
+        form.find('input[name="toleransi_keterlambatan"]').val(toleransi);
+        form.find('input[name="jam_pulang"]').val(pulang);
+        form.find('select[name="is_aktif"]').val(aktif);
+        
+        $('#modal_ubah_jam').modal('show');
+    });
 });
 </script>
 @endsection
