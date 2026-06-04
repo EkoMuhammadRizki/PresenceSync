@@ -15,7 +15,7 @@
                     <div class="symbol symbol-100px symbol-circle mb-7">
                         <div class="symbol-label fs-1 bg-light-primary text-primary fw-bolder">X</div>
                     </div>
-                    <span class="fs-3 text-gray-800 fw-bolder mb-1">X IPA 1</span>
+                    <span class="fs-3 text-gray-800 fw-bolder mb-1">X-1</span>
                     <div class="fs-5 fw-bold text-muted mb-6">Tahun Ajaran 2025/2026</div>
                     <div class="d-flex flex-wrap flex-center">
                         <div class="border border-dashed rounded min-w-90px py-3 px-4 mx-2 mb-3">

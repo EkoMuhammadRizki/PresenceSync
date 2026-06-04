@@ -44,7 +44,7 @@
                 <tr>
                     <td>2</td><td>guru.budi</td><td>Budi Santoso</td>
                     <td><span class="badge badge-light-info fw-bolder">Guru</span></td>
-                    <td>Melihat data kehadiran kelas X IPA 1</td>
+                    <td>Melihat data kehadiran kelas X-1</td>
                     <td><span class="badge badge-light-primary fw-bolder">GET</span></td>
                     <td>15 Mei 2026, 09:15</td>
                 </tr>

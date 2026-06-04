@@ -44,7 +44,7 @@
                 <div id="kt_user_view_details" class="collapse show">
                     <div class="pb-5 fs-6">
                         <div class="fw-bolder mt-5">Kelas</div>
-                        <div class="text-gray-600">X IPA 1</div>
+                        <div class="text-gray-600">X-1</div>
                         <div class="fw-bolder mt-5">Jurusan</div>
                         <div class="text-gray-600">Ilmu Pengetahuan Alam</div>
                         <div class="fw-bolder mt-5">Wali Kelas</div>

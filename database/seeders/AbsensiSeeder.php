@@ -126,7 +126,7 @@ class AbsensiSeeder extends Seeder
         $kelas1 = Kelas::create([
             'jurusan_id' => $jurusanIPA->id,
             'guru_id'    => $guru1->id,
-            'nama'       => 'X IPA 1',
+            'nama'       => 'X-1',
             'tingkat'    => '10',
             'status'     => 'aktif',
         ]);
@@ -134,7 +134,7 @@ class AbsensiSeeder extends Seeder
         $kelas2 = Kelas::create([
             'jurusan_id' => $jurusanIPA->id,
             'guru_id'    => $guru3->id,
-            'nama'       => 'XI IPA 2',
+            'nama'       => 'XI-1',
             'tingkat'    => '11',
             'status'     => 'aktif',
         ]);
@@ -142,7 +142,7 @@ class AbsensiSeeder extends Seeder
         $kelas3 = Kelas::create([
             'jurusan_id' => $jurusanIPS->id,
             'guru_id'    => $guru2->id,
-            'nama'       => 'XII IPS 1',
+            'nama'       => 'XII-1',
             'tingkat'    => '12',
             'status'     => 'aktif',
         ]);

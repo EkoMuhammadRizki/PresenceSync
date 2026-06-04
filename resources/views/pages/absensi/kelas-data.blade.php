@@ -136,7 +136,7 @@
                     @csrf
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Nama Kelas</label>
-                        <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Contoh: X IPA 1, XI RPL 2" required />
+                        <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Contoh: X-1, XI-1" required />
                     </div>
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">

@@ -30,7 +30,7 @@ test('import students from excel works', function () {
     // Create a Kelas
     $kelas = Kelas::create([
         'jurusan_id' => $jurusan->id,
-        'nama'       => 'X IPA 1',
+        'nama'       => 'X-1',
         'tingkat'    => 10,
         'status'     => 'aktif',
     ]);
@@ -50,7 +50,7 @@ test('import students from excel works', function () {
     $sheet->setCellValue('A2', 'Test Student');
     $sheet->setCellValue('B2', '1234567890');
     $sheet->setCellValue('C2', '98765');
-    $sheet->setCellValue('D2', 'X IPA 1');
+    $sheet->setCellValue('D2', 'X-1');
     $sheet->setCellValue('E2', 'L');
     $sheet->setCellValue('F2', '2009-08-15');
     $sheet->setCellValue('G2', 'Test Address');
@@ -59,7 +59,7 @@ test('import students from excel works', function () {
     $sheet->setCellValue('A3', 'Duplicate Student');
     $sheet->setCellValue('B3', '0054321098');
     $sheet->setCellValue('C3', '10201');
-    $sheet->setCellValue('D3', 'X IPA 1');
+    $sheet->setCellValue('D3', 'X-1');
     $sheet->setCellValue('E3', 'P');
     $sheet->setCellValue('F3', '2009-08-15');
     $sheet->setCellValue('G3', 'Dup Address');

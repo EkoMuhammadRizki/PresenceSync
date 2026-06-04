@@ -18,7 +18,7 @@ test('bulk delete siswa works and deletes associated users', function () {
     // Create a Kelas
     $kelas = Kelas::create([
         'jurusan_id' => $jurusan->id,
-        'nama'       => 'X IPA 1',
+        'nama'       => 'X-1',
         'tingkat'    => 10,
         'status'     => 'aktif',
     ]);

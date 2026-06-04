@@ -77,19 +77,19 @@
                     </thead>
                     <tbody class="text-gray-600 fw-bold">
                         <tr>
-                            <td>1</td><td>Senin</td><td>Matematika</td><td>X IPA 1</td><td>07:30 – 09:00</td>
+                            <td>1</td><td>Senin</td><td>Matematika</td><td>X-1</td><td>07:30 – 09:00</td>
                         </tr>
                         <tr>
-                            <td>2</td><td>Rabu</td><td>Matematika</td><td>XI IPA 2</td><td>09:15 – 10:45</td>
+                            <td>2</td><td>Rabu</td><td>Matematika</td><td>XI-1</td><td>09:15 – 10:45</td>
                         </tr>
                         <tr>
-                            <td>3</td><td>Jumat</td><td>Matematika</td><td>XII IPA 1</td><td>07:30 – 09:00</td>
+                            <td>3</td><td>Jumat</td><td>Matematika</td><td>XII-1</td><td>07:30 – 09:00</td>
                         </tr>
                         <tr>
-                            <td>4</td><td>Kamis</td><td>Matematika</td><td>X IPA 1</td><td>10:45 – 12:15</td>
+                            <td>4</td><td>Kamis</td><td>Matematika</td><td>X-1</td><td>10:45 – 12:15</td>
                         </tr>
                         <tr>
-                            <td>5</td><td>Selasa</td><td>Matematika</td><td>XI IPA 2</td><td>07:30 – 09:00</td>
+                            <td>5</td><td>Selasa</td><td>Matematika</td><td>XI-1</td><td>07:30 – 09:00</td>
                         </tr>
                     </tbody>
                 </table>
@@ -108,7 +108,7 @@
                         <div class="symbol-label bg-light-primary text-primary fw-bolder fs-5">X</div>
                     </div>
                     <div class="flex-grow-1">
-                        <span class="text-dark fw-bolder text-hover-primary fs-6">X IPA 1</span>
+                        <span class="text-dark fw-bolder text-hover-primary fs-6">X-1</span>
                         <span class="text-muted d-block fw-bold">32 Siswa • Tahun Ajaran 2025/2026</span>
                     </div>
                     <a href="{{ theme()->getPageUrl('absensi/profil-kelas') }}" class="btn btn-sm btn-light-primary">Lihat Kelas</a>

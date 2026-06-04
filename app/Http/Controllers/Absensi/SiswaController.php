@@ -141,7 +141,7 @@ class SiswaController extends Controller
         $sheet->setCellValue('A2', 'Ahmad Subarjo');
         $sheet->setCellValue('B2', '0054321098');
         $sheet->setCellValue('C2', '10201');
-        $sheet->setCellValue('D2', 'X IPA 1');
+        $sheet->setCellValue('D2', 'X-1');
         $sheet->setCellValue('E2', 'L');
         $sheet->setCellValue('F2', '2009-08-15');
         $sheet->setCellValue('G2', 'Jl. Sukarno Hatta No. 12');
