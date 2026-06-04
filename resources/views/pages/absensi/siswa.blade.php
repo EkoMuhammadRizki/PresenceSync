@@ -25,6 +25,21 @@
     </div>
 @endif
 
+@if(session('import_success'))
+    <div class="alert alert-info d-flex align-items-center p-5 mb-10">
+        <span class="svg-icon svg-icon-2hx svg-icon-info me-4">
+            {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
+        </span>
+        <div class="d-flex flex-column">
+            <h4 class="mb-1 text-dark">Informasi Import Data Siswa</h4>
+            <span>
+                Berhasil diimport: <strong>{{ session('import_success')['success_count'] }}</strong> siswa.<br>
+                Tidak diimport (sudah ada di database): <strong>{{ session('import_success')['skip_count'] }}</strong> siswa.
+            </span>
+        </div>
+    </div>
+@endif
+
 @if ($errors->any())
     <div class="alert alert-danger p-5 mb-10">
         <div class="d-flex flex-column">
@@ -47,6 +62,10 @@
             </div>
         </div>
         <div class="card-toolbar">
+            <button type="button" class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#modal_import_siswa">
+                {!! theme()->getSvgIcon("icons/duotune/arrows/arr078.svg", "svg-icon-2") !!}
+                Import Data Siswa
+            </button>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_siswa">
                 {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
                 Tambah Siswa
@@ -54,10 +73,14 @@
         </div>
     </div>
     <div class="card-body py-4">
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_siswa">
+        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_siswa" data-bulk-type="siswa">
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-30px">No</th>
+                    <th class="w-30px">
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-all-checkbox" type="checkbox" />
+                        </div>
+                    </th>
                     <th class="min-w-80px">NIS / NISN</th>
                     <th class="min-w-150px">Nama</th>
                     <th class="min-w-90px">Jenis Kelamin</th>
@@ -70,7 +93,11 @@
             <tbody class="text-gray-600 fw-bold">
                 @foreach ($siswas as $i => $item)
                 <tr>
-                    <td>{{ $i + 1 }}</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
+                        </div>
+                    </td>
                     <td>
                         <span class="text-gray-800">{{ $item->nis ?? '-' }}</span>
                         <div class="fs-7 text-muted">NISN: {{ $item->nisn ?? '-' }}</div>
@@ -194,6 +221,47 @@
     </div>
 </div>
 
+<!-- Modal Import Siswa -->
+<div class="modal fade" id="modal_import_siswa" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mw-650px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="fw-bolder">Import Data Siswa</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body mx-5 my-7">
+                <form class="form" action="{{ route('siswa.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-6 mb-9">
+                        <span class="svg-icon svg-icon-2tx svg-icon-primary me-4">
+                            {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
+                        </span>
+                        <div class="d-flex flex-stack flex-grow-1">
+                            <div class="fw-bold">
+                                <h4 class="text-gray-900 fw-bolder">Template Excel</h4>
+                                <div class="fs-6 text-gray-700">
+                                    Silakan unduh template excel terlebih dahulu untuk mengisi data siswa dengan benar.
+                                    <a href="{{ route('siswa.download-template') }}" class="fw-bolder text-primary">Download Template Excel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Pilih File Excel (.xlsx / .xls)</label>
+                        <input type="file" name="file" class="form-control form-control-solid" accept=".xlsx, .xls" required />
+                    </div>
+
+                    <div class="text-center pt-5">
+                        <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-success">Mulai Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ubah Siswa -->
 <div class="modal fade" id="modal_ubah_siswa" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered mw-650px">
@@ -278,7 +346,15 @@ $(document).ready(function() {
         table.search(this.value).draw(); 
     });
 
-    $('.btn-edit').on('click', function(e) {
+    // Re-init Metronic menu instances on table redraw (pagination, search, sort)
+    table.on('draw', function() {
+        if (window.KTMenu) {
+            KTMenu.createInstances();
+        }
+    });
+
+    // Use event delegation so edit button works on all pages and after searching/sorting
+    $(document).on('click', '.btn-edit', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
         var nama = $(this).data('nama');

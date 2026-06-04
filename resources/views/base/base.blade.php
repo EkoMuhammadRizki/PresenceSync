@@ -728,6 +728,149 @@ License: {{ theme()->getOption('product', 'license') }}
     $(document).on('page:loaded spa:loaded', function() {
         showFlashMessages();
     });
+
+    // ─── Global: Checkbox Bulk Delete Toggle ───────────────────────────────
+    
+    // Select all checkboxes toggle
+    $(document).on('change', 'thead input[type="checkbox"].select-all-checkbox', function() {
+        var checked = this.checked;
+        var table = $(this).closest('table');
+        table.find('tbody input[type="checkbox"].select-item-checkbox').each(function() {
+            this.checked = checked;
+            $(this).trigger('change');
+        });
+    });
+
+    // Check individual items and update Bulk Delete button visibility/count
+    $(document).on('change', 'tbody input[type="checkbox"].select-item-checkbox', function() {
+        var table = $(this).closest('table');
+        var card = table.closest('.card');
+        
+        // Dynamically inject bulk delete button if not exists
+        checkAndInjectBulkDeleteButton(table);
+        
+        var checkedCount = table.find('tbody input[type="checkbox"].select-item-checkbox:checked').length;
+        var bulkDeleteBtn = card.find('.btn-bulk-delete-global');
+        
+        if (checkedCount > 0) {
+            bulkDeleteBtn.find('.selected-count').text(checkedCount);
+            bulkDeleteBtn.show();
+        } else {
+            bulkDeleteBtn.hide();
+            // Also uncheck the select-all if no item is checked
+            table.find('thead input[type="checkbox"].select-all-checkbox').prop('checked', false);
+        }
+        
+        // If all items are checked, check select-all, else uncheck it
+        var totalCount = table.find('tbody input[type="checkbox"].select-item-checkbox').length;
+        if (checkedCount === totalCount && totalCount > 0) {
+            table.find('thead input[type="checkbox"].select-all-checkbox').prop('checked', true);
+        } else {
+            table.find('thead input[type="checkbox"].select-all-checkbox').prop('checked', false);
+        }
+    });
+
+    // Inject Bulk Delete Button
+    function checkAndInjectBulkDeleteButton(table) {
+        var card = table.closest('.card');
+        var toolbar = card.find('.card-toolbar');
+        if (toolbar.length && toolbar.find('.btn-bulk-delete-global').length === 0) {
+            var buttonHtml = `
+                <button type="button" class="btn btn-danger me-3 btn-bulk-delete-global" style="display: none;">
+                    <span class="svg-icon svg-icon-2 m-0 pe-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 9C5 8.44772 5.44772 8 6 8H18C18.5523 8 19 8.44772 19 9V18C19 19.6569 17.6569 21 16 21H8C6.34315 21 5 19.6569 5 18V9Z" fill="currentColor"/>
+                            <path opacity="0.5" d="M5 5C5 4.44772 5.44772 4 6 4H18C18.5523 4 19 4.44772 19 5V5C19 5.55228 18.5523 6 18 6H6C5.44772 6 5 5.55228 5 5V5Z" fill="currentColor"/>
+                            <path opacity="0.5" d="M9 4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V4H9V4Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    Hapus Terpilih (<span class="selected-count">0</span>)
+                </button>
+            `;
+            toolbar.prepend(buttonHtml);
+        }
+    }
+
+    // Trigger Bulk Delete request
+    $(document).on('click', '.btn-bulk-delete-global', function() {
+        var card = $(this).closest('.card');
+        var table = card.find('table');
+        var checkedCheckboxes = table.find('tbody input[type="checkbox"].select-item-checkbox:checked');
+        var ids = [];
+        
+        checkedCheckboxes.each(function() {
+            ids.push($(this).val());
+        });
+        
+        var type = table.data('bulk-type');
+        
+        if (!type) {
+            // Static mockup support
+            konfirmasiHapus({ 
+                title: 'Hapus Terpilih?', 
+                text: 'Data terpilih akan dihapus dari tampilan prototype.',
+                confirmButtonText: 'Ya, Hapus!'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    checkedCheckboxes.each(function() {
+                        var row = $(this).closest('tr');
+                        if ($.fn.DataTable.isDataTable(table[0])) {
+                            table.DataTable().row(row).remove().draw();
+                        } else {
+                            row.remove();
+                        }
+                    });
+                    card.find('.btn-bulk-delete-global').hide();
+                    SwalSuccess.fire({ title: 'Berhasil!', text: 'Data terpilih berhasil dihapus dari prototype.' });
+                }
+            });
+            return;
+        }
+
+        konfirmasiHapus({ 
+            title: 'Hapus Terpilih?', 
+            text: 'Data terpilih akan dihapus permanen dari database!',
+            confirmButtonText: 'Ya, Hapus!'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '{{ route("bulk-delete") }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        type: type,
+                        ids: ids
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            SwalSuccess.fire({ title: 'Berhasil!', text: response.message }).then(function() {
+                                window.location.reload();
+                            });
+                        } else {
+                            SwalError.fire({ title: 'Gagal!', text: response.message || 'Terjadi kesalahan.' });
+                        }
+                    },
+                    error: function(xhr) {
+                        var errMsg = 'Terjadi kesalahan saat menghapus data.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errMsg = xhr.responseJSON.message;
+                        }
+                        SwalError.fire({ title: 'Gagal!', text: errMsg });
+                    }
+                });
+            }
+        });
+    });
+
+    // Automatically check and inject bulk delete buttons for existing checked checkboxes on draw/init
+    $(document).on('draw.dt init.dt', function(e, settings) {
+        if (settings && settings.nTable) {
+            var table = $(settings.nTable);
+            if (table.find('tbody input[type="checkbox"].select-item-checkbox').length > 0) {
+                checkAndInjectBulkDeleteButton(table);
+            }
+        }
+    });
 })();
 </script>
 

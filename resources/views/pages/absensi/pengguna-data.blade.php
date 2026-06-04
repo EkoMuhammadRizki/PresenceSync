@@ -26,7 +26,11 @@
         <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_pengguna">
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-30px">No</th>
+                    <th class="w-30px">
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-all-checkbox" type="checkbox" />
+                        </div>
+                    </th>
                     <th class="min-w-100px">Username</th>
                     <th class="min-w-150px">Email</th>
                     <th class="min-w-100px">Jenis Pengguna</th>
@@ -38,7 +42,11 @@
             </thead>
             <tbody class="text-gray-600 fw-bold">
                 <tr>
-                    <td>1</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="1" />
+                        </div>
+                    </td>
                     <td>admin.sekolah</td>
                     <td>admin@sekolah.sch.id</td>
                     <td>Admin</td>
@@ -60,7 +68,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>2</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="2" />
+                        </div>
+                    </td>
                     <td>guru.budi</td>
                     <td>budi@sekolah.sch.id</td>
                     <td>Guru</td>
@@ -82,7 +94,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>3</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="3" />
+                        </div>
+                    </td>
                     <td>siswa.ahmad</td>
                     <td>ahmad@siswa.sch.id</td>
                     <td>Siswa</td>
@@ -104,7 +120,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>4</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="4" />
+                        </div>
+                    </td>
                     <td>guru.siti</td>
                     <td>siti@sekolah.sch.id</td>
                     <td>Guru</td>
@@ -126,7 +146,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>5</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="5" />
+                        </div>
+                    </td>
                     <td>admin.eko</td>
                     <td>eko@sekolah.sch.id</td>
                     <td>Admin</td>

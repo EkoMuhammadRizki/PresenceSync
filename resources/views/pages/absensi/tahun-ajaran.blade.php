@@ -51,10 +51,14 @@
                 </div>
             </div>
             <div class="card-body py-4">
-                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_tahun_ajaran">
+                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_tahun_ajaran" data-bulk-type="tahun-ajaran">
                     <thead>
                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                            <th class="w-30px">No</th>
+                            <th class="w-30px">
+                                <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input select-all-checkbox" type="checkbox" />
+                                </div>
+                            </th>
                             <th>Tahun Ajaran</th>
                             <th>Bulan Mulai</th>
                             <th>Bulan Selesai</th>
@@ -65,7 +69,11 @@
                     <tbody class="text-gray-600 fw-bold">
                         @foreach ($tahunAjarans as $i => $ta)
                         <tr>
-                            <td>{{ $i + 1 }}</td>
+                            <td>
+                                <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $ta->id }}" />
+                                </div>
+                            </td>
                             <td><strong>{{ $ta->nama }}</strong></td>
                             <td>{{ \Carbon\Carbon::parse($ta->bulan_mulai)->format('d M Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($ta->bulan_selesai)->format('d M Y') }}</td>
@@ -121,10 +129,14 @@
                 </div>
             </div>
             <div class="card-body py-4">
-                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_semester">
+                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_semester" data-bulk-type="semester">
                     <thead>
                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                            <th class="w-30px">No</th>
+                            <th class="w-30px">
+                                <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input select-all-checkbox" type="checkbox" />
+                                </div>
+                            </th>
                             <th>Tahun Ajaran</th>
                             <th>Semester</th>
                             <th>Tgl Mulai</th>
@@ -136,7 +148,11 @@
                     <tbody class="text-gray-600 fw-bold">
                         @foreach ($semesters as $i => $sem)
                         <tr>
-                            <td>{{ $i + 1 }}</td>
+                            <td>
+                                <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $sem->id }}" />
+                                </div>
+                            </td>
                             <td>{{ $sem->tahunAjaran->nama ?? '-' }}</td>
                             <td><strong>{{ ucfirst($sem->jenis) }}</strong></td>
                             <td>{{ \Carbon\Carbon::parse($sem->tanggal_mulai)->format('d M Y') }}</td>

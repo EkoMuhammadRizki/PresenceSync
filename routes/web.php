@@ -56,7 +56,10 @@ Route::middleware('auth')->group(function () {
     
     Route::resource('absensi/master/jurusan', \App\Http\Controllers\Absensi\JurusanController::class)->names('jurusan');
     Route::resource('absensi/master/guru', \App\Http\Controllers\Absensi\GuruController::class)->names('guru');
-    Route::resource('absensi/master/kelas/data', \App\Http\Controllers\Absensi\KelasController::class)->names('kelas');
+    Route::resource('absensi/master/kelas/data', \App\Http\Controllers\Absensi\KelasController::class)->names('kelas')->parameters(['data' => 'kelas']);
+    Route::get('absensi/master/siswa/download-template', [\App\Http\Controllers\Absensi\SiswaController::class, 'downloadTemplate'])->name('siswa.download-template');
+    Route::post('absensi/master/siswa/import', [\App\Http\Controllers\Absensi\SiswaController::class, 'import'])->name('siswa.import');
+    Route::post('absensi/bulk-delete', [\App\Http\Controllers\Absensi\BulkDeleteController::class, 'destroy'])->name('bulk-delete');
     Route::resource('absensi/master/siswa', \App\Http\Controllers\Absensi\SiswaController::class)->names('siswa');
     Route::resource('absensi/master/mata-pelajaran', \App\Http\Controllers\Absensi\MataPelajaranController::class)->names('mata-pelajaran');
     Route::resource('absensi/master/jadwal-pelajaran', \App\Http\Controllers\Absensi\JadwalPelajaranController::class)->names('jadwal-pelajaran');

@@ -21,7 +21,11 @@
         <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_fingerprint">
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-30px">No</th>
+                    <th class="w-30px">
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-all-checkbox" type="checkbox" />
+                        </div>
+                    </th>
                     <th class="min-w-80px">Kode</th>
                     <th class="min-w-150px">Nama Perangkat</th>
                     <th class="min-w-100px">Lokasi</th>
@@ -34,7 +38,11 @@
             </thead>
             <tbody class="text-gray-600 fw-bold">
                 <tr>
-                    <td>1</td><td>FP-001</td><td>Fingerprint Gerbang Utama</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="1" />
+                        </div>
+                    </td><td>FP-001</td><td>Fingerprint Gerbang Utama</td>
                     <td>Pintu Depan</td><td>192.168.1.101</td><td>4370</td>
                     <td><code class="text-gray-600 fs-8">a1b2c3d4e5f6...</code></td>
                     <td><span class="badge badge-light-success fw-bolder">Online</span></td>
@@ -49,7 +57,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>2</td><td>FP-002</td><td>Fingerprint Lab Komputer</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="2" />
+                        </div>
+                    </td><td>FP-002</td><td>Fingerprint Lab Komputer</td>
                     <td>Gedung B Lt. 2</td><td>192.168.1.102</td><td>4370</td>
                     <td><code class="text-gray-600 fs-8">g7h8i9j0k1l2...</code></td>
                     <td><span class="badge badge-light-danger fw-bolder">Offline</span></td>
@@ -64,7 +76,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>3</td><td>FP-003</td><td>Fingerprint Ruang Guru</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="3" />
+                        </div>
+                    </td><td>FP-003</td><td>Fingerprint Ruang Guru</td>
                     <td>Gedung A Lt. 1</td><td>192.168.1.103</td><td>4370</td>
                     <td><code class="text-gray-600 fs-8">m3n4o5p6q7r8...</code></td>
                     <td><span class="badge badge-light-success fw-bolder">Online</span></td>
@@ -79,7 +95,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>4</td><td>FP-004</td><td>Fingerprint Perpustakaan</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="4" />
+                        </div>
+                    </td><td>FP-004</td><td>Fingerprint Perpustakaan</td>
                     <td>Gedung C Lt. 1</td><td>192.168.1.104</td><td>4370</td>
                     <td><code class="text-gray-600 fs-8">s9t0u1v2w3x4...</code></td>
                     <td><span class="badge badge-light-success fw-bolder">Online</span></td>
@@ -94,7 +114,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td>5</td><td>FP-005</td><td>Fingerprint Lab Biologi</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="5" />
+                        </div>
+                    </td><td>FP-005</td><td>Fingerprint Lab Biologi</td>
                     <td>Gedung D Lt. 2</td><td>192.168.1.105</td><td>4370</td>
                     <td><code class="text-gray-600 fs-8">y5z6a7b8c9d0...</code></td>
                     <td><span class="badge badge-light-danger fw-bolder">Offline</span></td>

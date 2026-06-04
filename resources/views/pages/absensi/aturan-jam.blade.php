@@ -48,10 +48,14 @@
         </div>
     </div>
     <div class="card-body py-4">
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_jam">
+        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_jam" data-bulk-type="aturan-jam">
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-30px">No</th>
+                    <th class="w-30px">
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-all-checkbox" type="checkbox" />
+                        </div>
+                    </th>
                     <th class="min-w-150px">Nama Aturan</th>
                     <th class="min-w-120px">Jam Masuk</th>
                     <th class="min-w-120px">Toleransi (Menit)</th>
@@ -63,7 +67,11 @@
             <tbody class="text-gray-600 fw-bold">
                 @foreach ($aturanJams as $i => $item)
                 <tr>
-                    <td>{{ $i + 1 }}</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
+                        </div>
+                    </td>
                     <td><strong>{{ $item->nama }}</strong></td>
                     <td>{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}</td>
                     <td>{{ $item->toleransi_keterlambatan }} menit</td>
@@ -203,7 +211,7 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#kt_table_jam').DataTable({ 
+    var table = $('#kt_table_jam').DataTable({ 
         dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', 
         info:true, 
         order:[], 
@@ -212,7 +220,15 @@ $(document).ready(function() {
         columnDefs:[{orderable:false,targets:[0,6]}] 
     });
 
-    $('.btn-edit').on('click', function(e) {
+    // Re-init Metronic menu instances on table redraw (pagination, search, sort)
+    table.on('draw', function() {
+        if (window.KTMenu) {
+            KTMenu.createInstances();
+        }
+    });
+
+    // Use event delegation so edit button works on all pages and after searching/sorting
+    $(document).on('click', '.btn-edit', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
         var nama = $(this).data('nama');

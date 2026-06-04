@@ -54,10 +54,14 @@
         </div>
     </div>
     <div class="card-body py-4">
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_kelas">
+        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_kelas" data-bulk-type="kelas">
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-30px">No</th>
+                    <th class="w-30px">
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-all-checkbox" type="checkbox" />
+                        </div>
+                    </th>
                     <th class="min-w-150px">Jurusan</th>
                     <th class="min-w-120px">Nama Kelas</th>
                     <th class="min-w-80px">Tingkat</th>
@@ -70,7 +74,11 @@
             <tbody class="text-gray-600 fw-bold">
                 @foreach ($kelas as $i => $item)
                 <tr>
-                    <td>{{ $i + 1 }}</td>
+                    <td>
+                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
+                        </div>
+                    </td>
                     <td>{{ $item->jurusan->nama ?? '-' }}</td>
                     <td><strong>{{ $item->nama }}</strong></td>
                     <td>{{ $item->tingkat }}</td>
@@ -250,7 +258,15 @@ $(document).ready(function() {
         table.search(this.value).draw(); 
     });
 
-    $('.btn-edit').on('click', function(e) {
+    // Re-init Metronic menu instances on table redraw (pagination, search, sort)
+    table.on('draw', function() {
+        if (window.KTMenu) {
+            KTMenu.createInstances();
+        }
+    });
+
+    // Use event delegation so edit button works on all pages and after searching/sorting
+    $(document).on('click', '.btn-edit', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
         var nama = $(this).data('nama');
