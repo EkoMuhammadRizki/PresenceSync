@@ -19,12 +19,18 @@ class SiswaController extends Controller
     {
         $siswas = Siswa::with(['kelas.jurusan', 'user'])->latest()->get();
         $kelas  = Kelas::with('jurusan')->where('status', 'aktif')->orderBy('tingkat')->get();
-        return view('pages.absensi.siswa', compact('siswas', 'kelas'));
+        
+        // Dapatkan user yang belum dikaitkan dengan data siswa manapun
+        $siswaUserIds = Siswa::pluck('user_id')->filter()->toArray();
+        $users = User::whereNotIn('id', $siswaUserIds)->orderBy('email')->get();
+        
+        return view('pages.absensi.siswa', compact('siswas', 'kelas', 'users'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'user_id'       => 'required|exists:users,id|unique:siswas,user_id',
             'nama'          => 'required|string|max:150',
             'nisn'          => 'nullable|string|max:20|unique:siswas,nisn',
             'nis'           => 'nullable|string|max:20|unique:siswas,nis',
@@ -33,34 +39,18 @@ class SiswaController extends Controller
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable|string',
         ], [
+            'user_id.required'       => 'Username/Akun wajib dipilih.',
+            'user_id.unique'         => 'Akun ini sudah dikaitkan dengan siswa lain.',
             'nama.required'          => 'Nama siswa wajib diisi.',
             'nisn.unique'            => 'NISN sudah terdaftar.',
             'nis.unique'             => 'NIS sudah terdaftar.',
             'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
         ]);
 
-        // Buat akun user otomatis untuk siswa
-        $email    = Str::slug($request->nama, '.') . '@siswa.presencesync.sch.id';
-        $password = $request->nisn ?? $request->nis ?? 'password123';
-
-        $nameParts = explode(' ', trim($request->nama), 2);
-        $firstName = $nameParts[0];
-        $lastName  = $nameParts[1] ?? $nameParts[0];
-
-        $user = User::create([
-            'first_name' => $firstName,
-            'last_name'  => $lastName,
-            'email'      => $email,
-            'password'   => Hash::make($password),
-        ]);
-
-        Siswa::create(array_merge(
-            $request->only('nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat'),
-            ['user_id' => $user->id]
-        ));
+        Siswa::create($request->only('user_id', 'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat'));
 
         return redirect()->route('siswa.index')
-            ->with('success', "Siswa berhasil ditambahkan. Akun login: {$email} | Password: {$password}");
+            ->with('success', 'Siswa berhasil ditambahkan.');
     }
 
     public function update(Request $request, Siswa $siswa)

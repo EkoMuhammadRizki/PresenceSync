@@ -87,8 +87,10 @@
                     <td>
                         @if ($item->status === 'aktif')
                             <span class="badge badge-light-success fw-bolder">Aktif</span>
+                        @elseif ($item->status === 'lulus')
+                            <span class="badge badge-light-purple fw-bolder">Lulus</span>
                         @else
-                            <span class="badge badge-light-danger fw-bolder">Nonaktif</span>
+                            <span class="badge badge-light-danger fw-bolder">Non Aktif</span>
                         @endif
                     </td>
                     <td class="text-end">
@@ -141,7 +143,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Tingkat</label>
-                            <select name="tingkat" class="form-select form-select-solid" required>
+                            <select name="tingkat" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas" required>
                                 <option value="10">10</option>
                                 <option value="11">11</option>
                                 <option value="12">12</option>
@@ -149,7 +151,7 @@
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Jurusan</label>
-                            <select name="jurusan_id" class="form-select form-select-solid" required>
+                            <select name="jurusan_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas" required>
                                 @foreach($jurusans as $j)
                                     <option value="{{ $j->id }}">{{ $j->kode }} - {{ $j->nama }}</option>
                                 @endforeach
@@ -158,7 +160,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Wali Kelas</label>
-                        <select name="guru_id" class="form-select form-select-solid">
+                        <select name="guru_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas">
                             <option value="">-- Pilih Wali Kelas (Opsional) --</option>
                             @foreach($gurus as $g)
                                 <option value="{{ $g->id }}">{{ $g->nama }}</option>
@@ -167,7 +169,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status</label>
-                        <select name="status" class="form-select form-select-solid" required>
+                        <select name="status" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas" required>
                             <option value="aktif">Aktif</option>
                             <option value="nonaktif">Nonaktif</option>
                         </select>
@@ -201,7 +203,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Tingkat</label>
-                            <select name="tingkat" class="form-select form-select-solid" required>
+                            <select name="tingkat" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas" required>
                                 <option value="10">10</option>
                                 <option value="11">11</option>
                                 <option value="12">12</option>
@@ -209,7 +211,7 @@
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Jurusan</label>
-                            <select name="jurusan_id" class="form-select form-select-solid" required>
+                            <select name="jurusan_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas" required>
                                 @foreach($jurusans as $j)
                                     <option value="{{ $j->id }}">{{ $j->kode }} - {{ $j->nama }}</option>
                                 @endforeach
@@ -218,7 +220,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Wali Kelas</label>
-                        <select name="guru_id" class="form-select form-select-solid">
+                        <select name="guru_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas">
                             <option value="">-- Pilih Wali Kelas (Opsional) --</option>
                             @foreach($gurus as $g)
                                 <option value="{{ $g->id }}">{{ $g->nama }}</option>
@@ -227,7 +229,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status</label>
-                        <select name="status" class="form-select form-select-solid" required>
+                        <select name="status" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas" required>
                             <option value="aktif">Aktif</option>
                             <option value="nonaktif">Nonaktif</option>
                         </select>
@@ -278,10 +280,10 @@ $(document).ready(function() {
         var form = $('#modal_ubah_kelas form');
         form.attr('action', '{{ url("absensi/master/kelas/data") }}/' + id);
         form.find('input[name="nama"]').val(nama);
-        form.find('select[name="jurusan_id"]').val(jurusan);
-        form.find('select[name="guru_id"]').val(guru);
-        form.find('select[name="tingkat"]').val(tingkat);
-        form.find('select[name="status"]').val(status);
+        form.find('select[name="jurusan_id"]').val(jurusan).trigger('change');
+        form.find('select[name="guru_id"]').val(guru).trigger('change');
+        form.find('select[name="tingkat"]').val(tingkat).trigger('change');
+        form.find('select[name="status"]').val(status).trigger('change');
         
         $('#modal_ubah_kelas').modal('show');
     });

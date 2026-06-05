@@ -132,7 +132,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Guru Pengampu</label>
-                        <select name="guru_id" class="form-select form-select-solid">
+                        <select name="guru_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_mapel">
                             <option value="">-- Pilih Guru (Opsional) --</option>
                             @foreach($gurus as $guru)
                                 <option value="{{ $guru->id }}">{{ $guru->nama }}</option>
@@ -175,7 +175,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Guru Pengampu</label>
-                        <select name="guru_id" class="form-select form-select-solid">
+                        <select name="guru_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_mapel">
                             <option value="">-- Pilih Guru (Opsional) --</option>
                             @foreach($gurus as $guru)
                                 <option value="{{ $guru->id }}">{{ $guru->nama }}</option>
@@ -231,7 +231,7 @@ $(document).ready(function() {
         form.attr('action', '{{ url("absensi/master/mata-pelajaran") }}/' + id);
         form.find('input[name="kode"]').val(kode);
         form.find('input[name="nama"]').val(nama);
-        form.find('select[name="guru_id"]').val(guru);
+        form.find('select[name="guru_id"]').val(guru).trigger('change');
         form.find('input[name="jam_per_minggu"]').val(jam);
         
         $('#modal_ubah_mapel').modal('show');

@@ -263,7 +263,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Semester</label>
-                            <select name="semester_id" class="form-select form-select-solid" required>
+                        <select name="semester_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kehadiran" required>
                                 @foreach ($semesters as $sem)
                                     <option value="{{ $sem->id }}" {{ $activeSemester && $activeSemester->id == $sem->id ? 'selected' : '' }}>
                                         {{ $sem->tahunAjaran->nama ?? '-' }} - {{ ucfirst($sem->jenis) }}
@@ -279,7 +279,7 @@
 
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Kehadiran</label>
-                        <select name="status" class="form-select form-select-solid" required>
+                        <select name="status" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kehadiran" required>
                             <option value="hadir">Hadir</option>
                             <option value="terlambat">Terlambat</option>
                             <option value="sakit">Sakit</option>
@@ -334,7 +334,7 @@
 
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Kehadiran</label>
-                        <select name="status" class="form-select form-select-solid" required>
+                        <select name="status" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kehadiran" required>
                             <option value="hadir">Hadir</option>
                             <option value="terlambat">Terlambat</option>
                             <option value="sakit">Sakit</option>
@@ -402,7 +402,7 @@
             var form = $('#modal_ubah_kehadiran form');
             form.attr('action', '{{ url("absensi/kehadiran") }}/' + id);
             $('#edit_siswa_nama').val(nama);
-            form.find('select[name="status"]').val(status);
+            form.find('select[name="status"]').val(status).trigger('change');
             form.find('input[name="jam_masuk"]').val(masuk);
             form.find('input[name="jam_pulang"]').val(pulang);
             form.find('textarea[name="keterangan"]').val(keterangan);

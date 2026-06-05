@@ -17,16 +17,17 @@ class AturanJamController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama'                   => 'required|string|max:100',
-            'jam_masuk'              => 'required',
-            'toleransi_keterlambatan'=> 'required|integer|min:0',
-            'jam_pulang'             => 'required',
-            'is_aktif'               => 'required|in:0,1',
+            'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'jam_masuk'               => 'required',
+            'toleransi_keterlambatan' => 'required|integer|min:0',
+            'jam_pulang'              => 'required',
+            'is_aktif'                => 'required|in:0,1',
         ], [
-            'nama.required'                   => 'Nama aturan jam wajib diisi.',
-            'jam_masuk.required'              => 'Jam masuk wajib diisi.',
-            'toleransi_keterlambatan.required' => 'Toleransi keterlambatan wajib diisi.',
-            'jam_pulang.required'             => 'Jam pulang wajib diisi.',
+            'hari.required'                    => 'Hari wajib dipilih.',
+            'hari.in'                          => 'Hari tidak valid.',
+            'jam_masuk.required'               => 'Jam masuk wajib diisi.',
+            'toleransi_keterlambatan.required'  => 'Toleransi keterlambatan wajib diisi.',
+            'jam_pulang.required'              => 'Jam pulang wajib diisi.',
         ]);
 
         $isAktif = (bool) $request->is_aktif;
@@ -36,7 +37,7 @@ class AturanJamController extends Controller
         }
 
         AturanJam::create([
-            'nama'                    => $request->nama,
+            'hari'                    => $request->hari,
             'jam_masuk'               => $request->jam_masuk,
             'toleransi_keterlambatan' => $request->toleransi_keterlambatan,
             'jam_pulang'              => $request->jam_pulang,
@@ -50,11 +51,11 @@ class AturanJamController extends Controller
     public function update(Request $request, AturanJam $aturanJam)
     {
         $request->validate([
-            'nama'                   => 'required|string|max:100',
-            'jam_masuk'              => 'required',
-            'toleransi_keterlambatan'=> 'required|integer|min:0',
-            'jam_pulang'             => 'required',
-            'is_aktif'               => 'required|in:0,1',
+            'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'jam_masuk'               => 'required',
+            'toleransi_keterlambatan' => 'required|integer|min:0',
+            'jam_pulang'              => 'required',
+            'is_aktif'                => 'required|in:0,1',
         ]);
 
         $isAktif = (bool) $request->is_aktif;
@@ -66,7 +67,7 @@ class AturanJamController extends Controller
         }
 
         $aturanJam->update([
-            'nama'                    => $request->nama,
+            'hari'                    => $request->hari,
             'jam_masuk'               => $request->jam_masuk,
             'toleransi_keterlambatan' => $request->toleransi_keterlambatan,
             'jam_pulang'              => $request->jam_pulang,

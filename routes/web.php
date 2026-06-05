@@ -55,6 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('absensi/master/semester/{semester}', [\App\Http\Controllers\Absensi\SemesterController::class, 'destroy'])->name('semester.destroy');
     
     Route::resource('absensi/master/jurusan', \App\Http\Controllers\Absensi\JurusanController::class)->names('jurusan');
+    Route::get('absensi/master/guru/download-template', [\App\Http\Controllers\Absensi\GuruController::class, 'downloadTemplate'])->name('guru.download-template');
+    Route::post('absensi/master/guru/import', [\App\Http\Controllers\Absensi\GuruController::class, 'import'])->name('guru.import');
     Route::resource('absensi/master/guru', \App\Http\Controllers\Absensi\GuruController::class)->names('guru');
     Route::resource('absensi/master/kelas/data', \App\Http\Controllers\Absensi\KelasController::class)->names('kelas')->parameters(['data' => 'kelas']);
     Route::get('absensi/master/siswa/download-template', [\App\Http\Controllers\Absensi\SiswaController::class, 'downloadTemplate'])->name('siswa.download-template');

@@ -71,7 +71,7 @@
             <div class="card-header border-0 pt-6">
                 <div class="card-title"><h3 class="fw-bolder">Riwayat Kehadiran</h3></div>
                 <div class="card-toolbar">
-                    <select class="form-select form-select-solid form-select-sm fw-bolder w-200px" data-control="select2" data-hide-search="true">
+                    <select class="form-select form-select-solid form-select-sm fw-bolder w-200px" data-control="select2">
                         <option>2025/2026 - Genap</option>
                         <option>2025/2026 - Ganjil</option>
                     </select>

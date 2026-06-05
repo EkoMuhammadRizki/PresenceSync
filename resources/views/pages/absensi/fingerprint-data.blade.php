@@ -154,7 +154,7 @@
                         <div class="col-md-4 fv-row"><label class="required fw-bold fs-6 mb-2">Port</label><input type="number" class="form-control form-control-solid" value="4370" /></div>
                     </div>
                     <div class="fv-row mb-7"><label class="fw-bold fs-6 mb-2">Token API</label><input type="text" class="form-control form-control-solid" placeholder="Token otentikasi API" /></div>
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_fp" data-hide-search="true"><option value="online">Online</option><option value="offline">Offline</option></select></div>
+                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_fp"><option value="online">Online</option><option value="offline">Offline</option></select></div>
                     <div class="text-center pt-5"><button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
                 </form>
             </div>
@@ -178,7 +178,7 @@
                         <div class="col-md-4 fv-row"><label class="required fw-bold fs-6 mb-2">Port</label><input type="number" class="form-control form-control-solid" value="4370" /></div>
                     </div>
                     <div class="fv-row mb-7"><label class="fw-bold fs-6 mb-2">Token API</label><input type="text" class="form-control form-control-solid" value="a1b2c3d4e5f6..." /></div>
-                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_fp" data-hide-search="true"><option value="online" selected>Online</option><option value="offline">Offline</option></select></div>
+                    <div class="fv-row mb-7"><label class="required fw-bold fs-6 mb-2">Status</label><select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_fp"><option value="online" selected>Online</option><option value="offline">Offline</option></select></div>
                     <div class="text-center pt-5"><button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>
                 </form>
             </div>

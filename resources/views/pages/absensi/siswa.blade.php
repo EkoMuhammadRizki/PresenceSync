@@ -62,14 +62,20 @@
             </div>
         </div>
         <div class="card-toolbar">
-            <button type="button" class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#modal_import_siswa">
-                {!! theme()->getSvgIcon("icons/duotune/arrows/arr078.svg", "svg-icon-2") !!}
-                Import Data Siswa
-            </button>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_siswa">
-                {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
-                Tambah Siswa
-            </button>
+            <div class="d-flex gap-2">
+                <a href="{{ route('siswa.download-template') }}" class="btn btn-light-success">
+                    {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
+                    Download Template
+                </a>
+                <button type="button" class="btn btn-light-primary" data-bs-toggle="modal" data-bs-target="#modal_import_siswa">
+                    {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
+                    Import Excel
+                </button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_siswa">
+                    {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
+                    Tambah Siswa
+                </button>
+            </div>
         </div>
     </div>
     <div class="card-body py-4">
@@ -171,31 +177,42 @@
             <div class="modal-body mx-5 my-7">
                 <form class="form" action="{{ route('siswa.store') }}" method="POST">
                     @csrf
+                    
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Username / Akun User</label>
+                        <select name="user_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required>
+                            <option value="">-- Pilih Username / Email --</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->email }} ({{ $user->name }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
-                        <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Siswa" required />
+                        <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Siswa" required disabled />
                     </div>
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="fw-bold fs-6 mb-2">NISN</label>
-                            <input type="text" name="nisn" class="form-control form-control-solid" placeholder="10 Digit NISN" />
+                            <input type="text" name="nisn" class="form-control form-control-solid" placeholder="10 Digit NISN" disabled />
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="fw-bold fs-6 mb-2">NIS</label>
-                            <input type="text" name="nis" class="form-control form-control-solid" placeholder="Nomor Induk Siswa" />
+                            <input type="text" name="nis" class="form-control form-control-solid" placeholder="Nomor Induk Siswa" disabled />
                         </div>
                     </div>
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Jenis Kelamin</label>
-                            <select name="jenis_kelamin" class="form-select form-select-solid" required>
+                            <select name="jenis_kelamin" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required disabled>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Kelas</label>
-                            <select name="kelas_id" class="form-select form-select-solid" required>
+                            <select name="kelas_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required disabled>
                                 <option value="">-- Pilih Kelas --</option>
                                 @foreach($kelas as $k)
                                     <option value="{{ $k->id }}">{{ $k->tingkat }} {{ $k->nama }} ({{ $k->jurusan->kode }})</option>
@@ -205,15 +222,15 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Tanggal Lahir</label>
-                        <input type="date" name="tanggal_lahir" class="form-control form-control-solid" />
+                        <input type="date" name="tanggal_lahir" class="form-control form-control-solid" disabled />
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
-                        <textarea name="alamat" class="form-control form-control-solid" rows="3" placeholder="Alamat lengkap siswa"></textarea>
+                        <textarea name="alamat" class="form-control form-control-solid" rows="3" placeholder="Alamat lengkap siswa" disabled></textarea>
                     </div>
                     <div class="text-center pt-5">
                         <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Simpan & Buat Akun</button>
+                        <button type="submit" class="btn btn-primary" disabled>Simpan</button>
                     </div>
                 </form>
             </div>
@@ -291,14 +308,14 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Jenis Kelamin</label>
-                            <select name="jenis_kelamin" class="form-select form-select-solid" required>
+                            <select name="jenis_kelamin" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_siswa" required>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Kelas</label>
-                            <select name="kelas_id" class="form-select form-select-solid" required>
+                            <select name="kelas_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_siswa" required>
                                 <option value="">-- Pilih Kelas --</option>
                                 @foreach($kelas as $k)
                                     <option value="{{ $k->id }}">{{ $k->tingkat }} {{ $k->nama }} ({{ $k->jurusan->kode }})</option>
@@ -353,6 +370,43 @@ $(document).ready(function() {
         }
     });
 
+    // Toggle form inputs in modal_tambah_siswa based on user_id selection
+    function toggleTambahSiswaFormFields() {
+        var userId = $('#modal_tambah_siswa select[name="user_id"]').val();
+        var formFields = $('#modal_tambah_siswa').find('input, select, textarea, button[type="submit"]').not('[name="_token"]').not('[name="user_id"]');
+        
+        if (userId) {
+            formFields.removeAttr('disabled');
+            // Re-enable select2 fields
+            $('#modal_tambah_siswa select[name="jenis_kelamin"]').prop('disabled', false);
+            $('#modal_tambah_siswa select[name="kelas_id"]').prop('disabled', false);
+        } else {
+            formFields.attr('disabled', 'disabled');
+            // Disable select2 fields
+            $('#modal_tambah_siswa select[name="jenis_kelamin"]').prop('disabled', true);
+            $('#modal_tambah_siswa select[name="kelas_id"]').prop('disabled', true);
+        }
+    }
+
+    // On change of user_id
+    $('#modal_tambah_siswa select[name="user_id"]').on('change', function() {
+        toggleTambahSiswaFormFields();
+    });
+
+    // When modal is shown
+    $('#modal_tambah_siswa').on('show.bs.modal', function () {
+        // Reset the form
+        var form = $(this).find('form')[0];
+        if (form) form.reset();
+        
+        // Reset select2 fields
+        $(this).find('select[name="user_id"]').val('').trigger('change');
+        $(this).find('select[name="jenis_kelamin"]').val('L').trigger('change');
+        $(this).find('select[name="kelas_id"]').val('').trigger('change');
+        
+        toggleTambahSiswaFormFields();
+    });
+
     // Use event delegation so edit button works on all pages and after searching/sorting
     $(document).on('click', '.btn-edit', function(e) {
         e.preventDefault();
@@ -371,8 +425,8 @@ $(document).ready(function() {
         form.find('input[name="nama"]').val(nama);
         form.find('input[name="nisn"]').val(nisn);
         form.find('input[name="nis"]').val(nis);
-        form.find('select[name="kelas_id"]').val(kelas);
-        form.find('select[name="jenis_kelamin"]').val(jk);
+        form.find('select[name="kelas_id"]').val(kelas).trigger('change');
+        form.find('select[name="jenis_kelamin"]').val(jk).trigger('change');
         form.find('input[name="tanggal_lahir"]').val(lahir);
         form.find('textarea[name="alamat"]').val(alamat);
         form.find('input[name="fingerprint_id"]').val(fingerprint);

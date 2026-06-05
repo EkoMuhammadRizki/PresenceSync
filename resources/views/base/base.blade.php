@@ -60,6 +60,16 @@ License: {{ theme()->getOption('product', 'license') }}
     @endif
 
     <style>
+        /* ─── Status Badge: Lulus (Ungu) ──────────────────────────────────── */
+        .badge-light-purple {
+            color: #7239ea;
+            background-color: #f8f5ff;
+        }
+        [data-bs-theme="dark"] .badge-light-purple {
+            color: #b899f8;
+            background-color: rgba(114, 57, 234, 0.2);
+        }
+
         /* Custom Header Styling with Two Sorting/Filtering Buttons */
         .table th {
             position: relative;
@@ -776,8 +786,8 @@ License: {{ theme()->getOption('product', 'license') }}
         var toolbar = card.find('.card-toolbar');
         if (toolbar.length && toolbar.find('.btn-bulk-delete-global').length === 0) {
             var buttonHtml = `
-                <button type="button" class="btn btn-danger me-3 btn-bulk-delete-global" style="display: none;">
-                    <span class="svg-icon svg-icon-2 m-0 pe-1">
+                <button type="button" class="btn btn-sm btn-danger me-3 btn-bulk-delete-global" style="display: none;">
+                    <span class="svg-icon svg-icon-3 m-0 pe-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                             <path d="M5 9C5 8.44772 5.44772 8 6 8H18C18.5523 8 19 8.44772 19 9V18C19 19.6569 17.6569 21 16 21H8C6.34315 21 5 19.6569 5 18V9Z" fill="currentColor"/>
                             <path opacity="0.5" d="M5 5C5 4.44772 5.44772 4 6 4H18C18.5523 4 19 4.44772 19 5V5C19 5.55228 18.5523 6 18 6H6C5.44772 6 5 5.55228 5 5V5Z" fill="currentColor"/>

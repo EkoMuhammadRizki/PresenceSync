@@ -38,6 +38,21 @@
     </div>
 @endif
 
+@if(session('import_success'))
+    <div class="alert alert-success d-flex align-items-center p-5 mb-10">
+        <span class="svg-icon svg-icon-2hx svg-icon-success me-4">
+            {!! theme()->getSvgIcon("icons/duotune/general/gen048.svg") !!}
+        </span>
+        <div class="d-flex flex-column">
+            <h4 class="mb-1 text-dark">Import Berhasil</h4>
+            <span>
+                Berhasil diimport: <strong>{{ session('import_success')['success_count'] }}</strong> guru.<br>
+                Tidak diimport (sudah ada di database): <strong>{{ session('import_success')['skip_count'] }}</strong> guru.
+            </span>
+        </div>
+    </div>
+@endif
+
 <div class="card mt-2">
     <div class="card-header border-0 pt-6">
         <div class="card-title">
@@ -47,10 +62,20 @@
             </div>
         </div>
         <div class="card-toolbar">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_guru">
-                {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
-                Tambah Guru
-            </button>
+            <div class="d-flex gap-2">
+                <a href="{{ route('guru.download-template') }}" class="btn btn-light-success">
+                    {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
+                    Download Template
+                </a>
+                <button type="button" class="btn btn-light-primary" data-bs-toggle="modal" data-bs-target="#modal_import_guru">
+                    {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
+                    Import Excel
+                </button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_guru">
+                    {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
+                    Tambah Guru
+                </button>
+            </div>
         </div>
     </div>
     <div class="card-body py-4">
@@ -168,6 +193,55 @@
                     <div class="text-center pt-5">
                         <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Import Guru -->
+<div class="modal fade" id="modal_import_guru" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mw-550px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="fw-bolder">Import Data Guru</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body mx-5 my-7">
+                <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed p-6 mb-7">
+                    <span class="svg-icon svg-icon-2tx svg-icon-warning me-4">
+                        {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
+                    </span>
+                    <div class="d-flex flex-stack flex-grow-1">
+                        <div class="fw-bold">
+                            <h4 class="text-gray-800 fw-bolder">Petunjuk Import</h4>
+                            <div class="fs-6 text-gray-600">
+                                <ul class="ps-4 mb-0">
+                                    <li>Gunakan template Excel yang telah disediakan.</li>
+                                    <li>Kolom: <strong>Nama, NIP, Email, No HP, Alamat</strong>.</li>
+                                    <li>Guru dengan NIP atau Email yang sudah ada akan dilewati (tidak digandakan).</li>
+                                    <li>Format file: <strong>.xlsx</strong> atau <strong>.xls</strong>.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <form action="{{ route('guru.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">File Excel</label>
+                        <input type="file" name="file" id="file_import_guru"
+                            class="form-control form-control-solid"
+                            accept=".xlsx,.xls" required />
+                        <div class="form-text text-muted">Format yang diterima: .xlsx, .xls</div>
+                    </div>
+                    <div class="text-center pt-5">
+                        <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
+                            Upload & Import
+                        </button>
                     </div>
                 </form>
             </div>

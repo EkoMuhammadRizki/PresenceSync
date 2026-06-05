@@ -10,7 +10,7 @@ class AturanJam extends Model
     protected $table = 'aturan_jams';
 
     protected $fillable = [
-        'nama',
+        'hari',
         'jam_masuk',
         'toleransi_keterlambatan',
         'jam_pulang',

@@ -56,7 +56,7 @@
                             <input class="form-check-input select-all-checkbox" type="checkbox" />
                         </div>
                     </th>
-                    <th class="min-w-150px">Nama Aturan</th>
+                    <th class="min-w-150px">Hari</th>
                     <th class="min-w-120px">Jam Masuk</th>
                     <th class="min-w-120px">Toleransi (Menit)</th>
                     <th class="min-w-120px">Jam Pulang</th>
@@ -72,7 +72,9 @@
                             <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
                         </div>
                     </td>
-                    <td><strong>{{ $item->nama }}</strong></td>
+                    <td>
+                        <strong>{{ $item->hari ?? '-' }}</strong>
+                    </td>
                     <td>{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}</td>
                     <td>{{ $item->toleransi_keterlambatan }} menit</td>
                     <td>{{ \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') }}</td>
@@ -91,7 +93,7 @@
                             <div class="menu-item px-3">
                                 <a href="#" class="menu-link px-3 btn-edit" 
                                    data-id="{{ $item->id }}"
-                                   data-nama="{{ $item->nama }}"
+                                   data-hari="{{ $item->hari }}"
                                    data-masuk="{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}"
                                    data-toleransi="{{ $item->toleransi_keterlambatan }}"
                                    data-pulang="{{ \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') }}"
@@ -127,8 +129,13 @@
                 <form class="form" action="{{ route('aturan-jam.store') }}" method="POST">
                     @csrf
                     <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Nama Aturan</label>
-                        <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Contoh: Jadwal Normal, Jadwal Ujian" required />
+                        <label class="required fw-bold fs-6 mb-2">Hari</label>
+                        <select name="hari" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jam" required>
+                            <option value="">-- Pilih Hari --</option>
+                            @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $h)
+                                <option value="{{ $h }}">{{ $h }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
@@ -146,7 +153,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
-                        <select name="is_aktif" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jam" data-hide-search="true">
+                        <select name="is_aktif" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jam">
                             <option value="1">Aktif</option>
                             <option value="0">Nonaktif</option>
                         </select>
@@ -174,8 +181,13 @@
                     @csrf
                     @method('PUT')
                     <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Nama Aturan</label>
-                        <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" required />
+                        <label class="required fw-bold fs-6 mb-2">Hari</label>
+                        <select name="hari" class="form-select form-select-solid fw-bolder" id="edit_hari" data-control="select2" data-dropdown-parent="#modal_ubah_jam" required>
+                            <option value="">-- Pilih Hari --</option>
+                            @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $h)
+                                <option value="{{ $h }}">{{ $h }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
@@ -193,7 +205,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
-                        <select name="is_aktif" class="form-select form-select-solid fw-bolder" id="edit_is_aktif">
+                        <select name="is_aktif" class="form-select form-select-solid fw-bolder" id="edit_is_aktif" data-control="select2" data-dropdown-parent="#modal_ubah_jam">
                             <option value="1">Aktif</option>
                             <option value="0">Nonaktif</option>
                         </select>
@@ -231,7 +243,7 @@ $(document).ready(function() {
     $(document).on('click', '.btn-edit', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
-        var nama = $(this).data('nama');
+        var hari = $(this).data('hari');
         var masuk = $(this).data('masuk');
         var toleransi = $(this).data('toleransi');
         var pulang = $(this).data('pulang');
@@ -239,11 +251,11 @@ $(document).ready(function() {
         
         var form = $('#modal_ubah_jam form');
         form.attr('action', '{{ url("absensi/master/aturan-jam") }}/' + id);
-        form.find('input[name="nama"]').val(nama);
+        form.find('select[name="hari"]').val(hari).trigger('change');
         form.find('input[name="jam_masuk"]').val(masuk);
         form.find('input[name="toleransi_keterlambatan"]').val(toleransi);
         form.find('input[name="jam_pulang"]').val(pulang);
-        form.find('select[name="is_aktif"]').val(aktif);
+        form.find('select[name="is_aktif"]').val(aktif).trigger('change');
         
         $('#modal_ubah_jam').modal('show');
     });

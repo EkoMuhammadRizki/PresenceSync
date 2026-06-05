@@ -148,7 +148,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-12 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Semester & Tahun Ajaran</label>
-                            <select name="semester_id" class="form-select form-select-solid fw-bolder" required>
+                            <select name="semester_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jadwal" required>
                                 <option value="">Pilih semester...</option>
                                 @foreach ($semesters as $s)
                                     <option value="{{ $s->id }}">{{ $s->tahunAjaran->nama ?? '-' }} - {{ ucfirst($s->jenis) }} (Aktif)</option>
@@ -159,7 +159,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Kelas</label>
-                            <select name="kelas_id" class="form-select form-select-solid fw-bolder" required>
+                            <select name="kelas_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jadwal" required>
                                 <option value="">Pilih kelas...</option>
                                 @foreach ($kelas as $k)
                                     <option value="{{ $k->id }}">{{ $k->nama }}</option>
@@ -168,7 +168,7 @@
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Mata Pelajaran</label>
-                            <select name="mata_pelajaran_id" class="form-select form-select-solid fw-bolder" required>
+                            <select name="mata_pelajaran_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jadwal" required>
                                 <option value="">Pilih mapel...</option>
                                 @foreach ($mataPelajarans as $mp)
                                     <option value="{{ $mp->id }}">{{ $mp->kode }} - {{ $mp->nama }} ({{ $mp->guru->nama ?? 'No Guru' }})</option>
@@ -179,7 +179,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-4 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Hari</label>
-                            <select name="hari" class="form-select form-select-solid fw-bolder" required>
+                            <select name="hari" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jadwal" required>
                                 <option value="Senin">Senin</option>
                                 <option value="Selasa">Selasa</option>
                                 <option value="Rabu">Rabu</option>
@@ -222,7 +222,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-12 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Semester & Tahun Ajaran</label>
-                            <select name="semester_id" class="form-select form-select-solid fw-bolder" required>
+                            <select name="semester_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_jadwal" required>
                                 @foreach ($semesters as $s)
                                     <option value="{{ $s->id }}">{{ $s->tahunAjaran->nama ?? '-' }} - {{ ucfirst($s->jenis) }}</option>
                                 @endforeach
@@ -232,7 +232,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Kelas</label>
-                            <select name="kelas_id" class="form-select form-select-solid fw-bolder" required>
+                            <select name="kelas_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_jadwal" required>
                                 @foreach ($kelas as $k)
                                     <option value="{{ $k->id }}">{{ $k->nama }}</option>
                                 @endforeach
@@ -240,7 +240,7 @@
                         </div>
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Mata Pelajaran</label>
-                            <select name="mata_pelajaran_id" class="form-select form-select-solid fw-bolder" required>
+                            <select name="mata_pelajaran_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_jadwal" required>
                                 @foreach ($mataPelajarans as $mp)
                                     <option value="{{ $mp->id }}">{{ $mp->kode }} - {{ $mp->nama }} ({{ $mp->guru->nama ?? 'No Guru' }})</option>
                                 @endforeach
@@ -250,7 +250,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-4 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Hari</label>
-                            <select name="hari" class="form-select form-select-solid fw-bolder" required>
+                            <select name="hari" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_jadwal" required>
                                 <option value="Senin">Senin</option>
                                 <option value="Selasa">Selasa</option>
                                 <option value="Rabu">Rabu</option>
@@ -313,10 +313,10 @@ $(document).ready(function() {
         
         var form = $('#modal_ubah_jadwal form');
         form.attr('action', '{{ url("absensi/master/jadwal-pelajaran") }}/' + id);
-        form.find('select[name="semester_id"]').val(semester);
-        form.find('select[name="kelas_id"]').val(kelas);
-        form.find('select[name="mata_pelajaran_id"]').val(mapel);
-        form.find('select[name="hari"]').val(hari);
+        form.find('select[name="semester_id"]').val(semester).trigger('change');
+        form.find('select[name="kelas_id"]').val(kelas).trigger('change');
+        form.find('select[name="mata_pelajaran_id"]').val(mapel).trigger('change');
+        form.find('select[name="hari"]').val(hari).trigger('change');
         form.find('input[name="jam_mulai"]').val(mulai);
         form.find('input[name="jam_selesai"]').val(selesai);
         

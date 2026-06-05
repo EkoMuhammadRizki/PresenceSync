@@ -52,11 +52,13 @@ return array(
                         'path'   => 'absensi/master/guru',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
+                    /*
                     array(
                         'title'  => 'Jurusan',
                         'path'   => 'absensi/master/jurusan',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
+                    */
                     // Kelas (parent with Level_3 sub-menu)
                     array(
                         'title'      => 'Kelas',
@@ -89,11 +91,13 @@ return array(
                         'path'   => 'absensi/master/mata-pelajaran',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
+                    /*
                     array(
                         'title'  => 'Jadwal Pelajaran',
                         'path'   => 'absensi/master/jadwal-pelajaran',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
+                    */
                     array(
                         'title'  => 'Aturan Jam Sekolah',
                         'path'   => 'absensi/master/aturan-jam',

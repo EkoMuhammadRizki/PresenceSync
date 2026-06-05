@@ -45,11 +45,32 @@
             <div class="card-header border-0 pt-6">
                 <div class="card-title"><h3 class="fw-bolder">Tahun Ajaran</h3></div>
                 <div class="card-toolbar">
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_ta">
-                        {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-3") !!} Tambah
-                    </button>
+                    @if($hasAktif)
+                        <button type="button" class="btn btn-sm btn-secondary disabled"
+                            data-bs-toggle="tooltip" data-bs-placement="left"
+                            title="Ubah status tahun ajaran yang Aktif menjadi Selesai terlebih dahulu.">
+                            {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-3") !!} Tambah
+                        </button>
+                    @else
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_ta">
+                            {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-3") !!} Tambah
+                        </button>
+                    @endif
                 </div>
             </div>
+            @if($hasAktif)
+            <div class="px-6 pt-0 pb-4">
+                <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed p-4 align-items-center">
+                    <span class="svg-icon svg-icon-2tx svg-icon-warning me-3 flex-shrink-0">
+                        {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
+                    </span>
+                    <div class="fw-semibold fs-7 text-gray-700">
+                        Masih ada tahun ajaran yang berstatus <strong>Aktif</strong>.
+                        Ubah statusnya menjadi <strong>Selesai</strong> sebelum menambahkan tahun ajaran baru.
+                    </div>
+                </div>
+            </div>
+            @endif
             <div class="card-body py-4">
                 <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_tahun_ajaran" data-bulk-type="tahun-ajaran">
                     <thead>
@@ -81,7 +102,7 @@
                                 @if ($ta->status === 'aktif')
                                     <span class="badge badge-light-success fw-bolder">Aktif</span>
                                 @else
-                                    <span class="badge badge-light-secondary fw-bolder">Selesai</span>
+                                    <span class="badge badge-light-primary fw-bolder">Selesai</span>
                                 @endif
                             </td>
                             <td class="text-end">
@@ -93,8 +114,8 @@
                                         <a href="#" class="menu-link px-3 btn-edit-ta" 
                                            data-id="{{ $ta->id }}"
                                            data-nama="{{ $ta->nama }}"
-                                           data-mulai="{{ $ta->bulan_mulai }}"
-                                           data-selesai="{{ $ta->bulan_selesai }}"
+                                           data-mulai="{{ $ta->bulan_mulai?->format('Y-m-d') }}"
+                                           data-selesai="{{ $ta->bulan_selesai?->format('Y-m-d') }}"
                                            data-status="{{ $ta->status }}">
                                             Ubah
                                         </a>
@@ -161,7 +182,7 @@
                                 @if ($sem->status === 'aktif')
                                     <span class="badge badge-light-success fw-bolder">Aktif</span>
                                 @else
-                                    <span class="badge badge-light-secondary fw-bolder">Selesai</span>
+                                    <span class="badge badge-light-primary fw-bolder">Selesai</span>
                                 @endif
                             </td>
                             <td class="text-end">
@@ -174,8 +195,8 @@
                                            data-id="{{ $sem->id }}"
                                            data-ta="{{ $sem->tahun_ajaran_id }}"
                                            data-jenis="{{ $sem->jenis }}"
-                                           data-mulai="{{ $sem->tanggal_mulai }}"
-                                           data-selesai="{{ $sem->tanggal_selesai }}"
+                                           data-mulai="{{ $sem->tanggal_mulai?->format('Y-m-d') }}"
+                                           data-selesai="{{ $sem->tanggal_selesai?->format('Y-m-d') }}"
                                            data-status="{{ $sem->status }}">
                                             Ubah
                                         </a>
@@ -262,7 +283,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status</label>
-                        <select name="status" class="form-select form-select-solid" required>
+                        <select name="status" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_ta" required>
                             <option value="aktif">Aktif</option>
                             <option value="selesai">Selesai</option>
                         </select>
@@ -290,7 +311,7 @@
                     @csrf
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Tahun Ajaran</label>
-                        <select name="tahun_ajaran_id" class="form-select form-select-solid fw-bolder" required>
+                        <select name="tahun_ajaran_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_semester" required>
                             <option value="">Pilih tahun ajaran...</option>
                             @foreach($tahunAjarans as $ta)
                                 <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
@@ -299,7 +320,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Semester</label>
-                        <select name="jenis" class="form-select form-select-solid fw-bolder" required>
+                        <select name="jenis" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_semester" required>
                             <option value="">Pilih semester...</option>
                             <option value="ganjil">Ganjil</option>
                             <option value="genap">Genap</option>
@@ -317,7 +338,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
-                        <select name="status" class="form-select form-select-solid fw-bolder" required>
+                        <select name="status" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_semester" required>
                             <option value="aktif">Aktif</option>
                             <option value="selesai">Selesai</option>
                         </select>
@@ -346,7 +367,7 @@
                     @method('PUT')
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Tahun Ajaran</label>
-                        <select name="tahun_ajaran_id" class="form-select form-select-solid fw-bolder" required>
+                        <select name="tahun_ajaran_id" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_semester" required>
                             @foreach($tahunAjarans as $ta)
                                 <option value="{{ $ta->id }}">{{ $ta->nama }}</option>
                             @endforeach
@@ -354,7 +375,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Semester</label>
-                        <select name="jenis" class="form-select form-select-solid fw-bolder" required>
+                        <select name="jenis" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_semester" required>
                             <option value="ganjil">Ganjil</option>
                             <option value="genap">Genap</option>
                         </select>
@@ -371,7 +392,7 @@
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
-                        <select name="status" class="form-select form-select-solid fw-bolder" required>
+                        <select name="status" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_semester" required>
                             <option value="aktif">Aktif</option>
                             <option value="selesai">Selesai</option>
                         </select>
@@ -407,6 +428,10 @@ $(document).ready(function() {
         columnDefs:[{orderable:false,targets:[0,6]}] 
     });
 
+    // Inisialisasi Bootstrap Tooltip (untuk tombol Tambah disabled)
+    var tooltipEls = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipEls.forEach(function(el) { new bootstrap.Tooltip(el); });
+
     // Edit Tahun Ajaran
     $('.btn-edit-ta').on('click', function(e) {
         e.preventDefault();
@@ -421,7 +446,7 @@ $(document).ready(function() {
         form.find('input[name="nama"]').val(nama);
         form.find('input[name="bulan_mulai"]').val(mulai);
         form.find('input[name="bulan_selesai"]').val(selesai);
-        form.find('select[name="status"]').val(status);
+        form.find('select[name="status"]').val(status).trigger('change');
         
         $('#modal_ubah_ta').modal('show');
     });
@@ -438,11 +463,11 @@ $(document).ready(function() {
         
         var form = $('#modal_ubah_semester form');
         form.attr('action', '{{ url("absensi/master/semester") }}/' + id);
-        form.find('select[name="tahun_ajaran_id"]').val(ta);
-        form.find('select[name="jenis"]').val(jenis);
+        form.find('select[name="tahun_ajaran_id"]').val(ta).trigger('change');
+        form.find('select[name="jenis"]').val(jenis).trigger('change');
         form.find('input[name="tanggal_mulai"]').val(mulai);
         form.find('input[name="tanggal_selesai"]').val(selesai);
-        form.find('select[name="status"]').val(status);
+        form.find('select[name="status"]').val(status).trigger('change');
         
         $('#modal_ubah_semester').modal('show');
     });

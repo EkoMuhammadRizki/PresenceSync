@@ -13,11 +13,18 @@ class TahunAjaranController extends Controller
     {
         $tahunAjarans = TahunAjaran::withCount('semesters')->latest()->get();
         $semesters    = Semester::with('tahunAjaran')->latest()->get();
-        return view('pages.absensi.tahun-ajaran', compact('tahunAjarans', 'semesters'));
+        $hasAktif     = TahunAjaran::where('status', 'aktif')->exists();
+        return view('pages.absensi.tahun-ajaran', compact('tahunAjarans', 'semesters', 'hasAktif'));
     }
 
     public function store(Request $request)
     {
+        // Cegah penambahan jika masih ada tahun ajaran yang aktif
+        if (TahunAjaran::where('status', 'aktif')->exists()) {
+            return redirect()->route('tahun-ajaran.index')
+                ->with('error', 'Tidak dapat menambahkan tahun ajaran baru. Ubah status tahun ajaran yang aktif menjadi "Selesai" terlebih dahulu.');
+        }
+
         $request->validate([
             'nama'          => 'required|string|max:20|unique:tahun_ajarans,nama',
             'bulan_mulai'   => 'required|date',
