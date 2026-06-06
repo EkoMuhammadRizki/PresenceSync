@@ -205,7 +205,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Jenis Kelamin</label>
-                            <select name="jenis_kelamin" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required disabled>
+                            <select name="jenis_kelamin" class="form-select form-select-solid" required disabled>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
@@ -308,7 +308,7 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="required fw-bold fs-6 mb-2">Jenis Kelamin</label>
-                            <select name="jenis_kelamin" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_siswa" required>
+                            <select name="jenis_kelamin" class="form-select form-select-solid" required>
                                 <option value="L">Laki-laki</option>
                                 <option value="P">Perempuan</option>
                             </select>
@@ -375,17 +375,21 @@ $(document).ready(function() {
         var userId = $('#modal_tambah_siswa select[name="user_id"]').val();
         var formFields = $('#modal_tambah_siswa').find('input, select, textarea, button[type="submit"]').not('[name="_token"]').not('[name="user_id"]');
         
+        var $kelasSelect = $('#modal_tambah_siswa select[name="kelas_id"]');
+        if ($kelasSelect.data('select2')) {
+            $kelasSelect.select2('destroy');
+        }
+
         if (userId) {
             formFields.removeAttr('disabled');
-            // Re-enable select2 fields
-            $('#modal_tambah_siswa select[name="jenis_kelamin"]').prop('disabled', false);
-            $('#modal_tambah_siswa select[name="kelas_id"]').prop('disabled', false);
         } else {
             formFields.attr('disabled', 'disabled');
-            // Disable select2 fields
-            $('#modal_tambah_siswa select[name="jenis_kelamin"]').prop('disabled', true);
-            $('#modal_tambah_siswa select[name="kelas_id"]').prop('disabled', true);
         }
+
+        $kelasSelect.select2({
+            dir: document.body.getAttribute('direction') || 'ltr',
+            dropdownParent: $('#modal_tambah_siswa')
+        });
     }
 
     // On change of user_id
