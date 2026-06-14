@@ -79,9 +79,11 @@ if (args.indexOf('dark_mode') !== -1) {
 
 // Build custom 3rd party plugins
 (glob.sync(`resources/assets/core/plugins/custom/**/*.js`) || []).forEach(file => {
+    file = file.replace(/[\\\/]+/g, '/');
     mix.js(file, `public/${demo}/${file.replace(`resources/assets/core/`, '').replace('.js', '.bundle.js')}`);
 });
 (glob.sync(`resources/assets/core/plugins/custom/**/*.scss`) || []).forEach(file => {
+    file = file.replace(/[\\\/]+/g, '/');
     mix.sass(file, `public/${demo}/${file.replace(`resources/assets/core/`, '').replace('.scss', '.bundle.css')}`);
 });
 
@@ -94,6 +96,7 @@ if (args.indexOf('dark_mode') !== -1) {
 var extendedFiles = [];
 // Extend custom js files for laravel
 (glob.sync('resources/assets/extended/js/**/*.js') || []).forEach(file => {
+    file = file.replace(/[\\\/]+/g, '/');
     var output = `public/${demo}/${file.replace('resources/assets/extended/', '')}`;
     mix.js(file, output);
     extendedFiles.push(output);
@@ -101,12 +104,14 @@ var extendedFiles = [];
 
 // Metronic js pages (single page use)
 (glob.sync('resources/assets/core/js/custom/**/*.js') || []).forEach(file => {
+    file = file.replace(/[\\\/]+/g, '/');
     var output = `public/${demo}/${file.replace('resources/assets/core/', '')}`;
     if (extendedFiles.indexOf(output) === -1) {
         mix.js(file, output);
     }
 });
 (glob.sync(`resources/assets/${assetSourceDemo}/js/custom/**/*.js`) || []).forEach(file => {
+    file = file.replace(/[\\\/]+/g, '/');
     var output = `public/${demo}/${file.replace(`resources/assets/${assetSourceDemo}/`, '')}`;
     if (extendedFiles.indexOf(output) === -1) {
         mix.js(file, output);
