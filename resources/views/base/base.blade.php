@@ -739,6 +739,44 @@ License: {{ theme()->getOption('product', 'license') }}
         showFlashMessages();
     });
 
+    // ─── Global: Intercept Logout ─────────────────────────────────────────
+    $(document).on('click', 'a[href*="logout"], [data-action*="logout"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var url = $(this).attr('href') || $(this).data('action');
+        if (url === '#' || url === 'javascript:;') {
+            url = '/logout'; // fallback default logout route
+        }
+
+        Swal.fire({
+            title: 'Apakah anda yakin ingin keluar?',
+            text: "Anda akan keluar dari sesi aplikasi ini.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Keluar!',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            customClass: {
+                confirmButton: 'btn btn-danger fw-bold px-6',
+                cancelButton: 'btn btn-light fw-bold px-6 me-3'
+            },
+            buttonsStyling: false
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                // Submit logout form via POST
+                var form = $('<form method="POST" style="display:none">'
+                    + '<input name="_token" value="' + $('meta[name=csrf-token]').attr('content') + '">'
+                    + '</form>');
+                form.attr('action', url);
+                $('body').append(form);
+                form.submit();
+            }
+        });
+    });
+
     // ─── Global: Checkbox Bulk Delete Toggle ───────────────────────────────
     
     // Select all checkboxes toggle

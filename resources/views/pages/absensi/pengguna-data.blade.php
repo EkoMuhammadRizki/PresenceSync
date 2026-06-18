@@ -76,7 +76,7 @@
                     <td>guru.budi</td>
                     <td>budi@sekolah.sch.id</td>
                     <td>Guru</td>
-                    <td data-order="3"><span class="badge badge-light-info fw-bolder">Wali Kelas</span></td>
+                    <td data-order="3"><span class="badge badge-light-info fw-bolder">Guru</span></td>
                     <td>14 Mei 2026, 14:15</td>
                     <td><span class="badge badge-light-success fw-bolder">Aktif</span></td>
                     <td class="text-end">
@@ -128,7 +128,7 @@
                     <td>guru.siti</td>
                     <td>siti@sekolah.sch.id</td>
                     <td>Guru</td>
-                    <td data-order="4"><span class="badge badge-light-info fw-bolder">Guru Mapel</span></td>
+                    <td data-order="4"><span class="badge badge-light-info fw-bolder">Guru</span></td>
                     <td>12 Mei 2026, 11:20</td>
                     <td><span class="badge badge-light-success fw-bolder">Aktif</span></td>
                     <td class="text-end">
@@ -259,7 +259,6 @@
                                 <option value="">Pilih jenis...</option>
                                 <option value="admin">Admin</option>
                                 <option value="guru">Guru</option>
-                                <option value="siswa">Siswa</option>
                                 <option value="orang_tua">Orang Tua</option>
                             </select>
                         </div>
@@ -269,9 +268,6 @@
                                 <option value="">Pilih peran...</option>
                                 <option value="admin">Admin</option>
                                 <option value="kesiswaan">Kesiswaan</option>
-                                <option value="wali_kelas">Wali Kelas</option>
-                                <option value="guru_mapel">Guru Mapel</option>
-                                <option value="siswa">Siswa</option>
                                 <option value="orang_tua">Orang Tua</option>
                             </select>
                         </div>
@@ -322,7 +318,6 @@
                             <select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_pengguna" data-placeholder="Pilih jenis...">
                                 <option value="admin" selected>Admin</option>
                                 <option value="guru">Guru</option>
-                                <option value="siswa">Siswa</option>
                                 <option value="orang_tua">Orang Tua</option>
                             </select>
                         </div>
@@ -331,9 +326,6 @@
                             <select class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_pengguna" data-placeholder="Pilih peran...">
                                 <option value="admin" selected>Admin</option>
                                 <option value="kesiswaan">Kesiswaan</option>
-                                <option value="wali_kelas">Wali Kelas</option>
-                                <option value="guru_mapel">Guru Mapel</option>
-                                <option value="siswa">Siswa</option>
                                 <option value="orang_tua">Orang Tua</option>
                             </select>
                         </div>

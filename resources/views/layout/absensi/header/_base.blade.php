@@ -49,7 +49,18 @@
 		<div class="d-flex align-items-stretch justify-content-between flex-lg-grow-1">
 			<!--begin::Page Title & Date-->
             <div class="d-flex flex-column justify-content-center ms-5">
-                <h1 class="text-dark fw-bolder fs-3 mb-0">Dashboard Admin</h1>
+                @php
+                    $user = auth()->user();
+                    $roleName = 'Admin';
+                    if ($user) {
+                        if (\App\Models\Siswa::where('user_id', $user->id)->exists()) {
+                            $roleName = 'Siswa';
+                        } elseif (\App\Models\Guru::where('user_id', $user->id)->exists()) {
+                            $roleName = 'Guru';
+                        }
+                    }
+                @endphp
+                <h1 class="text-dark fw-bolder fs-3 mb-0">Dashboard {{ $roleName }}</h1>
                 <span class="text-gray-400 fs-7 fw-bold">{{ $tanggalStr }}</span>
             </div>
 			<!--end::Page Title & Date-->

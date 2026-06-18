@@ -38,31 +38,55 @@ test('import students from excel works', function () {
     // Create a temporary Excel file
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setCellValue('A1', 'Nama');
-    $sheet->setCellValue('B1', 'NISN');
-    $sheet->setCellValue('C1', 'NIS');
-    $sheet->setCellValue('D1', 'Kelas');
-    $sheet->setCellValue('E1', 'Jenis Kelamin (L/P)');
-    $sheet->setCellValue('F1', 'Tanggal Lahir (YYYY-MM-DD)');
-    $sheet->setCellValue('G1', 'Alamat');
+    $sheet->setCellValue('A1', 'email');
+    $sheet->setCellValue('B1', 'password');
+    $sheet->setCellValue('C1', 'kata_sandi');
+    $sheet->setCellValue('D1', 'jenis_pengguna');
+    $sheet->setCellValue('E1', 'nis');
+    $sheet->setCellValue('F1', 'nama');
+    $sheet->setCellValue('G1', 'id_fingerprint');
+    $sheet->setCellValue('H1', 'jenis_kelamin');
+    $sheet->setCellValue('I1', 'tempat_lahir');
+    $sheet->setCellValue('J1', 'tanggal_lahir');
+    $sheet->setCellValue('K1', 'alamat');
+    $sheet->setCellValue('L1', 'no_hp');
+    $sheet->setCellValue('M1', 'no_hp_orang_tua');
+    $sheet->setCellValue('N1', 'status');
+    $sheet->setCellValue('O1', 'kelas');
 
     // Row 2: new student
-    $sheet->setCellValue('A2', 'Test Student');
-    $sheet->setCellValue('B2', '1234567890');
-    $sheet->setCellValue('C2', '98765');
-    $sheet->setCellValue('D2', 'X-1');
-    $sheet->setCellValue('E2', 'L');
-    $sheet->setCellValue('F2', '2009-08-15');
-    $sheet->setCellValue('G2', 'Test Address');
+    $sheet->setCellValue('A2', 'test.student@siswa.presencesync.sch.id');
+    $sheet->setCellValue('B2', 'password123');
+    $sheet->setCellValue('C2', 'password123');
+    $sheet->setCellValue('D2', 'siswa');
+    $sheet->setCellValue('E2', '98765');
+    $sheet->setCellValue('F2', 'Test Student');
+    $sheet->setCellValue('G2', 'FP002');
+    $sheet->setCellValue('H2', 'L');
+    $sheet->setCellValue('I2', 'Bandung');
+    $sheet->setCellValue('J2', '2009-08-15');
+    $sheet->setCellValue('K2', 'Test Address');
+    $sheet->setCellValue('L2', '081234567890');
+    $sheet->setCellValue('M2', '081298765432');
+    $sheet->setCellValue('N2', 'aktif');
+    $sheet->setCellValue('O2', 'X-1');
 
     // Row 3: duplicate student (we will insert this to database beforehand)
-    $sheet->setCellValue('A3', 'Duplicate Student');
-    $sheet->setCellValue('B3', '0054321098');
-    $sheet->setCellValue('C3', '10201');
-    $sheet->setCellValue('D3', 'X-1');
-    $sheet->setCellValue('E3', 'P');
-    $sheet->setCellValue('F3', '2009-08-15');
-    $sheet->setCellValue('G3', 'Dup Address');
+    $sheet->setCellValue('A3', 'duplicate.student@siswa.presencesync.sch.id');
+    $sheet->setCellValue('B3', 'password123');
+    $sheet->setCellValue('C3', 'password123');
+    $sheet->setCellValue('D3', 'siswa');
+    $sheet->setCellValue('E3', '10201');
+    $sheet->setCellValue('F3', 'Duplicate Student');
+    $sheet->setCellValue('G3', 'FP001');
+    $sheet->setCellValue('H3', 'P');
+    $sheet->setCellValue('I3', 'Jakarta');
+    $sheet->setCellValue('J3', '2009-08-15');
+    $sheet->setCellValue('K3', 'Dup Address');
+    $sheet->setCellValue('L3', '081234567890');
+    $sheet->setCellValue('M3', '081298765432');
+    $sheet->setCellValue('N3', 'aktif');
+    $sheet->setCellValue('O3', 'X-1');
 
     // Pre-insert the duplicate student to database
     $dupUser = User::factory()->create([
@@ -106,7 +130,6 @@ test('import students from excel works', function () {
     // Verify student is inserted
     $this->assertDatabaseHas('siswas', [
         'nama'          => 'Test Student',
-        'nisn'          => '1234567890',
         'nis'           => '98765',
         'kelas_id'      => $kelas->id,
         'jenis_kelamin' => 'L',

@@ -114,7 +114,7 @@
                                 {{ substr($item->nama, 0, 1) }}
                             </div>
                         </div>
-                        <span>{{ $item->nama }}</span>
+                        <a href="{{ theme()->getPageUrl('absensi/profil-siswa') }}?id={{ $item->id }}" class="text-gray-800 text-hover-primary">{{ $item->nama }}</a>
                     </td>
                     <td>{{ $item->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
                     <td>
@@ -125,7 +125,7 @@
                         @if($item->fingerprint_id)
                             <span class="badge badge-light-success fw-bolder">{{ $item->fingerprint_id }}</span>
                         @else
-                            <span class="badge badge-light-warning fw-bolder">Belum Diregistrasi</span>
+                            <span class="badge badge-light-warning fw-bolder">Belum Registrasi</span>
                         @endif
                     </td>
                     <td>
@@ -136,6 +136,11 @@
                             Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            <div class="menu-item px-3">
+                                <a href="{{ theme()->getPageUrl('absensi/profil-siswa') }}?id={{ $item->id }}" class="menu-link px-3">
+                                    Detail
+                                </a>
+                            </div>
                             <div class="menu-item px-3">
                                 <a href="#" class="menu-link px-3 btn-edit"
                                    data-id="{{ $item->id }}"
@@ -175,62 +180,79 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body mx-5 my-7">
+                <!-- Stepper Nav -->
+                <div class="d-flex justify-content-center mb-9 border-bottom pb-5" id="tambah_siswa_stepper">
+                    <div class="d-flex align-items-center me-10" data-step="1">
+                        <span class="stepper-number bg-primary text-white p-2 rounded-circle fw-bold me-2 d-flex align-items-center justify-content-center" style="width:30px; height:30px;">1</span>
+                        <span class="stepper-title fw-bolder text-gray-800">Akun User</span>
+                    </div>
+                    <div class="d-flex align-items-center" data-step="2">
+                        <span class="stepper-number bg-light-primary text-primary p-2 rounded-circle fw-bold me-2 d-flex align-items-center justify-content-center" style="width:30px; height:30px;">2</span>
+                        <span class="stepper-title fw-bolder text-gray-800">Profil Siswa</span>
+                    </div>
+                </div>
+
                 <form class="form" action="{{ route('siswa.store') }}" method="POST">
                     @csrf
                     
-                    <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Username / Akun User</label>
-                        <select name="user_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required>
-                            <option value="">-- Pilih Username / Email --</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->email }} ({{ $user->name }})</option>
-                            @endforeach
-                        </select>
+                    <!-- Step 1: User Account -->
+                    <div id="tambah_siswa_step_1">
+                        <div class="fv-row mb-7">
+                            <label class="required fw-bold fs-6 mb-2">Email (Gmail)</label>
+                            <input type="email" name="email" class="form-control form-control-solid" placeholder="Contoh: ahmad@gmail.com" required />
+                        </div>
+                        <div class="fv-row mb-7">
+                            <label class="required fw-bold fs-6 mb-2">Password</label>
+                            <input type="password" name="password" class="form-control form-control-solid" placeholder="Masukkan password (minimal 6 karakter)" required />
+                        </div>
                     </div>
 
-                    <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
-                        <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Siswa" required disabled />
-                    </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">NISN</label>
-                            <input type="text" name="nisn" class="form-control form-control-solid" placeholder="10 Digit NISN" disabled />
+                    <!-- Step 2: Student Profile -->
+                    <div id="tambah_siswa_step_2" class="d-none">
+                        <div class="fv-row mb-7">
+                            <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
+                            <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Siswa" required />
                         </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">NIS</label>
-                            <input type="text" name="nis" class="form-control form-control-solid" placeholder="Nomor Induk Siswa" disabled />
+                        <div class="row g-9 mb-7">
+                            <div class="col-md-12 fv-row">
+                                <label class="fw-bold fs-6 mb-2">NIS (Nomor Induk Siswa)</label>
+                                <input type="text" name="nis" class="form-control form-control-solid" placeholder="Nomor Induk Siswa" />
+                            </div>
+                        </div>
+                        <div class="row g-9 mb-7">
+                            <div class="col-md-6 fv-row">
+                                <label class="required fw-bold fs-6 mb-2">Jenis Kelamin</label>
+                                <select name="jenis_kelamin" class="form-select form-select-solid" required>
+                                    <option value="L">Laki-laki</option>
+                                    <option value="P">Perempuan</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 fv-row">
+                                <label class="required fw-bold fs-6 mb-2">Kelas</label>
+                                <select name="kelas_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required>
+                                    <option value="">-- Pilih Kelas --</option>
+                                    @foreach($kelas as $k)
+                                        <option value="{{ $k->id }}">{{ $k->tingkat }} {{ $k->nama }} ({{ $k->jurusan->kode }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="fv-row mb-7">
+                            <label class="fw-bold fs-6 mb-2">Tanggal Lahir</label>
+                            <input type="date" name="tanggal_lahir" class="form-control form-control-solid" />
+                        </div>
+                        <div class="fv-row mb-7">
+                            <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
+                            <textarea name="alamat" class="form-control form-control-solid" rows="3" placeholder="Alamat lengkap siswa"></textarea>
                         </div>
                     </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Jenis Kelamin</label>
-                            <select name="jenis_kelamin" class="form-select form-select-solid" required disabled>
-                                <option value="L">Laki-laki</option>
-                                <option value="P">Perempuan</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Kelas</label>
-                            <select name="kelas_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_siswa" required disabled>
-                                <option value="">-- Pilih Kelas --</option>
-                                @foreach($kelas as $k)
-                                    <option value="{{ $k->id }}">{{ $k->tingkat }} {{ $k->nama }} ({{ $k->jurusan->kode }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="fv-row mb-7">
-                        <label class="fw-bold fs-6 mb-2">Tanggal Lahir</label>
-                        <input type="date" name="tanggal_lahir" class="form-control form-control-solid" disabled />
-                    </div>
-                    <div class="fv-row mb-7">
-                        <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
-                        <textarea name="alamat" class="form-control form-control-solid" rows="3" placeholder="Alamat lengkap siswa" disabled></textarea>
-                    </div>
-                    <div class="text-center pt-5">
-                        <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary" disabled>Simpan</button>
+
+                    <!-- Footer Buttons -->
+                    <div class="text-center pt-10 border-top mt-5">
+                        <button type="button" class="btn btn-light me-3" data-bs-dismiss="modal" id="tambah_siswa_btn_cancel">Batal</button>
+                        <button type="button" class="btn btn-light-primary me-3 d-none" id="tambah_siswa_btn_prev">Sebelumnya</button>
+                        <button type="button" class="btn btn-primary" id="tambah_siswa_btn_next">Berikutnya</button>
+                        <button type="submit" class="btn btn-success d-none" id="tambah_siswa_btn_submit">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -347,6 +369,16 @@
     </div>
 </div>
 
+<style>
+    #kt_table_siswa tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    #kt_table_siswa tbody tr:hover {
+        background-color: #f5f8fa !important;
+    }
+</style>
+
 @section('scripts')
 <script>
 $(document).ready(function() {
@@ -357,6 +389,21 @@ $(document).ready(function() {
         pageLength:5, 
         lengthChange:true, 
         columnDefs:[{orderable:false,targets:[0,7]}] 
+    });
+
+    // Make entire table row clickable (excluding checkbox and actions)
+    $('#kt_table_siswa').on('click', 'tbody tr', function(e) {
+        var targetTd = $(e.target).closest('td');
+        if (targetTd.length === 0) return;
+        var idx = targetTd.index();
+        // Skip first column (checkbox) and last column (actions dropdown)
+        if (idx === 0 || idx === 7 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+            return;
+        }
+        var link = $(this).find('td:nth-child(3) a');
+        if (link.length) {
+            window.location.href = link.attr('href');
+        }
     });
     
     $('#search_siswa').on('keyup', function() { 
@@ -370,31 +417,88 @@ $(document).ready(function() {
         }
     });
 
-    // Toggle form inputs in modal_tambah_siswa based on user_id selection
-    function toggleTambahSiswaFormFields() {
-        var userId = $('#modal_tambah_siswa select[name="user_id"]').val();
-        var formFields = $('#modal_tambah_siswa').find('input, select, textarea, button[type="submit"]').not('[name="_token"]').not('[name="user_id"]');
-        
-        var $kelasSelect = $('#modal_tambah_siswa select[name="kelas_id"]');
-        if ($kelasSelect.data('select2')) {
-            $kelasSelect.select2('destroy');
-        }
+    // Stepper navigation in modal_tambah_siswa
+    var currentStep = 1;
 
-        if (userId) {
-            formFields.removeAttr('disabled');
-        } else {
-            formFields.attr('disabled', 'disabled');
-        }
+    function showStep(step) {
+        if (step === 1) {
+            $('#tambah_siswa_step_1').removeClass('d-none');
+            $('#tambah_siswa_step_2').addClass('d-none');
+            
+            $('#tambah_siswa_btn_cancel').removeClass('d-none');
+            $('#tambah_siswa_btn_prev').addClass('d-none');
+            $('#tambah_siswa_btn_next').removeClass('d-none');
+            $('#tambah_siswa_btn_submit').addClass('d-none');
+            
+            // Stepper nav colors
+            $('#tambah_siswa_stepper [data-step="1"] .stepper-number').removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
+            $('#tambah_siswa_stepper [data-step="2"] .stepper-number').removeClass('bg-primary text-white').addClass('bg-light-primary text-primary');
+        } else if (step === 2) {
+            $('#tambah_siswa_step_1').addClass('d-none');
+            $('#tambah_siswa_step_2').removeClass('d-none');
+            
+            $('#tambah_siswa_btn_cancel').addClass('d-none');
+            $('#tambah_siswa_btn_prev').removeClass('d-none');
+            $('#tambah_siswa_btn_next').addClass('d-none');
+            $('#tambah_siswa_btn_submit').removeClass('d-none');
 
-        $kelasSelect.select2({
-            dir: document.body.getAttribute('direction') || 'ltr',
-            dropdownParent: $('#modal_tambah_siswa')
-        });
+            // Stepper nav colors
+            $('#tambah_siswa_stepper [data-step="1"] .stepper-number').removeClass('bg-primary text-white').addClass('bg-light-primary text-primary');
+            $('#tambah_siswa_stepper [data-step="2"] .stepper-number').removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
+        }
+        currentStep = step;
     }
 
-    // On change of user_id
-    $('#modal_tambah_siswa select[name="user_id"]').on('change', function() {
-        toggleTambahSiswaFormFields();
+    $('#tambah_siswa_btn_next').on('click', function() {
+        // Validate step 1 fields
+        var email = $('#modal_tambah_siswa input[name="email"]').val();
+        var password = $('#modal_tambah_siswa input[name="password"]').val();
+
+        if (!email || !password) {
+            Swal.fire({
+                text: 'Silakan isi email dan password terlebih dahulu.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return;
+        }
+
+        // Basic email format validation
+        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            Swal.fire({
+                text: 'Format email tidak valid.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return;
+        }
+
+        if (password.length < 6) {
+            Swal.fire({
+                text: 'Password minimal harus 6 karakter.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return;
+        }
+
+        showStep(2);
+    });
+
+    $('#tambah_siswa_btn_prev').on('click', function() {
+        showStep(1);
     });
 
     // When modal is shown
@@ -404,11 +508,10 @@ $(document).ready(function() {
         if (form) form.reset();
         
         // Reset select2 fields
-        $(this).find('select[name="user_id"]').val('').trigger('change');
         $(this).find('select[name="jenis_kelamin"]').val('L').trigger('change');
         $(this).find('select[name="kelas_id"]').val('').trigger('change');
         
-        toggleTambahSiswaFormFields();
+        showStep(1);
     });
 
     // Use event delegation so edit button works on all pages and after searching/sorting

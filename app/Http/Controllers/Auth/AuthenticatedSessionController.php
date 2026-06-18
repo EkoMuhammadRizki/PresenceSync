@@ -37,6 +37,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = auth()->user();
+        if (\App\Models\Siswa::where('user_id', $user->id)->exists()) {
+            return redirect()->intended('/absensi/siswa/dashboard');
+        }
+
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

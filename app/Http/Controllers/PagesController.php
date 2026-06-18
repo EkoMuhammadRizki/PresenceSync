@@ -13,6 +13,11 @@ class PagesController extends Controller
      */
     public function index()
     {
+        // Redirect student to student dashboard
+        if (auth()->check() && \App\Models\Siswa::where('user_id', auth()->id())->exists()) {
+            return redirect('/absensi/siswa/dashboard');
+        }
+
         // Get view file location from menu config
         $view = theme()->getOption('page', 'view');
 

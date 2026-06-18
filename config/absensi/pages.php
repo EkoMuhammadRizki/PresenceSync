@@ -50,8 +50,9 @@ return array(
                     'assets' => $dtAssets,
                 ),
                 'pembagian' => array(
-                    'title' => 'Pembagian Kelas',
-                    'view'  => 'absensi/placeholder',
+                    'title'  => 'Pembagian Kelas',
+                    'view'   => 'absensi/pembagian-kelas',
+                    'assets' => $dtAssets,
                 ),
             ),
             'tahun-ajaran' => array(
@@ -109,6 +110,14 @@ return array(
             'title'  => 'Profil Kelas',
             'view'   => 'absensi/profil-kelas',
             'assets' => $dtAssets,
+        ),
+
+        'siswa' => array(
+            'dashboard' => array(
+                'title'  => 'Kehadiran',
+                'view'   => 'absensi/siswa-dashboard',
+                'assets' => $dtAssets,
+            ),
         ),
 
         'laporan' => array(

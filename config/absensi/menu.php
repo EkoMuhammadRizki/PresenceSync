@@ -10,6 +10,13 @@ return array(
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
         ),
 
+        // Kehadiran Siswa (Only visible for Siswa)
+        array(
+            'title' => 'Kehadiran',
+            'path'  => 'absensi/siswa/dashboard',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
+        ),
+
         // Manajemen Pengguna & Peran
         array(
             'title'      => 'Manajemen Pengguna & Peran',

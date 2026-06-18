@@ -24,7 +24,7 @@ class AbsensiSeeder extends Seeder
     {
         // 1. Aturan Jam
         $aturanNormal = AturanJam::create([
-            'nama'                    => 'Jadwal Normal',
+            'hari'                    => 'Senin',
             'jam_masuk'               => '07:00:00',
             'toleransi_keterlambatan' => 15,
             'jam_pulang'              => '15:30:00',
@@ -32,7 +32,7 @@ class AbsensiSeeder extends Seeder
         ]);
 
         $aturanRamadhan = AturanJam::create([
-            'nama'                    => 'Jadwal Ramadhan',
+            'hari'                    => 'Selasa',
             'jam_masuk'               => '07:30:00',
             'toleransi_keterlambatan' => 10,
             'jam_pulang'              => '14:00:00',
@@ -90,37 +90,63 @@ class AbsensiSeeder extends Seeder
         ]);
 
         // 4. Guru
-        $guru1 = Guru::create([
-            'nip'           => '198105122008011003',
-            'nama'          => 'Budi Santoso, S.Pd',
-            'email'         => 'budisantoso@sekolah.sch.id',
-            'no_hp'         => '081234567890',
-            'alamat'        => 'Jl. Sukasenang No. 12',
-        ]);
+        $guruData = [
+            [
+                'nip'    => '198105122008011003',
+                'nama'   => 'Budi Santoso, S.Pd',
+                'email'  => 'budisantoso@sekolah.sch.id',
+                'no_hp'  => '081234567890',
+                'alamat' => 'Jl. Sukasenang No. 12',
+            ],
+            [
+                'nip'    => '198502152010022004',
+                'nama'   => 'Siti Rahayu, M.Pd',
+                'email'  => 'sitirahayu@sekolah.sch.id',
+                'no_hp'  => '081298765432',
+                'alamat' => 'Jl. Pahlawan No. 45',
+            ],
+            [
+                'nip'    => '199008242019031005',
+                'nama'   => 'Hendra Wijaya, S.T',
+                'email'  => 'hendrawijaya@sekolah.sch.id',
+                'no_hp'  => '085732165498',
+                'alamat' => 'Jl. Cihampelas No. 101',
+            ],
+            [
+                'nip'    => '198811022015042006',
+                'nama'   => 'Dewi Lestari, S.Pd',
+                'email'  => 'dewilestari@sekolah.sch.id',
+                'no_hp'  => '081345678912',
+                'alamat' => 'Jl. Dago No. 8',
+            ]
+        ];
 
-        $guru2 = Guru::create([
-            'nip'           => '198502152010022004',
-            'nama'          => 'Siti Rahayu, M.Pd',
-            'email'         => 'sitirahayu@sekolah.sch.id',
-            'no_hp'         => '081298765432',
-            'alamat'        => 'Jl. Pahlawan No. 45',
-        ]);
+        $gurus = [];
+        foreach ($guruData as $index => $data) {
+            $nameParts = explode(' ', trim($data['nama']), 2);
+            $firstName = $nameParts[0];
+            $lastName  = $nameParts[1] ?? $nameParts[0];
 
-        $guru3 = Guru::create([
-            'nip'           => '199008242019031005',
-            'nama'          => 'Hendra Wijaya, S.T',
-            'email'         => 'hendrawijaya@sekolah.sch.id',
-            'no_hp'         => '085732165498',
-            'alamat'        => 'Jl. Cihampelas No. 101',
-        ]);
+            $user = User::create([
+                'first_name' => $firstName,
+                'last_name'  => $lastName,
+                'email'      => $data['email'],
+                'password'   => Hash::make('password123'),
+            ]);
 
-        $guru4 = Guru::create([
-            'nip'           => '198811022015042006',
-            'nama'          => 'Dewi Lestari, S.Pd',
-            'email'         => 'dewilestari@sekolah.sch.id',
-            'no_hp'         => '081345678912',
-            'alamat'        => 'Jl. Dago No. 8',
-        ]);
+            $gurus[] = Guru::create([
+                'user_id' => $user->id,
+                'nip'     => $data['nip'],
+                'nama'    => $data['nama'],
+                'email'   => $data['email'],
+                'no_hp'   => $data['no_hp'],
+                'alamat'  => $data['alamat'],
+            ]);
+        }
+        $guru1 = $gurus[0];
+        $guru2 = $gurus[1];
+        $guru3 = $gurus[2];
+        $guru4 = $gurus[3];
 
         // 5. Kelas
         $kelas1 = Kelas::create([

@@ -17,8 +17,13 @@ class Siswa extends Model
         'nisn',
         'nis',
         'jenis_kelamin',
+        'tempat_lahir',
         'tanggal_lahir',
         'alamat',
+        'no_hp',
+        'no_hp_orang_tua',
+        'nama_orang_tua',
+        'status',
         'fingerprint_id',
     ];
 

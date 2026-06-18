@@ -66,10 +66,10 @@ var KTSigninGeneral = function() {
 
                         // Show message popup. For more info check the plugin's official documentation: https://sweetalert2.github.io/
                         Swal.fire({
-                            text: "You have successfully logged in!",
+                            text: "Anda telah berhasil masuk!",
                             icon: "success",
                             buttonsStyling: false,
-                            confirmButtonText: "Ok, got it!",
+                            confirmButtonText: "Oke, mengerti!",
                             customClass: {
                                 confirmButton: "btn btn-primary"
                             }
@@ -92,7 +92,7 @@ var KTSigninGeneral = function() {
                         text: "Sorry, looks like there are some errors detected, please try again.",
                         icon: "error",
                         buttonsStyling: false,
-                        confirmButtonText: "Ok, got it!",
+                        confirmButtonText: "Oke, mengerti!",
                         customClass: {
                             confirmButton: "btn btn-primary"
                         }

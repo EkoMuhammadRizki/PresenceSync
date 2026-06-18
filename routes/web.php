@@ -14,6 +14,12 @@ Route::get('/', function () {
     if (!auth()->check()) {
         return redirect('/login');
     }
+    
+    // Check if logged in user is a student
+    if (\App\Models\Siswa::where('user_id', auth()->id())->exists()) {
+        return redirect('/absensi/siswa/dashboard');
+    }
+
     return app(PagesController::class)->index();
 });
 
@@ -59,6 +65,9 @@ Route::middleware('auth')->group(function () {
     Route::post('absensi/master/guru/import', [\App\Http\Controllers\Absensi\GuruController::class, 'import'])->name('guru.import');
     Route::resource('absensi/master/guru', \App\Http\Controllers\Absensi\GuruController::class)->names('guru');
     Route::resource('absensi/master/kelas/data', \App\Http\Controllers\Absensi\KelasController::class)->names('kelas')->parameters(['data' => 'kelas']);
+    Route::resource('absensi/master/kelas/pembagian', \App\Http\Controllers\Absensi\PembagianKelasController::class)->names('pembagian-kelas')->parameters(['pembagian' => 'pembagian'])->only(['index', 'show']);
+    Route::post('absensi/master/kelas/pembagian/{kelas}/add-siswa', [\App\Http\Controllers\Absensi\PembagianKelasController::class, 'addSiswa'])->name('pembagian-kelas.add-siswa');
+    Route::delete('absensi/master/kelas/pembagian/{kelas}/remove-siswa/{siswa}', [\App\Http\Controllers\Absensi\PembagianKelasController::class, 'removeSiswa'])->name('pembagian-kelas.remove-siswa');
     Route::get('absensi/master/siswa/download-template', [\App\Http\Controllers\Absensi\SiswaController::class, 'downloadTemplate'])->name('siswa.download-template');
     Route::post('absensi/master/siswa/import', [\App\Http\Controllers\Absensi\SiswaController::class, 'import'])->name('siswa.import');
     Route::post('absensi/bulk-delete', [\App\Http\Controllers\Absensi\BulkDeleteController::class, 'destroy'])->name('bulk-delete');
@@ -68,9 +77,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi/master/aturan-jam', \App\Http\Controllers\Absensi\AturanJamController::class)->names('aturan-jam');
     Route::resource('absensi/kehadiran', \App\Http\Controllers\Absensi\KehadiranController::class)->names('kehadiran');
 
-    Route::get('absensi/profil-siswa', [PagesController::class, 'index']);
-    Route::get('absensi/profil-guru', [PagesController::class, 'index']);
+    Route::get('absensi/profil-siswa', [\App\Http\Controllers\Absensi\ProfilController::class, 'showSiswa'])->name('profil-siswa.show');
+    Route::put('absensi/profil-siswa/{siswa}', [\App\Http\Controllers\Absensi\ProfilController::class, 'updateSiswa'])->name('profil-siswa.update');
+    Route::get('absensi/profil-guru', [\App\Http\Controllers\Absensi\ProfilController::class, 'showGuru'])->name('profil-guru.show');
+    Route::put('absensi/profil-guru/{guru}', [\App\Http\Controllers\Absensi\ProfilController::class, 'updateGuru'])->name('profil-guru.update');
     Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
+
+    // Student Dashboard Routes
+    Route::get('absensi/siswa/dashboard', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'index'])->name('siswa.dashboard');
+    Route::post('absensi/siswa/presensi', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'presensi'])->name('siswa.presensi');
+    Route::post('absensi/siswa/izin', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'izin'])->name('siswa.izin');
 });
 
 

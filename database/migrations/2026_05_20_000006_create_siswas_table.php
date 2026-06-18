@@ -16,8 +16,12 @@ return new class extends Migration
             $table->string('nisn', 20)->nullable()->unique()->comment('Nomor Induk Siswa Nasional');
             $table->string('nis', 20)->nullable()->unique()->comment('Nomor Induk Siswa lokal');
             $table->enum('jenis_kelamin', ['L', 'P']);
+            $table->string('tempat_lahir', 100)->nullable();
             $table->date('tanggal_lahir')->nullable();
             $table->text('alamat')->nullable();
+            $table->string('no_hp', 20)->nullable();
+            $table->string('no_hp_orang_tua', 20)->nullable();
+            $table->string('status', 20)->nullable()->default('aktif');
             $table->string('fingerprint_id', 50)->nullable()->unique()->comment('ID enrollment fingerprint di perangkat');
             $table->timestamps();
         });

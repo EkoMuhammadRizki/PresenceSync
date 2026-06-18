@@ -30,24 +30,45 @@ class SiswaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id'       => 'required|exists:users,id|unique:siswas,user_id',
+            'email'         => 'required|email|max:255|unique:users,email',
+            'password'      => 'required|string|min:6',
             'nama'          => 'required|string|max:150',
-            'nisn'          => 'nullable|string|max:20|unique:siswas,nisn',
             'nis'           => 'nullable|string|max:20|unique:siswas,nis',
             'kelas_id'      => 'nullable|exists:kelas,id',
             'jenis_kelamin' => 'required|in:L,P',
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable|string',
         ], [
-            'user_id.required'       => 'Username/Akun wajib dipilih.',
-            'user_id.unique'         => 'Akun ini sudah dikaitkan dengan siswa lain.',
+            'email.required'         => 'Email wajib diisi.',
+            'email.email'            => 'Format email tidak valid.',
+            'email.unique'           => 'Email sudah digunakan oleh user lain.',
+            'password.required'      => 'Password wajib diisi.',
+            'password.min'           => 'Password minimal harus 6 karakter.',
             'nama.required'          => 'Nama siswa wajib diisi.',
-            'nisn.unique'            => 'NISN sudah terdaftar.',
             'nis.unique'             => 'NIS sudah terdaftar.',
             'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
         ]);
 
-        Siswa::create($request->only('user_id', 'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat'));
+        $nameParts = explode(' ', trim($request->nama), 2);
+        $firstName = $nameParts[0];
+        $lastName  = $nameParts[1] ?? $nameParts[0];
+
+        $user = User::create([
+            'first_name' => $firstName,
+            'last_name'  => $lastName,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+        ]);
+
+        Siswa::create([
+            'user_id'       => $user->id,
+            'nama'          => $request->nama,
+            'nis'           => $request->nis,
+            'kelas_id'      => $request->kelas_id,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'tanggal_lahir' => $request->tanggal_lahir,
+            'alamat'        => $request->alamat,
+        ]);
 
         return redirect()->route('siswa.index')
             ->with('success', 'Siswa berhasil ditambahkan.');
@@ -113,13 +134,21 @@ class SiswaController extends Controller
         
         // Headers
         $headers = [
-            'Nama',
-            'NISN',
-            'NIS',
-            'Kelas',
-            'Jenis Kelamin (L/P)',
-            'Tanggal Lahir (YYYY-MM-DD)',
-            'Alamat'
+            'email',
+            'password',
+            'kata_sandi',
+            'jenis_pengguna',
+            'nis',
+            'nama',
+            'id_fingerprint',
+            'jenis_kelamin',
+            'tempat_lahir',
+            'tanggal_lahir',
+            'alamat',
+            'no_hp',
+            'no_hp_orang_tua',
+            'status',
+            'kelas'
         ];
         
         foreach ($headers as $colIndex => $header) {
@@ -128,15 +157,23 @@ class SiswaController extends Controller
         }
         
         // Sample Row
-        $sheet->setCellValue('A2', 'Ahmad Subarjo');
-        $sheet->setCellValue('B2', '0054321098');
-        $sheet->setCellValue('C2', '10201');
-        $sheet->setCellValue('D2', 'X-1');
-        $sheet->setCellValue('E2', 'L');
-        $sheet->setCellValue('F2', '2009-08-15');
-        $sheet->setCellValue('G2', 'Jl. Sukarno Hatta No. 12');
+        $sheet->setCellValue('A2', 'ahmad.subarjo@siswa.presencesync.sch.id');
+        $sheet->setCellValue('B2', 'password123');
+        $sheet->setCellValue('C2', 'password123');
+        $sheet->setCellValue('D2', 'siswa');
+        $sheet->setCellValue('E2', '10201');
+        $sheet->setCellValue('F2', 'Ahmad Subarjo');
+        $sheet->setCellValue('G2', 'FP001');
+        $sheet->setCellValue('H2', 'L');
+        $sheet->setCellValue('I2', 'Bandung');
+        $sheet->setCellValue('J2', '2009-08-15');
+        $sheet->setCellValue('K2', 'Jl. Sukarno Hatta No. 12');
+        $sheet->setCellValue('L2', '081234567890');
+        $sheet->setCellValue('M2', '081298765432');
+        $sheet->setCellValue('N2', 'aktif');
+        $sheet->setCellValue('O2', 'X-1');
         
-        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
         
         // Sheet 2: Daftar Kelas (untuk referensi)
         $kelasSheet = $spreadsheet->createSheet();
@@ -201,36 +238,29 @@ class SiswaController extends Controller
         $skipCount = 0;
 
         foreach ($rows as $row) {
-            // Skip baris kosong
-            if (empty($row[0])) {
+            // Skip baris jika nama (kolom F / index 5) kosong
+            if (empty($row[5])) {
                 continue;
             }
 
-            $nama = trim($row[0]);
-            $nisn = !empty($row[1]) ? trim($row[1]) : null;
-            $nis = !empty($row[2]) ? trim($row[2]) : null;
-            $kelasName = !empty($row[3]) ? trim($row[3]) : null;
-            $jk = !empty($row[4]) ? strtoupper(trim($row[4])) : 'L';
-            $tanggalLahirRaw = !empty($row[5]) ? trim($row[5]) : null;
-            $alamat = !empty($row[6]) ? trim($row[6]) : null;
+            $inputEmail = !empty($row[0]) ? trim($row[0]) : null;
+            $inputPassword = !empty($row[1]) ? trim($row[1]) : (!empty($row[2]) ? trim($row[2]) : null);
+            $jenisPengguna = !empty($row[3]) ? trim($row[3]) : 'siswa';
+            $nis = !empty($row[4]) ? trim($row[4]) : null;
+            $nama = trim($row[5]);
+            $fingerprintId = !empty($row[6]) ? trim($row[6]) : null;
+            $jk = !empty($row[7]) ? strtoupper(trim($row[7])) : 'L';
+            $tempatLahir = !empty($row[8]) ? trim($row[8]) : null;
+            $tanggalLahirRaw = !empty($row[9]) ? trim($row[9]) : null;
+            $alamat = !empty($row[10]) ? trim($row[10]) : null;
+            $noHp = !empty($row[11]) ? trim($row[11]) : null;
+            $noHpOrangTua = !empty($row[12]) ? trim($row[12]) : null;
+            $status = !empty($row[13]) ? trim($row[13]) : 'aktif';
+            $kelasName = !empty($row[14]) ? trim($row[14]) : null;
 
             // Normalisasi jenis kelamin
             if ($jk !== 'P') {
                 $jk = 'L';
-            }
-
-            // Pengecekan apakah siswa sudah ada di database (berdasarkan NISN atau NIS)
-            $exists = false;
-            if ($nisn) {
-                $exists = Siswa::where('nisn', $nisn)->exists();
-            }
-            if (!$exists && $nis) {
-                $exists = Siswa::where('nis', $nis)->exists();
-            }
-
-            if ($exists) {
-                $skipCount++;
-                continue;
             }
 
             // Cari kelas berdasarkan nama kelas
@@ -240,6 +270,32 @@ class SiswaController extends Controller
                 if ($kelas) {
                     $kelasId = $kelas->id;
                 }
+            }
+
+            // Parse email
+            $email = $inputEmail;
+            if (empty($email)) {
+                $baseEmail = Str::slug($nama, '.') . '@siswa.presencesync.sch.id';
+                $email = $baseEmail;
+                $counter = 1;
+                while (User::where('email', $email)->exists()) {
+                    $email = Str::slug($nama, '.') . $counter . '@siswa.presencesync.sch.id';
+                    $counter++;
+                }
+            }
+
+            // Pengecekan apakah siswa sudah ada di database (berdasarkan email atau NIS)
+            $exists = false;
+            if ($nis) {
+                $exists = Siswa::where('nis', $nis)->exists();
+            }
+            if (!$exists && $email) {
+                $exists = User::where('email', $email)->exists();
+            }
+
+            if ($exists) {
+                $skipCount++;
+                continue;
             }
 
             // Parse tanggal lahir
@@ -260,16 +316,7 @@ class SiswaController extends Controller
                 }
             }
 
-            // Buat akun user secara otomatis untuk siswa
-            $baseEmail = Str::slug($nama, '.') . '@siswa.presencesync.sch.id';
-            $email = $baseEmail;
-            $counter = 1;
-            while (User::where('email', $email)->exists()) {
-                $email = Str::slug($nama, '.') . $counter . '@siswa.presencesync.sch.id';
-                $counter++;
-            }
-
-            $password = $nisn ?? $nis ?? 'password123';
+            $password = $inputPassword ?? $nis ?? 'password123';
 
             $nameParts = explode(' ', trim($nama), 2);
             $firstName = $nameParts[0];
@@ -283,14 +330,18 @@ class SiswaController extends Controller
             ]);
 
             Siswa::create([
-                'user_id'       => $user->id,
-                'kelas_id'      => $kelasId,
-                'nama'          => $nama,
-                'nisn'          => $nisn,
-                'nis'           => $nis,
-                'jenis_kelamin' => $jk,
-                'tanggal_lahir' => $tanggalLahir,
-                'alamat'        => $alamat,
+                'user_id'         => $user->id,
+                'kelas_id'        => $kelasId,
+                'nama'            => $nama,
+                'nis'             => $nis,
+                'jenis_kelamin'   => $jk,
+                'tempat_lahir'    => $tempatLahir,
+                'tanggal_lahir'   => $tanggalLahir,
+                'alamat'          => $alamat,
+                'no_hp'           => $noHp,
+                'no_hp_orang_tua' => $noHpOrangTua,
+                'status'          => $status,
+                'fingerprint_id'  => $fingerprintId,
             ]);
 
             $successCount++;

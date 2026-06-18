@@ -46,9 +46,15 @@
             </div>
             <!--end::Wrapper-->
 
-            <!--begin::Input-->
-            <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="off" value="demo" required/>
-            <!--end::Input-->
+            <!--begin::Input wrapper-->
+            <div class="position-relative mb-3" data-kt-password-meter="true">
+                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="off" value="demo" required/>
+                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                    <i class="bi bi-eye-slash fs-2"></i>
+                    <i class="bi bi-eye fs-2 d-none"></i>
+                </span>
+            </div>
+            <!--end::Input wrapper-->
         </div>
         <!--end::Input group-->
 
@@ -84,8 +90,7 @@
                 return setTimeout(initLoginHandler, 50);
             }
 
-            // Sembunyikan spinner saat pertama load
-            $('#kt_sign_in_submit .indicator-progress').hide();
+            // Keenthemes CSS sudah otomatis menyembunyikan .indicator-progress
 
             $('#kt_sign_in_form').off('submit').on('submit', function (e) {
                 e.preventDefault();
@@ -97,8 +102,7 @@
 
                 // Tampilkan loading spinner
                 $btn.prop('disabled', true);
-                $label.hide();
-                $spin.show();
+                $btn.attr('data-kt-indicator', 'on');
 
                 // Kirim via AJAX dengan header JSON agar Laravel return 422 JSON saat error
                 axios.post($form.attr('action'), {
@@ -113,7 +117,11 @@
                     },
                     maxRedirects: 5,
                 })
-                .then(function () {
+                .then(function (response) {
+                    var redirectUrl = '/absensi/dashboard';
+                    if (response && response.data && response.data.redirect) {
+                        redirectUrl = response.data.redirect;
+                    }
                     // Login berhasil → tampil SwalSuccess lalu redirect
                     Swal.fire({
                         icon             : 'success',
@@ -124,14 +132,13 @@
                         showConfirmButton : false,
                         allowOutsideClick : false,
                     }).then(function () {
-                        window.location.href = '/absensi/dashboard';
+                        window.location.href = redirectUrl;
                     });
                 })
                 .catch(function (error) {
                     // Reset tombol
                     $btn.prop('disabled', false);
-                    $label.show();
-                    $spin.hide();
+                    $btn.removeAttr('data-kt-indicator');
 
                     var errorMsg = 'Terjadi kesalahan. Silakan coba lagi.';
 

@@ -111,7 +111,7 @@
                                 {{ substr($item->nama, 0, 1) }}
                             </div>
                         </div>
-                        <span>{{ $item->nama }}</span>
+                        <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="text-gray-800 text-hover-primary">{{ $item->nama }}</a>
                     </td>
                     <td>{{ $item->email ?? '-' }}</td>
                     <td>{{ $item->no_hp ?? '-' }}</td>
@@ -130,6 +130,11 @@
                             Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            <div class="menu-item px-3">
+                                <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="menu-link px-3">
+                                    Detail
+                                </a>
+                            </div>
                             <div class="menu-item px-3">
                                 <a href="#" class="menu-link px-3 btn-edit"
                                    data-id="{{ $item->id }}"
@@ -166,33 +171,59 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body mx-5 my-7">
+                <!-- Stepper Nav -->
+                <div class="d-flex justify-content-center mb-9 border-bottom pb-5" id="tambah_guru_stepper">
+                    <div class="d-flex align-items-center me-10" data-step="1">
+                        <span class="stepper-number bg-primary text-white p-2 rounded-circle fw-bold me-2 d-flex align-items-center justify-content-center" style="width:30px; height:30px;">1</span>
+                        <span class="stepper-title fw-bolder text-gray-800">Akun User</span>
+                    </div>
+                    <div class="d-flex align-items-center" data-step="2">
+                        <span class="stepper-number bg-light-primary text-primary p-2 rounded-circle fw-bold me-2 d-flex align-items-center justify-content-center" style="width:30px; height:30px;">2</span>
+                        <span class="stepper-title fw-bolder text-gray-800">Profil Guru</span>
+                    </div>
+                </div>
+
                 <form class="form" action="{{ route('guru.store') }}" method="POST">
                     @csrf
-                    <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
-                        <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Beserta Gelar" required />
+
+                    <!-- Step 1: User Account -->
+                    <div id="tambah_guru_step_1">
+                        <div class="fv-row mb-7">
+                            <label class="required fw-bold fs-6 mb-2">Email (Gmail / Email Resmi)</label>
+                            <input type="email" name="email" class="form-control form-control-solid" placeholder="Contoh: budi.santoso@sekolah.sch.id" required />
+                        </div>
+                        <div class="fv-row mb-7">
+                            <label class="required fw-bold fs-6 mb-2">Password</label>
+                            <input type="password" name="password" class="form-control form-control-solid" placeholder="Masukkan password (minimal 6 karakter)" required />
+                        </div>
                     </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
+
+                    <!-- Step 2: Guru Profile -->
+                    <div id="tambah_guru_step_2" class="d-none">
+                        <div class="fv-row mb-7">
+                            <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
+                            <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Beserta Gelar" required />
+                        </div>
+                        <div class="fv-row mb-7">
                             <label class="fw-bold fs-6 mb-2">NIP</label>
                             <input type="text" name="nip" class="form-control form-control-solid" placeholder="NIP Resmi Guru" />
                         </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">Email</label>
-                            <input type="email" name="email" class="form-control form-control-solid" placeholder="contoh@sekolah.sch.id" />
+                        <div class="fv-row mb-7">
+                            <label class="fw-bold fs-6 mb-2">No. HP (WhatsApp)</label>
+                            <input type="text" name="no_hp" class="form-control form-control-solid" placeholder="Contoh: 081234567890" />
+                        </div>
+                        <div class="fv-row mb-7">
+                            <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
+                            <textarea name="alamat" class="form-control form-control-solid" rows="3" placeholder="Alamat tinggal saat ini"></textarea>
                         </div>
                     </div>
-                    <div class="fv-row mb-7">
-                        <label class="fw-bold fs-6 mb-2">No. HP (WhatsApp)</label>
-                        <input type="text" name="no_hp" class="form-control form-control-solid" placeholder="Contoh: 081234567890" />
-                    </div>
-                    <div class="fv-row mb-7">
-                        <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
-                        <textarea name="alamat" class="form-control form-control-solid" rows="3" placeholder="Alamat tinggal saat ini"></textarea>
-                    </div>
-                    <div class="text-center pt-5">
-                        <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Simpan</button>
+
+                    <!-- Footer Buttons -->
+                    <div class="text-center pt-10 border-top mt-5">
+                        <button type="button" class="btn btn-light me-3" data-bs-dismiss="modal" id="tambah_guru_btn_cancel">Batal</button>
+                        <button type="button" class="btn btn-light-primary me-3 d-none" id="tambah_guru_btn_prev">Sebelumnya</button>
+                        <button type="button" class="btn btn-primary" id="tambah_guru_btn_next">Berikutnya</button>
+                        <button type="submit" class="btn btn-success d-none" id="tambah_guru_btn_submit">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -220,7 +251,7 @@
                                 <ul class="ps-4 mb-0">
                                     <li>Gunakan template Excel yang telah disediakan.</li>
                                     <li>Kolom: <strong>Nama, NIP, Email, No HP, Alamat</strong>.</li>
-                                    <li>Guru dengan NIP atau Email yang sudah ada akan dilewati (tidak digandakan).</li>
+                                    <li>Guru dengan NIP or Email yang sudah ada akan dilewati (tidak digandakan).</li>
                                     <li>Format file: <strong>.xlsx</strong> atau <strong>.xls</strong>.</li>
                                 </ul>
                             </div>
@@ -293,6 +324,16 @@
     </div>
 </div>
 
+<style>
+    #kt_table_guru tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    #kt_table_guru tbody tr:hover {
+        background-color: #f5f8fa !important;
+    }
+</style>
+
 @section('scripts')
 <script>
 $(document).ready(function() {
@@ -304,6 +345,21 @@ $(document).ready(function() {
         lengthChange:true, 
         columnDefs:[{orderable:false,targets:[0,7]}] 
     });
+
+    // Make entire table row clickable (excluding checkbox and actions)
+    $('#kt_table_guru').on('click', 'tbody tr', function(e) {
+        var targetTd = $(e.target).closest('td');
+        if (targetTd.length === 0) return;
+        var idx = targetTd.index();
+        // Skip first column (checkbox) and last column (actions dropdown)
+        if (idx === 0 || idx === 7 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+            return;
+        }
+        var link = $(this).find('td:nth-child(3) a');
+        if (link.length) {
+            window.location.href = link.attr('href');
+        }
+    });
     
     $('#search_guru').on('keyup', function() { 
         table.search(this.value).draw(); 
@@ -314,6 +370,99 @@ $(document).ready(function() {
         if (window.KTMenu) {
             KTMenu.createInstances();
         }
+    });
+
+    // Stepper navigation in modal_tambah_guru
+    var currentStep = 1;
+
+    function showStep(step) {
+        if (step === 1) {
+            $('#tambah_guru_step_1').removeClass('d-none');
+            $('#tambah_guru_step_2').addClass('d-none');
+            
+            $('#tambah_guru_btn_cancel').removeClass('d-none');
+            $('#tambah_guru_btn_prev').addClass('d-none');
+            $('#tambah_guru_btn_next').removeClass('d-none');
+            $('#tambah_guru_btn_submit').addClass('d-none');
+            
+            // Stepper nav colors
+            $('#tambah_guru_stepper [data-step="1"] .stepper-number').removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
+            $('#tambah_guru_stepper [data-step="2"] .stepper-number').removeClass('bg-primary text-white').addClass('bg-light-primary text-primary');
+        } else if (step === 2) {
+            $('#tambah_guru_step_1').addClass('d-none');
+            $('#tambah_guru_step_2').removeClass('d-none');
+            
+            $('#tambah_guru_btn_cancel').addClass('d-none');
+            $('#tambah_guru_btn_prev').removeClass('d-none');
+            $('#tambah_guru_btn_next').addClass('d-none');
+            $('#tambah_guru_btn_submit').removeClass('d-none');
+
+            // Stepper nav colors
+            $('#tambah_guru_stepper [data-step="1"] .stepper-number').removeClass('bg-primary text-white').addClass('bg-light-primary text-primary');
+            $('#tambah_guru_stepper [data-step="2"] .stepper-number').removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
+        }
+        currentStep = step;
+    }
+
+    $('#tambah_guru_btn_next').on('click', function() {
+        // Validate step 1 fields
+        var email = $('#modal_tambah_guru input[name="email"]').val();
+        var password = $('#modal_tambah_guru input[name="password"]').val();
+
+        if (!email || !password) {
+            Swal.fire({
+                text: 'Silakan isi email dan password terlebih dahulu.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return;
+        }
+
+        // Basic email format validation
+        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            Swal.fire({
+                text: 'Format email tidak valid.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return;
+        }
+
+        if (password.length < 6) {
+            Swal.fire({
+                text: 'Password minimal harus 6 karakter.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return;
+        }
+
+        showStep(2);
+    });
+
+    $('#tambah_guru_btn_prev').on('click', function() {
+        showStep(1);
+    });
+
+    // When modal is shown
+    $('#modal_tambah_guru').on('show.bs.modal', function () {
+        // Reset the form
+        var form = $(this).find('form')[0];
+        if (form) form.reset();
+        
+        showStep(1);
     });
 
     // Use event delegation so edit button works on all pages and after searching/sorting
