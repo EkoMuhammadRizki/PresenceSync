@@ -62,7 +62,6 @@
                             <input class="form-check-input select-all-checkbox" type="checkbox" />
                         </div>
                     </th>
-                    <th class="min-w-150px">Jurusan</th>
                     <th class="min-w-120px">Nama Kelas</th>
                     <th class="min-w-80px">Tingkat</th>
                     <th class="min-w-180px">Wali Kelas</th>
@@ -79,7 +78,6 @@
                             <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
                         </div>
                     </td>
-                    <td>{{ $item->jurusan->nama ?? '-' }}</td>
                     <td><strong>{{ $item->nama }}</strong></td>
                     <td>{{ $item->tingkat }}</td>
                     <td>{{ $item->guru->nama ?? 'Belum Ditentukan' }}</td>
@@ -102,7 +100,6 @@
                                 <a href="#" class="menu-link px-3 btn-edit"
                                    data-id="{{ $item->id }}"
                                    data-nama="{{ $item->nama }}"
-                                   data-jurusan="{{ $item->jurusan_id }}"
                                    data-guru="{{ $item->guru_id ?? '' }}"
                                    data-tingkat="{{ $item->tingkat }}"
                                    data-status="{{ $item->status }}">
@@ -140,23 +137,13 @@
                         <label class="required fw-bold fs-6 mb-2">Nama Kelas</label>
                         <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Contoh: X-1, XI-1" required />
                     </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Tingkat</label>
-                            <select name="tingkat" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas" required>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Jurusan</label>
-                            <select name="jurusan_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas" required>
-                                @foreach($jurusans as $j)
-                                    <option value="{{ $j->id }}">{{ $j->kode }} - {{ $j->nama }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Tingkat</label>
+                        <select name="tingkat" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas" required>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Wali Kelas</label>
@@ -200,23 +187,13 @@
                         <label class="required fw-bold fs-6 mb-2">Nama Kelas</label>
                         <input type="text" name="nama" class="form-control form-control-solid mb-3 mb-lg-0" required />
                     </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Tingkat</label>
-                            <select name="tingkat" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas" required>
-                                <option value="10">10</option>
-                                <option value="11">11</option>
-                                <option value="12">12</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Jurusan</label>
-                            <select name="jurusan_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas" required>
-                                @foreach($jurusans as $j)
-                                    <option value="{{ $j->id }}">{{ $j->kode }} - {{ $j->nama }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Tingkat</label>
+                        <select name="tingkat" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas" required>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
                     </div>
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Wali Kelas</label>
@@ -253,7 +230,7 @@ $(document).ready(function() {
         order:[], 
         pageLength:5, 
         lengthChange:true, 
-        columnDefs:[{orderable:false,targets:[0,7]}] 
+        columnDefs:[{orderable:false,targets:[0,6]}] 
     });
     
     $('#search_kelas').on('keyup', function() { 
@@ -272,7 +249,6 @@ $(document).ready(function() {
         e.preventDefault();
         var id = $(this).data('id');
         var nama = $(this).data('nama');
-        var jurusan = $(this).data('jurusan');
         var guru = $(this).data('guru');
         var tingkat = $(this).data('tingkat');
         var status = $(this).data('status');
@@ -280,7 +256,6 @@ $(document).ready(function() {
         var form = $('#modal_ubah_kelas form');
         form.attr('action', '{{ url("absensi/master/kelas/data") }}/' + id);
         form.find('input[name="nama"]').val(nama);
-        form.find('select[name="jurusan_id"]').val(jurusan).trigger('change');
         form.find('select[name="guru_id"]').val(guru).trigger('change');
         form.find('select[name="tingkat"]').val(tingkat).trigger('change');
         form.find('select[name="status"]').val(status).trigger('change');

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Siswa;
 use App\Models\Guru;
-use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\TahunAjaran;
 use App\Models\Semester;
@@ -31,7 +30,6 @@ class BulkDeleteController extends Controller
         $modelClass = match($type) {
             'siswa' => Siswa::class,
             'guru' => Guru::class,
-            'jurusan' => Jurusan::class,
             'kelas' => Kelas::class,
             'tahun-ajaran' => TahunAjaran::class,
             'semester' => Semester::class,

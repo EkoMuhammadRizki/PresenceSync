@@ -18,6 +18,8 @@ class Kehadiran extends Model
         'jam_pulang',
         'status',
         'keterangan',
+        'foto',
+        'koordinat',
     ];
 
     protected $casts = [

@@ -14,8 +14,22 @@ class PagesController extends Controller
     public function index()
     {
         // Redirect student to student dashboard
-        if (auth()->check() && \App\Models\Siswa::where('user_id', auth()->id())->exists()) {
-            return redirect('/absensi/siswa/dashboard');
+        if (auth()->check()) {
+            $user = auth()->user();
+            if (\App\Models\Siswa::where('user_id', $user->id)->exists()) {
+                return redirect('/absensi/siswa/dashboard');
+            }
+            if (request()->is('absensi/dashboard')) {
+                if ($user->hasRole('kesiswaan')) {
+                    return redirect('/absensi/kesiswaan/dashboard');
+                }
+                if ($user->hasRole('orang_tua')) {
+                    return redirect('/absensi/orangtua/dashboard');
+                }
+                if (\App\Models\Guru::where('user_id', $user->id)->exists()) {
+                    return redirect('/absensi/guru/dashboard');
+                }
+            }
         }
 
         // Get view file location from menu config

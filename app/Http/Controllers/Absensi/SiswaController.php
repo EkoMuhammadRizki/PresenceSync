@@ -17,8 +17,8 @@ class SiswaController extends Controller
 {
     public function index()
     {
-        $siswas = Siswa::with(['kelas.jurusan', 'user'])->latest()->get();
-        $kelas  = Kelas::with('jurusan')->where('status', 'aktif')->orderBy('tingkat')->get();
+        $siswas = Siswa::with(['kelas', 'user'])->latest()->get();
+        $kelas  = Kelas::where('status', 'aktif')->orderBy('tingkat')->get();
         
         // Dapatkan user yang belum dikaitkan dengan data siswa manapun
         $siswaUserIds = Siswa::pluck('user_id')->filter()->toArray();
@@ -33,7 +33,7 @@ class SiswaController extends Controller
             'email'         => 'required|email|max:255|unique:users,email',
             'password'      => 'required|string|min:6',
             'nama'          => 'required|string|max:150',
-            'nis'           => 'nullable|string|max:20|unique:siswas,nis',
+            'nis'           => 'nullable|regex:/^[0-9]+$/|max:20|unique:siswas,nis',
             'kelas_id'      => 'nullable|exists:kelas,id',
             'jenis_kelamin' => 'required|in:L,P',
             'tanggal_lahir' => 'nullable|date',
@@ -45,6 +45,8 @@ class SiswaController extends Controller
             'password.required'      => 'Password wajib diisi.',
             'password.min'           => 'Password minimal harus 6 karakter.',
             'nama.required'          => 'Nama siswa wajib diisi.',
+            'nis.regex'              => 'NIS hanya boleh berisi angka.',
+            'nis.max'                => 'NIS maksimal 20 digit.',
             'nis.unique'             => 'NIS sudah terdaftar.',
             'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
         ]);
@@ -79,20 +81,20 @@ class SiswaController extends Controller
         $request->validate([
             'nama'          => 'required|string|max:150',
             'nisn'          => 'nullable|string|max:20|unique:siswas,nisn,' . $siswa->id,
-            'nis'           => 'nullable|string|max:20|unique:siswas,nis,' . $siswa->id,
+            'nis'           => 'nullable|regex:/^[0-9]+$/|max:20|unique:siswas,nis,' . $siswa->id,
             'kelas_id'      => 'nullable|exists:kelas,id',
             'jenis_kelamin' => 'required|in:L,P',
             'tanggal_lahir' => 'nullable|date',
             'alamat'        => 'nullable|string',
-            'fingerprint_id'=> 'nullable|string|max:50|unique:siswas,fingerprint_id,' . $siswa->id,
         ], [
             'nisn.unique'           => 'NISN sudah terdaftar.',
             'nis.unique'            => 'NIS sudah terdaftar.',
-            'fingerprint_id.unique' => 'ID fingerprint sudah terdaftar pada siswa lain.',
+            'nis.regex'             => 'NIS hanya boleh berisi angka.',
+            'nis.max'               => 'NIS maksimal 20 digit.',
         ]);
 
         $siswa->update($request->only(
-            'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat', 'fingerprint_id'
+            'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat'
         ));
 
         // Update nama user terkait
@@ -156,22 +158,46 @@ class SiswaController extends Controller
             $sheet->setCellValue($colLetter . '1', $header);
         }
         
-        // Sample Row
-        $sheet->setCellValue('A2', 'ahmad.subarjo@siswa.presencesync.sch.id');
-        $sheet->setCellValue('B2', 'password123');
-        $sheet->setCellValue('C2', 'password123');
-        $sheet->setCellValue('D2', 'siswa');
-        $sheet->setCellValue('E2', '10201');
-        $sheet->setCellValue('F2', 'Ahmad Subarjo');
-        $sheet->setCellValue('G2', 'FP001');
-        $sheet->setCellValue('H2', 'L');
-        $sheet->setCellValue('I2', 'Bandung');
-        $sheet->setCellValue('J2', '2009-08-15');
-        $sheet->setCellValue('K2', 'Jl. Sukarno Hatta No. 12');
-        $sheet->setCellValue('L2', '081234567890');
-        $sheet->setCellValue('M2', '081298765432');
-        $sheet->setCellValue('N2', 'aktif');
-        $sheet->setCellValue('O2', 'X-1');
+        // Populate existing students if any, otherwise write a sample row
+        $siswas = Siswa::with(['user', 'kelas'])->orderBy('nama')->get();
+        
+        if ($siswas->isEmpty()) {
+            $sheet->setCellValue('A2', 'ahmad.subarjo@siswa.presencesync.sch.id');
+            $sheet->setCellValue('B2', 'password123');
+            $sheet->setCellValue('C2', 'password123');
+            $sheet->setCellValue('D2', 'siswa');
+            $sheet->setCellValue('E2', '10201');
+            $sheet->setCellValue('F2', 'Ahmad Subarjo');
+            $sheet->setCellValue('G2', 'FP001');
+            $sheet->setCellValue('H2', 'L');
+            $sheet->setCellValue('I2', 'Bandung');
+            $sheet->setCellValue('J2', '2009-08-15');
+            $sheet->setCellValue('K2', 'Jl. Sukarno Hatta No. 12');
+            $sheet->setCellValue('L2', '081234567890');
+            $sheet->setCellValue('M2', '081298765432');
+            $sheet->setCellValue('N2', 'aktif');
+            $sheet->setCellValue('O2', 'X-1');
+        } else {
+            $rowNum = 2;
+            foreach ($siswas as $siswa) {
+                $sheet->setCellValue('A' . $rowNum, $siswa->user->email ?? '');
+                $sheet->setCellValue('B' . $rowNum, 'password123');
+                $sheet->setCellValue('C' . $rowNum, 'password123');
+                $sheet->setCellValue('D' . $rowNum, 'siswa');
+                $sheet->setCellValue('E' . $rowNum, $siswa->nis ?? '');
+                $sheet->setCellValue('F' . $rowNum, $siswa->nama);
+                $sheet->setCellValue('G' . $rowNum, $siswa->fingerprint_id ?? '');
+                $sheet->setCellValue('H' . $rowNum, $siswa->jenis_kelamin);
+                $sheet->setCellValue('I' . $rowNum, $siswa->tempat_lahir ?? '');
+                $sheet->setCellValue('J' . $rowNum, $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '');
+                $sheet->setCellValue('K' . $rowNum, $siswa->alamat ?? '');
+                $sheet->setCellValue('L' . $rowNum, $siswa->no_hp ?? '');
+                $sheet->setCellValue('M' . $rowNum, $siswa->no_hp_orang_tua ?? '');
+                $sheet->setCellValue('N' . $rowNum, $siswa->status ?? 'aktif');
+                $sheet->setCellValue('O' . $rowNum, $siswa->kelas->nama ?? '');
+                $rowNum++;
+            }
+        }
         
         $sheet->getStyle('A1:O1')->getFont()->setBold(true);
         
@@ -196,6 +222,8 @@ class SiswaController extends Controller
                 $currentSheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
             }
         }
+
+        $spreadsheet->setActiveSheetIndex(0);
         
         $response = new StreamedResponse(function () use ($spreadsheet) {
             $writer = new Xlsx($spreadsheet);
@@ -248,7 +276,6 @@ class SiswaController extends Controller
             $jenisPengguna = !empty($row[3]) ? trim($row[3]) : 'siswa';
             $nis = !empty($row[4]) ? trim($row[4]) : null;
             $nama = trim($row[5]);
-            $fingerprintId = !empty($row[6]) ? trim($row[6]) : null;
             $jk = !empty($row[7]) ? strtoupper(trim($row[7])) : 'L';
             $tempatLahir = !empty($row[8]) ? trim($row[8]) : null;
             $tanggalLahirRaw = !empty($row[9]) ? trim($row[9]) : null;
@@ -341,7 +368,6 @@ class SiswaController extends Controller
                 'no_hp'           => $noHp,
                 'no_hp_orang_tua' => $noHpOrangTua,
                 'status'          => $status,
-                'fingerprint_id'  => $fingerprintId,
             ]);
 
             $successCount++;

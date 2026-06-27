@@ -159,14 +159,14 @@
                         @endphp
                         <!--begin:: Avatar -->
                         <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                            <a href="#">
+                            <a href="{{ route('profil-siswa.show', ['id' => $kh->siswa->id, 'back' => 'kehadiran']) }}">
                                 <div class="symbol-label fs-3 bg-light-{{ $bgColor }} text-{{ $bgColor }}">{{ $initial }}</div>
                             </a>
                         </div>
                         <!--end::Avatar-->
                         <!--begin::User details-->
                         <div class="d-flex flex-column">
-                            <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $kh->siswa->nama ?? '-' }}</a>
+                            <a href="{{ route('profil-siswa.show', ['id' => $kh->siswa->id, 'back' => 'kehadiran']) }}" class="text-gray-800 text-hover-primary mb-1">{{ $kh->siswa->nama ?? '-' }}</a>
                             <span>{{ $kh->siswa->user->email ?? ($kh->siswa->nisn ?? '-') }}</span>
                         </div>
                         <!--end::User details-->

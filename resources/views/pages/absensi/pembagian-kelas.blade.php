@@ -55,7 +55,7 @@
                             </div>
                             <div class="d-flex flex-column">
                                 <a href="{{ route('pembagian-kelas.show', $item->id) }}" class="text-gray-800 text-hover-primary fw-bolder">{{ $item->nama }}</a>
-                                <span class="text-muted fs-7">{{ $item->jurusan->nama ?? '-' }} &bull; Tingkat {{ $item->tingkat }}</span>
+                                <span class="text-muted fs-7">Tingkat {{ $item->tingkat }}</span>
                             </div>
                         </div>
                     </td>

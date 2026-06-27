@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\TahunAjaran;
 use App\Models\Semester;
-use App\Models\Jurusan;
 use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\Siswa;
@@ -70,24 +69,7 @@ class AbsensiSeeder extends Seeder
             'status'          => 'aktif',
         ]);
 
-        // 3. Jurusan
-        $jurusanIPA = Jurusan::create([
-            'kode' => 'IPA',
-            'nama' => 'Ilmu Pengetahuan Alam',
-            'deskripsi' => 'Fokus pada ilmu fisika, kimia, biologi, dan matematika.',
-        ]);
-
-        $jurusanIPS = Jurusan::create([
-            'kode' => 'IPS',
-            'nama' => 'Ilmu Pengetahuan Sosial',
-            'deskripsi' => 'Fokus pada sosiologi, geografi, ekonomi, dan sejarah.',
-        ]);
-
-        $jurusanRPL = Jurusan::create([
-            'kode' => 'RPL',
-            'nama' => 'Rekayasa Perangkat Lunak',
-            'deskripsi' => 'Fokus pada pemrograman, pengembangan software, dan database.',
-        ]);
+        // 3. Jurusan (Removed)
 
         // 4. Guru
         $guruData = [
@@ -150,7 +132,6 @@ class AbsensiSeeder extends Seeder
 
         // 5. Kelas
         $kelas1 = Kelas::create([
-            'jurusan_id' => $jurusanIPA->id,
             'guru_id'    => $guru1->id,
             'nama'       => 'X-1',
             'tingkat'    => '10',
@@ -158,7 +139,6 @@ class AbsensiSeeder extends Seeder
         ]);
 
         $kelas2 = Kelas::create([
-            'jurusan_id' => $jurusanIPA->id,
             'guru_id'    => $guru3->id,
             'nama'       => 'XI-1',
             'tingkat'    => '11',
@@ -166,7 +146,6 @@ class AbsensiSeeder extends Seeder
         ]);
 
         $kelas3 = Kelas::create([
-            'jurusan_id' => $jurusanIPS->id,
             'guru_id'    => $guru2->id,
             'nama'       => 'XII-1',
             'tingkat'    => '12',
@@ -299,5 +278,58 @@ class AbsensiSeeder extends Seeder
                 ]);
             }
         }
+
+        // 10. Assign Guru role to existing guru users
+        foreach ($gurus as $guru) {
+            $guru->user->assignRole('guru');
+        }
+
+        // 11. Kesiswaan Account (Guru with kesiswaan role)
+        $kesiswaanUser = User::create([
+            'first_name'        => 'Ratna',
+            'last_name'         => 'Sari, S.Pd',
+            'email'             => 'ratnasari@sekolah.sch.id',
+            'password'          => Hash::make('password123'),
+            'email_verified_at' => now(),
+        ]);
+        $kesiswaanUser->assignRole('kesiswaan');
+
+        Guru::create([
+            'user_id' => $kesiswaanUser->id,
+            'nip'     => '199203172020042007',
+            'nama'    => 'Ratna Sari, S.Pd',
+            'email'   => 'ratnasari@sekolah.sch.id',
+            'no_hp'   => '081256789012',
+            'alamat'  => 'Jl. Merdeka No. 77',
+        ]);
+
+        // 12. Orang Tua Accounts
+        // Orang Tua 1 - linked to Ahmad Subarjo (siswas[0])
+        $orangTua1 = User::create([
+            'first_name'        => 'Subarjo',
+            'last_name'         => 'Hidayat',
+            'email'             => 'orangtua.ahmad@presencesync.sch.id',
+            'password'          => Hash::make('password123'),
+            'email_verified_at' => now(),
+        ]);
+        $orangTua1->assignRole('orang_tua');
+        $siswas[0]->update([
+            'nama_orang_tua'    => 'Subarjo Hidayat',
+            'orang_tua_user_id' => $orangTua1->id,
+        ]);
+
+        // Orang Tua 2 - linked to Erna Lestari (siswas[4])
+        $orangTua2 = User::create([
+            'first_name'        => 'Lestari',
+            'last_name'         => 'Wulandari',
+            'email'             => 'orangtua.erna@presencesync.sch.id',
+            'password'          => Hash::make('password123'),
+            'email_verified_at' => now(),
+        ]);
+        $orangTua2->assignRole('orang_tua');
+        $siswas[4]->update([
+            'nama_orang_tua'    => 'Lestari Wulandari',
+            'orang_tua_user_id' => $orangTua2->id,
+        ]);
     }
 }

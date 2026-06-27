@@ -27,7 +27,6 @@
                     <th class="w-30px">No</th>
                     <th class="min-w-100px">Username</th>
                     <th class="min-w-120px">Nama</th>
-                    <th class="min-w-100px">Jenis Pengguna</th>
                     <th class="min-w-200px">Aktivitas</th>
                     <th class="min-w-80px">Metode</th>
                     <th class="min-w-150px">Waktu</th>
@@ -36,35 +35,30 @@
             <tbody class="text-gray-600 fw-bold">
                 <tr>
                     <td>1</td><td>admin.sekolah</td><td>Administrator</td>
-                    <td><span class="badge badge-light-primary fw-bolder">Admin</span></td>
                     <td>Login ke sistem</td>
                     <td><span class="badge badge-light-success fw-bolder">POST</span></td>
                     <td>15 Mei 2026, 08:30</td>
                 </tr>
                 <tr>
                     <td>2</td><td>guru.budi</td><td>Budi Santoso</td>
-                    <td><span class="badge badge-light-info fw-bolder">Guru</span></td>
                     <td>Melihat data kehadiran kelas X-1</td>
                     <td><span class="badge badge-light-primary fw-bolder">GET</span></td>
                     <td>15 Mei 2026, 09:15</td>
                 </tr>
                 <tr>
                     <td>3</td><td>admin.sekolah</td><td>Administrator</td>
-                    <td><span class="badge badge-light-primary fw-bolder">Admin</span></td>
                     <td>Menambah data siswa baru</td>
                     <td><span class="badge badge-light-success fw-bolder">POST</span></td>
                     <td>15 Mei 2026, 10:00</td>
                 </tr>
                 <tr>
                     <td>4</td><td>guru.siti</td><td>Siti Rahayu</td>
-                    <td><span class="badge badge-light-info fw-bolder">Guru</span></td>
                     <td>Mengubah jadwal pelajaran Matematika</td>
                     <td><span class="badge badge-light-warning fw-bolder">PUT</span></td>
                     <td>15 Mei 2026, 11:30</td>
                 </tr>
                 <tr>
                     <td>5</td><td>siswa.ahmad</td><td>Ahmad Subarjo</td>
-                    <td><span class="badge badge-light-warning fw-bolder">Siswa</span></td>
                     <td>Melakukan presensi masuk (fingerprint)</td>
                     <td><span class="badge badge-light-success fw-bolder">POST</span></td>
                     <td>15 Mei 2026, 06:45</td>
@@ -80,7 +74,7 @@ $(document).ready(function() {
     var table = $('#kt_table_log').DataTable({ 
         dom: '<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', 
         info: true, 
-        order: [[6, 'desc']], 
+        order: [[5, 'desc']], 
         pageLength: 5, 
         lengthChange: true, 
         columnDefs: [{orderable: false, targets: 0}] 
@@ -161,7 +155,7 @@ $(document).ready(function() {
             var minDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0);
             var maxDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59);
             
-            var rowDateStr = data[6]; // Kolom Waktu
+            var rowDateStr = data[5]; // Kolom Waktu
             var rowDate = parseIndonesianDate(rowDateStr);
             
             if (!rowDate) {

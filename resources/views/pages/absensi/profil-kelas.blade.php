@@ -33,8 +33,7 @@
                     <div class="pb-5 fs-6">
                         <div class="fw-bolder mt-5">Tingkat</div>
                         <div class="text-gray-600">Kelas 10</div>
-                        <div class="fw-bolder mt-5">Jurusan</div>
-                        <div class="text-gray-600">Ilmu Pengetahuan Alam</div>
+
                         <div class="fw-bolder mt-5">Wali Kelas</div>
                         <div class="text-gray-600">Budi Santoso, S.Pd</div>
                         <div class="fw-bolder mt-5">Status</div>

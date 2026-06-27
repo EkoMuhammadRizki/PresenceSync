@@ -14,10 +14,27 @@ Route::get('/', function () {
     if (!auth()->check()) {
         return redirect('/login');
     }
-    
+
+    $user = auth()->user();
+
     // Check if logged in user is a student
-    if (\App\Models\Siswa::where('user_id', auth()->id())->exists()) {
+    if (\App\Models\Siswa::where('user_id', $user->id)->exists()) {
         return redirect('/absensi/siswa/dashboard');
+    }
+
+    // Check if logged in user is orang tua
+    if ($user->hasRole('orang_tua')) {
+        return redirect('/absensi/orangtua/dashboard');
+    }
+
+    // Check if logged in user is kesiswaan
+    if ($user->hasRole('kesiswaan')) {
+        return redirect('/absensi/kesiswaan/dashboard');
+    }
+
+    // Check if logged in user is a guru
+    if (\App\Models\Guru::where('user_id', $user->id)->exists()) {
+        return redirect('/absensi/guru/dashboard');
     }
 
     return app(PagesController::class)->index();
@@ -55,12 +72,11 @@ Route::prefix('documentation')->group(function () {
 // Absensi profile pages (not in menu, linked via action buttons)
 Route::middleware('auth')->group(function () {
     // Absensi Modules Resource Routes
+    Route::resource('absensi/pengguna/data', \App\Http\Controllers\Absensi\PenggunaController::class)->names('pengguna')->parameters(['data' => 'pengguna']);
     Route::resource('absensi/master/tahun-ajaran', \App\Http\Controllers\Absensi\TahunAjaranController::class)->names('tahun-ajaran');
     Route::post('absensi/master/semester', [\App\Http\Controllers\Absensi\SemesterController::class, 'store'])->name('semester.store');
     Route::put('absensi/master/semester/{semester}', [\App\Http\Controllers\Absensi\SemesterController::class, 'update'])->name('semester.update');
     Route::delete('absensi/master/semester/{semester}', [\App\Http\Controllers\Absensi\SemesterController::class, 'destroy'])->name('semester.destroy');
-    
-    Route::resource('absensi/master/jurusan', \App\Http\Controllers\Absensi\JurusanController::class)->names('jurusan');
     Route::get('absensi/master/guru/download-template', [\App\Http\Controllers\Absensi\GuruController::class, 'downloadTemplate'])->name('guru.download-template');
     Route::post('absensi/master/guru/import', [\App\Http\Controllers\Absensi\GuruController::class, 'import'])->name('guru.import');
     Route::resource('absensi/master/guru', \App\Http\Controllers\Absensi\GuruController::class)->names('guru');
@@ -77,16 +93,33 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi/master/aturan-jam', \App\Http\Controllers\Absensi\AturanJamController::class)->names('aturan-jam');
     Route::resource('absensi/kehadiran', \App\Http\Controllers\Absensi\KehadiranController::class)->names('kehadiran');
 
-    Route::get('absensi/profil-siswa', [\App\Http\Controllers\Absensi\ProfilController::class, 'showSiswa'])->name('profil-siswa.show');
-    Route::put('absensi/profil-siswa/{siswa}', [\App\Http\Controllers\Absensi\ProfilController::class, 'updateSiswa'])->name('profil-siswa.update');
-    Route::get('absensi/profil-guru', [\App\Http\Controllers\Absensi\ProfilController::class, 'showGuru'])->name('profil-guru.show');
-    Route::put('absensi/profil-guru/{guru}', [\App\Http\Controllers\Absensi\ProfilController::class, 'updateGuru'])->name('profil-guru.update');
+    Route::get('absensi/profil-siswa', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'show'])->name('profil-siswa.show');
+    Route::put('absensi/profil-siswa/{siswa}', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'update'])->name('profil-siswa.update');
+    Route::put('absensi/profil-siswa/password', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'changePassword'])->name('profil-siswa.changePassword');
+    
+    Route::get('absensi/profil-guru', [\App\Http\Controllers\Absensi\GuruProfileController::class, 'show'])->name('profil-guru.show');
+    Route::put('absensi/profil-guru/{guru}', [\App\Http\Controllers\Absensi\GuruProfileController::class, 'update'])->name('profil-guru.update');
+    Route::put('absensi/profil-guru/password', [\App\Http\Controllers\Absensi\GuruProfileController::class, 'changePassword'])->name('profil-guru.changePassword');
+
+    Route::get('absensi/profil-admin', [\App\Http\Controllers\Absensi\AdminProfileController::class, 'show'])->name('profil-admin.show');
+    Route::put('absensi/profil-admin', [\App\Http\Controllers\Absensi\AdminProfileController::class, 'update'])->name('profil-admin.update');
+    Route::put('absensi/profil-admin/password', [\App\Http\Controllers\Absensi\AdminProfileController::class, 'changePassword'])->name('profil-admin.changePassword');
+    
     Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
 
     // Student Dashboard Routes
     Route::get('absensi/siswa/dashboard', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'index'])->name('siswa.dashboard');
     Route::post('absensi/siswa/presensi', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'presensi'])->name('siswa.presensi');
     Route::post('absensi/siswa/izin', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'izin'])->name('siswa.izin');
+
+    // Guru Dashboard Routes
+    Route::get('absensi/guru/dashboard', [\App\Http\Controllers\Absensi\GuruDashboardController::class, 'index'])->name('guru.dashboard');
+
+    // Kesiswaan Dashboard Routes
+    Route::get('absensi/kesiswaan/dashboard', [\App\Http\Controllers\Absensi\KesiswaanDashboardController::class, 'index'])->name('kesiswaan.dashboard');
+
+    // Orang Tua Dashboard Routes
+    Route::get('absensi/orangtua/dashboard', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'index'])->name('orangtua.dashboard');
 });
 
 
@@ -94,7 +127,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     // Account pages
     Route::prefix('account')->group(function () {
-        Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::get('settings', [\App\Http\Controllers\Absensi\ProfileController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::put('settings/email', [SettingsController::class, 'changeEmail'])->name('settings.changeEmail');
         Route::put('settings/password', [SettingsController::class, 'changePassword'])->name('settings.changePassword');

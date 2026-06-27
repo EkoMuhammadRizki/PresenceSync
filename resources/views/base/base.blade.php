@@ -142,6 +142,72 @@ License: {{ theme()->getOption('product', 'license') }}
             opacity: 0;
             pointer-events: none;
         }
+
+        /* ─── Responsive Layout Overrides ────────────────────────────────── */
+        @media (max-width: 767.98px) {
+            .card-header {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                height: auto !important;
+                padding-top: 1.25rem !important;
+                padding-bottom: 1.25rem !important;
+                gap: 1rem !important;
+            }
+            .card-header .card-title {
+                margin: 0 !important;
+                width: 100% !important;
+            }
+            .card-header .card-title .position-relative {
+                width: 100% !important;
+            }
+            .card-header .card-title input {
+                width: 100% !important;
+            }
+            .card-header .card-toolbar {
+                margin: 0 !important;
+                width: 100% !important;
+            }
+            .card-header .card-toolbar .d-flex {
+                width: 100% !important;
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+            }
+            .card-header .card-toolbar .d-flex > * {
+                flex: 1 1 auto !important;
+                justify-content: center !important;
+                margin: 0 !important;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .card-body {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+        }
+
+        /* Hide minimized logo by default in expanded aside mode */
+        .aside .logo-minimize {
+            display: none;
+        }
+
+        /* Shift content layout to prevent sidebar overlap when minimized aside is hovered on desktop */
+        @media (min-width: 992px) {
+            .aside-enabled.aside-fixed[data-kt-aside-minimize=on] .aside:hover ~ .wrapper {
+                padding-left: 265px !important;
+                transition: padding-left 0.3s ease;
+            }
+
+            .aside-enabled.aside-fixed.header-fixed[data-kt-aside-minimize=on] .aside:hover ~ .wrapper .header {
+                left: 265px !important;
+                transition: left 0.3s ease;
+            }
+
+            .aside-enabled.aside-fixed.toolbar-fixed[data-kt-aside-minimize=on] .aside:hover ~ .wrapper .toolbar {
+                left: 265px !important;
+                transition: left 0.3s ease;
+            }
+        }
     </style>
 
     {{-- SweetAlert2 CSS --}}
@@ -464,6 +530,16 @@ License: {{ theme()->getOption('product', 'license') }}
 
         function loadPage(url, pushToHistory) {
             startProgress();
+            
+            // Hide open drawer menus on transition, but preserve the desktop aside menu
+            if (window.KTDrawer && typeof KTDrawer.hideAll === 'function') {
+                var asideEl = document.getElementById('kt_aside');
+                if (window.innerWidth >= 992 && asideEl) {
+                    KTDrawer.hideAll(asideEl);
+                } else {
+                    KTDrawer.hideAll();
+                }
+            }
             
             // Clean up any existing active tooltips or popovers to prevent ghosting
             if (window.bootstrap) {

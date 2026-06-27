@@ -20,7 +20,7 @@ Dengan antarmuka yang responsif, aplikasi ini dapat diakses dengan mulus dari pe
 -   **Integrasi Fingerprint**: Sinkronisasi otomatis dari perangkat sidik jari ke server pusat.
 -   **Dashboard Admin Professional**: UI premium menggunakan Metronic 8 untuk manajemen data yang efisien.
 -   **Monitoring Multi-Level**: Akses khusus untuk Admin, Guru, Siswa, dan (mendatang) Orang Tua.
--   **Manajemen Data Master**: Kelola Siswa, Guru, Jurusan, Kelas, Mata Pelajaran, hingga Jadwal Pelajaran dalam satu tempat.
+-   **Manajemen Data Master**: Kelola Siswa, Guru, Kelas, Mata Pelajaran, hingga Jadwal Pelajaran dalam satu tempat.
 -   **Log Aktivitas & Audit**: Lacak setiap perubahan data untuk keamanan dan transparansi.
 -   **Responsivitas Tinggi**: Desain layout yang adaptif untuk berbagai ukuran layar.
 

@@ -17,9 +17,9 @@ class ProfilController extends Controller
     {
         $id = $request->id;
         if (!$id) {
-            $siswa = Siswa::with(['kelas.jurusan', 'kelas.guru', 'user'])->where('user_id', auth()->id())->first();
+            $siswa = Siswa::with(['kelas.guru', 'user'])->where('user_id', auth()->id())->first();
         } else {
-            $siswa = Siswa::with(['kelas.jurusan', 'kelas.guru', 'user'])->find($id);
+            $siswa = Siswa::with(['kelas.guru', 'user'])->find($id);
         }
 
         if (!$siswa) {
@@ -69,7 +69,6 @@ class ProfilController extends Controller
                 'tempat_lahir'   => 'nullable|string|max:100',
                 'tanggal_lahir'  => 'nullable|date',
                 'status'         => 'nullable|string|max:20',
-                'fingerprint_id' => 'nullable|string|max:50|unique:siswas,fingerprint_id,' . $siswa->id,
             ]);
 
             $messages = array_merge($messages, [
@@ -77,7 +76,6 @@ class ProfilController extends Controller
                 'nisn.unique'            => 'NISN sudah terdaftar.',
                 'nis.unique'             => 'NIS sudah terdaftar.',
                 'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
-                'fingerprint_id.unique'  => 'ID fingerprint sudah terdaftar pada siswa lain.',
             ]);
         }
 
@@ -89,11 +87,11 @@ class ProfilController extends Controller
                 'kelas_id', 'nama_orang_tua', 'no_hp', 'no_hp_orang_tua', 'alamat'
             ));
         } else {
-            // Guru / Kesiswaan / Admin: semua field
+            // Guru / Kesiswaan / Admin: semua field kecuali fingerprint_id
             $siswa->update($request->only(
                 'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tempat_lahir',
                 'tanggal_lahir', 'alamat', 'no_hp', 'no_hp_orang_tua', 'nama_orang_tua',
-                'status', 'fingerprint_id'
+                'status'
             ));
 
             // Update nama user terkait

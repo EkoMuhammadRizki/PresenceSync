@@ -90,4 +90,80 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(UserInfo::class);
     }
+
+    /**
+     * User relation to Siswa model
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function siswa()
+    {
+        return $this->hasOne(Siswa::class, 'user_id');
+    }
+
+    /**
+     * User relation to Guru model
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function guru()
+    {
+        return $this->hasOne(Guru::class, 'user_id');
+    }
+
+    /**
+     * User relation to Siswa model (as Orang Tua)
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function orangTuaSiswas()
+    {
+        return $this->hasMany(Siswa::class, 'orang_tua_user_id');
+    }
+
+    /**
+     * Get dynamic user role
+     *
+     * @return string
+     */
+    public function getRoleAttribute()
+    {
+        if ($this->siswa()->exists()) {
+            return 'Siswa';
+        }
+        if ($this->guru()->exists()) {
+            if ($this->hasRole('kesiswaan')) {
+                return 'Kesiswaan';
+            }
+            return 'Guru';
+        }
+        if ($this->hasRole('admin')) {
+            return 'Admin';
+        }
+        if ($this->hasRole('kesiswaan')) {
+            return 'Kesiswaan';
+        }
+        if ($this->hasRole('orang_tua')) {
+            return 'Orang Tua';
+        }
+
+        // Fallback to Spatie roles if any
+        $firstRole = $this->roles->first();
+        if ($firstRole) {
+            return ucwords(str_replace(['-', '_'], ' ', $firstRole->name));
+        }
+
+        return 'Admin'; // Default fallback
+    }
+
+    /**
+     * Get username derived from email
+     *
+     * @return string
+     */
+    public function getUsernameAttribute()
+    {
+        return strtolower(\Illuminate\Support\Str::before($this->email, '@'));
+    }
 }
+

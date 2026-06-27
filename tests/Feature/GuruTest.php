@@ -113,3 +113,46 @@ test('destroy deletes guru and user', function () {
     $this->assertDatabaseMissing('gurus', ['id' => $guru->id]);
     $this->assertDatabaseMissing('users', ['id' => $user->id]);
 });
+
+test('download template works and lists existing gurus', function () {
+    $admin = User::factory()->create();
+    
+    // Create an existing teacher
+    $user = User::factory()->create([
+        'email' => 'mytestteacher@sekolah.sch.id'
+    ]);
+    Guru::create([
+        'user_id' => $user->id,
+        'nama'    => 'My Test Teacher Name',
+        'nip'     => '998877',
+        'email'   => 'mytestteacher@sekolah.sch.id',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('guru.download-template'));
+
+    $response->assertStatus(200);
+    $response->assertHeader('Content-Disposition', 'attachment; filename="template_import_guru.xlsx"');
+
+    // Parse streamed response content
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'excel_download_test');
+    file_put_contents($tempFile, $content);
+
+    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
+    $sheet = $spreadsheet->getActiveSheet();
+    $rows = $sheet->toArray();
+    unlink($tempFile);
+
+    // Verify teacher info exists in output rows
+    $found = false;
+    foreach ($rows as $row) {
+        if (($row[0] ?? '') === 'mytestteacher@sekolah.sch.id' && ($row[5] ?? '') === 'My Test Teacher Name') {
+            $found = true;
+            break;
+        }
+    }
+    expect($found)->toBeTrue();
+});

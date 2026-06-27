@@ -4,6 +4,11 @@
     <form method="POST" action="{{ theme()->getPageUrl('login') }}" class="form w-100" novalidate="novalidate" id="kt_sign_in_form">
     @csrf
 
+    @php
+        $emailVal = request()->cookie('logged_in_email', 'demo@demo.com');
+        $passwordVal = request()->cookie('logged_in_password', 'demo');
+    @endphp
+
     <!--begin::Heading-->
         <div class="text-center mb-10">
             <!--begin::Title-->
@@ -23,7 +28,7 @@
             <!--end::Label-->
 
             <!--begin::Input-->
-            <input class="form-control form-control-lg form-control-solid" type="email" name="email" autocomplete="off" value="{{ old('email', 'demo@demo.com') }}" required autofocus/>
+            <input class="form-control form-control-lg form-control-solid" type="email" name="email" autocomplete="off" value="{{ old('email', $emailVal) }}" required autofocus/>
             <!--end::Input-->
         </div>
         <!--end::Input group-->
@@ -48,7 +53,7 @@
 
             <!--begin::Input wrapper-->
             <div class="position-relative mb-3" data-kt-password-meter="true">
-                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="off" value="demo" required/>
+                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="off" value="{{ $passwordVal }}" required/>
                 <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
                     <i class="bi bi-eye-slash fs-2"></i>
                     <i class="bi bi-eye fs-2 d-none"></i>

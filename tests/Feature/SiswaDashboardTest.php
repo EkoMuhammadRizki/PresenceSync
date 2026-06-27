@@ -70,7 +70,11 @@ test('student can check in successfully', function () {
         'jenis_kelamin' => 'L',
     ]);
 
-    $response = $this->actingAs($user)->post(route('siswa.presensi'));
+    $response = $this->actingAs($user)->post(route('siswa.presensi'), [
+        'foto_base64' => 'data:image/jpeg;base64,abcdef',
+        'latitude'    => -6.200000,
+        'longitude'   => 106.800000,
+    ]);
     $response->assertRedirect();
     $response->assertSessionHas('success');
 
@@ -99,7 +103,11 @@ test('student cannot double check in on same day', function () {
     ]);
 
     // Try second check in
-    $response = $this->actingAs($user)->post(route('siswa.presensi'));
+    $response = $this->actingAs($user)->post(route('siswa.presensi'), [
+        'foto_base64' => 'data:image/jpeg;base64,abcdef',
+        'latitude'    => -6.200000,
+        'longitude'   => 106.800000,
+    ]);
     $response->assertRedirect();
     $response->assertSessionHas('error');
 });
@@ -114,9 +122,14 @@ test('student can submit excuse successfully', function () {
         'jenis_kelamin' => 'L',
     ]);
 
+    $keteranganLong = str_repeat('A', 500);
+
     $response = $this->actingAs($user)->post(route('siswa.izin'), [
-        'status'     => 'izin',
-        'keterangan' => 'Keperluan keluarga',
+        'status'      => 'izin',
+        'keterangan'  => $keteranganLong,
+        'foto_base64' => 'data:image/jpeg;base64,abcdef',
+        'latitude'    => -6.200000,
+        'longitude'   => 106.800000,
     ]);
 
     $response->assertRedirect();
@@ -125,5 +138,5 @@ test('student can submit excuse successfully', function () {
     $kehadiran = Kehadiran::where('siswa_id', $siswa->id)->first();
     expect($kehadiran)->not->toBeNull();
     expect($kehadiran->status)->toBe('izin');
-    expect($kehadiran->keterangan)->toBe('Keperluan keluarga');
+    expect($kehadiran->keterangan)->toBe($keteranganLong);
 });

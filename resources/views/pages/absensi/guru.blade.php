@@ -54,111 +54,115 @@
 @endif
 
 <div class="card mt-2">
-    <div class="card-header border-0 pt-6">
-        <div class="card-title">
-            <div class="d-flex align-items-center position-relative my-1">
+    <div class="card-header border-0 pt-6 flex-column flex-md-row gap-3">
+        <div class="card-title my-0">
+            <div class="d-flex align-items-center position-relative my-1 w-100 w-md-250px">
                 {!! theme()->getSvgIcon("icons/duotune/general/gen021.svg", "svg-icon-1 position-absolute ms-6") !!}
-                <input type="text" id="search_guru" class="form-control form-control-solid w-250px ps-14" placeholder="Cari guru..." />
+                <input type="text" id="search_guru" class="form-control form-control-solid ps-14 w-100" placeholder="Cari guru..." />
             </div>
         </div>
-        <div class="card-toolbar">
-            <div class="d-flex gap-2">
-                <a href="{{ route('guru.download-template') }}" class="btn btn-light-success">
+        <div class="card-toolbar my-0">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('guru.download-template') }}" class="btn btn-light-success btn-sm btn-md-md">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
-                    Download Template
+                    <span class="d-none d-sm-inline">Download Template</span>
+                    <span class="d-inline d-sm-none">Template</span>
                 </a>
-                <button type="button" class="btn btn-light-primary" data-bs-toggle="modal" data-bs-target="#modal_import_guru">
+                <button type="button" class="btn btn-light-primary btn-sm btn-md-md" data-bs-toggle="modal" data-bs-target="#modal_import_guru">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
-                    Import Excel
+                    <span class="d-none d-sm-inline">Import Excel</span>
+                    <span class="d-inline d-sm-none">Import</span>
                 </button>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tambah_guru">
                     {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
-                    Tambah Guru
+                    Tambah
                 </button>
             </div>
         </div>
     </div>
     <div class="card-body py-4">
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_guru" data-bulk-type="guru">
-            <thead>
-                <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-30px">
-                        <div class="form-check form-check-sm form-check-custom form-check-solid">
-                            <input class="form-check-input select-all-checkbox" type="checkbox" />
-                        </div>
-                    </th>
-                    <th class="min-w-150px">NIP</th>
-                    <th class="min-w-200px">Nama</th>
-                    <th class="min-w-150px">Email</th>
-                    <th class="min-w-120px">No HP</th>
-                    <th class="min-w-150px">Wali Kelas</th>
-                    <th class="min-w-120px">Mata Pelajaran</th>
-                    <th class="text-end min-w-70px">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-600 fw-bold">
-                @foreach ($gurus as $i => $item)
-                <tr>
-                    <td>
-                        <div class="form-check form-check-sm form-check-custom form-check-solid">
-                            <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
-                        </div>
-                    </td>
-                    <td><strong>{{ $item->nip ?? '-' }}</strong></td>
-                    <td class="d-flex align-items-center border-0">
-                        <div class="symbol symbol-circle symbol-40px overflow-hidden me-3">
-                            <div class="symbol-label fs-4 bg-light-primary text-primary fw-bolder">
-                                {{ substr($item->nama, 0, 1) }}
+        <div class="table-responsive">
+            <table class="table align-middle table-row-dashed fs-6 gy-5 w-100" id="kt_table_guru" data-bulk-type="guru" style="width: 100%;">
+                <thead>
+                    <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
+                        <th class="w-30px">
+                            <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                <input class="form-check-input select-all-checkbox" type="checkbox" />
                             </div>
-                        </div>
-                        <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="text-gray-800 text-hover-primary">{{ $item->nama }}</a>
-                    </td>
-                    <td>{{ $item->email ?? '-' }}</td>
-                    <td>{{ $item->no_hp ?? '-' }}</td>
-                    <td>
-                        @if($item->kelas_count > 0)
-                            <span class="badge badge-light-success fw-bolder">{{ $item->kelas_count }} Kelas</span>
-                        @else
-                            <span class="badge badge-light-secondary text-muted fw-bold">Bukan Wali</span>
-                        @endif
-                    </td>
-                    <td>
-                        <span class="badge badge-light-info fw-bolder">{{ $item->mata_pelajarans_count }} Mapel</span>
-                    </td>
-                    <td class="text-end">
-                        <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
-                            Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
-                        </a>
-                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
-                            <div class="menu-item px-3">
-                                <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="menu-link px-3">
-                                    Detail
-                                </a>
+                        </th>
+                        <th class="min-w-150px">NIP</th>
+                        <th class="min-w-200px">Nama</th>
+                        <th class="min-w-150px">Email</th>
+                        <th class="min-w-120px">No HP</th>
+                        <th class="min-w-150px">Wali Kelas</th>
+                        <th class="min-w-120px">Mata Pelajaran</th>
+                        <th class="text-end min-w-70px">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-600 fw-bold">
+                    @foreach ($gurus as $i => $item)
+                    <tr>
+                        <td>
+                            <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
                             </div>
-                            <div class="menu-item px-3">
-                                <a href="#" class="menu-link px-3 btn-edit"
-                                   data-id="{{ $item->id }}"
-                                   data-nama="{{ $item->nama }}"
-                                   data-nip="{{ $item->nip ?? '' }}"
-                                   data-email="{{ $item->email ?? '' }}"
-                                   data-nohp="{{ $item->no_hp ?? '' }}"
-                                   data-alamat="{{ $item->alamat ?? '' }}">
-                                    Ubah
-                                </a>
+                        </td>
+                        <td><strong>{{ $item->nip ?? '-' }}</strong></td>
+                        <td class="d-flex align-items-center border-0">
+                            <div class="symbol symbol-circle symbol-40px overflow-hidden me-3">
+                                <div class="symbol-label fs-4 bg-light-primary text-primary fw-bolder">
+                                    {{ substr($item->nama, 0, 1) }}
+                                </div>
                             </div>
-                            <div class="menu-item px-3">
-                                <form action="{{ route('guru.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus guru ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
-                                </form>
+                            <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="text-gray-800 text-hover-primary">{{ $item->nama }}</a>
+                        </td>
+                        <td>{{ $item->email ?? '-' }}</td>
+                        <td>{{ $item->no_hp ?? '-' }}</td>
+                        <td>
+                            @if($item->kelas_count > 0)
+                                <span class="badge badge-light-success fw-bolder">{{ $item->kelas_count }} Kelas</span>
+                            @else
+                                <span class="badge badge-light-secondary text-muted fw-bold">Bukan Wali</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge badge-light-info fw-bolder">{{ $item->mata_pelajarans_count }} Mapel</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
+                            </a>
+                            <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                                <div class="menu-item px-3">
+                                    <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="menu-link px-3">
+                                        Detail
+                                    </a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3 btn-edit"
+                                       data-id="{{ $item->id }}"
+                                       data-nama="{{ $item->nama }}"
+                                       data-nip="{{ $item->nip ?? '' }}"
+                                       data-email="{{ $item->email ?? '' }}"
+                                       data-nohp="{{ $item->no_hp ?? '' }}"
+                                       data-alamat="{{ $item->alamat ?? '' }}">
+                                        Ubah
+                                    </a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <form action="{{ route('guru.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus guru ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -194,7 +198,12 @@
                         </div>
                         <div class="fv-row mb-7">
                             <label class="required fw-bold fs-6 mb-2">Password</label>
-                            <input type="password" name="password" class="form-control form-control-solid" placeholder="Masukkan password (minimal 6 karakter)" required />
+                            <div class="position-relative">
+                                <input type="password" name="password" class="form-control form-control-solid pe-12" placeholder="Masukkan password (minimal 6 karakter)" required />
+                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-1 toggle-password" style="cursor: pointer;">
+                                    <i class="bi bi-eye-slash fs-2"></i>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -484,6 +493,20 @@ $(document).ready(function() {
         form.find('textarea[name="alamat"]').val(alamat);
         
         $('#modal_ubah_guru').modal('show');
+    });
+
+    // Toggle Password Visibility
+    $(document).on('click', '.toggle-password', function(e) {
+        e.preventDefault();
+        var input = $(this).siblings('input');
+        var icon = $(this).find('i');
+        if (input.attr('type') === 'password') {
+            input.attr('type', 'text');
+            icon.removeClass('bi-eye-slash').addClass('bi-eye');
+        } else {
+            input.attr('type', 'password');
+            icon.removeClass('bi-eye').addClass('bi-eye-slash');
+        }
     });
 });
 </script>

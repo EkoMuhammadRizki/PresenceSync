@@ -10,6 +10,8 @@ class UserInfo extends Model
 {
     use SpatieLogsActivity;
 
+    protected $guarded = [];
+
     /**
      * Prepare proper error handling for url attribute
      *

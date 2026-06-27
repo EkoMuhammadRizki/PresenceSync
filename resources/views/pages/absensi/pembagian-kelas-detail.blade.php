@@ -53,7 +53,7 @@
                     </div>
                     <!--end::Avatar-->
                     <span class="fs-3 text-gray-800 fw-bolder mb-1">{{ $kelas->nama }}</span>
-                    <div class="fs-5 fw-bold text-muted mb-6">{{ $kelas->jurusan->nama ?? '-' }}</div>
+
                     <div class="d-flex flex-wrap flex-center">
                         <div class="border border-dashed rounded min-w-90px py-3 px-4 mx-2 mb-3">
                             <div class="fs-6 fw-bolder text-gray-700">{{ $kelas->siswas_count }}</div>
@@ -68,8 +68,7 @@
                     <div class="pb-5 fs-6">
                         <div class="fw-bolder mt-5">Tingkat</div>
                         <div class="text-gray-600">Kelas {{ $kelas->tingkat }}</div>
-                        <div class="fw-bolder mt-5">Jurusan</div>
-                        <div class="text-gray-600">{{ $kelas->jurusan->nama ?? '-' }}</div>
+
                         <div class="fw-bolder mt-5">Wali Kelas</div>
                         <div class="text-gray-600">{{ $kelas->guru->nama ?? 'Belum Ditentukan' }}</div>
                         <div class="fw-bolder mt-5">Status</div>
@@ -174,9 +173,9 @@
                     @csrf
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Pilih Siswa</label>
-                        <select name="siswa_ids[]" id="select_siswa_kelas" class="form-select form-select-solid" data-dropdown-parent="#modal_tambah_siswa_kelas" multiple="multiple" data-placeholder="Cari dan pilih siswa..." style="width: 100%;">
+                        <select name="siswa_ids[]" id="select_siswa_kelas" class="form-select form-select-solid fw-bolder" data-dropdown-parent="#modal_tambah_siswa_kelas" multiple="multiple">
                             @foreach($availableSiswas as $siswa)
-                                <option value="{{ $siswa->id }}">{{ $siswa->nama }} {{ $siswa->nis ? '('.$siswa->nis.')' : '' }}</option>
+                                <option value="{{ $siswa->id }}">{{ $siswa->nis ?? '-' }} – {{ $siswa->nama }}</option>
                             @endforeach
                         </select>
                         <div class="form-text text-muted">Pilih satu atau lebih siswa yang belum memiliki kelas.</div>
@@ -193,9 +192,74 @@
     </div>
 </div>
 
+@section('styles')
+<style>
+    /* Sembunyikan tag choice di dalam box, biarkan placeholder tetap tampil */
+    #select_siswa_kelas ~ .select2-container .select2-selection__choice {
+        display: none !important;
+    }
+    /* Sembunyikan input inline search (bukan placeholder-nya) */
+    #select_siswa_kelas ~ .select2-container .select2-search--inline .select2-search__field {
+        display: none !important;
+        width: 0 !important;
+    }
+    /* Buat box multiple mirip single */
+    #select_siswa_kelas ~ .select2-container .select2-selection--multiple {
+        height: 42px !important;
+        overflow: hidden;
+    }
+    #select_siswa_kelas ~ .select2-container .select2-selection--multiple .select2-selection__rendered {
+        display: flex !important;
+        align-items: center !important;
+        height: 100% !important;
+        padding: 0 12px !important;
+        flex-wrap: nowrap !important;
+    }
+</style>
+@endsection
+
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Inisialisasi Select2 "Pilih Siswa" – multiple tapi tampil seperti single select
+    $('#select_siswa_kelas').select2({
+        dropdownParent: $('#modal_tambah_siswa_kelas'),
+        placeholder: 'Cari dan pilih siswa...',
+        closeOnSelect: false,
+    });
+
+    // Fungsi update teks di box: sembunyikan tag, tampilkan counter
+    function updateSiswaSelection() {
+        var $select = $('#select_siswa_kelas');
+        var selected = $select.val();
+        var count = selected ? selected.length : 0;
+        var $rendered = $select.next('.select2-container').find('.select2-selection__rendered');
+
+        // Hapus semua tag choice (biarkan search--inline tetap ada untuk placeholder)
+        $rendered.find('.select2-selection__choice').remove();
+
+        // Hapus teks counter lama
+        $rendered.find('.kt-counter-text').remove();
+
+        if (count > 0) {
+            // Tampilkan counter, sembunyikan placeholder
+            $rendered.find('.select2-selection__placeholder').hide();
+            $rendered.prepend('<span class="kt-counter-text">' + count + ' siswa dipilih</span>');
+        } else {
+            // Tampilkan kembali placeholder
+            $rendered.find('.select2-selection__placeholder').show();
+        }
+    }
+
+    $('#select_siswa_kelas').on('select2:select select2:unselect', function() {
+        updateSiswaSelection();
+    });
+
+    // Reset select2 saat modal ditutup
+    $('#modal_tambah_siswa_kelas').on('hidden.bs.modal', function() {
+        $('#select_siswa_kelas').val(null).trigger('change');
+    });
+
     // DataTable for student list
     $('#kt_table_siswa_kelas').DataTable({
         dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>',
@@ -204,14 +268,6 @@ $(document).ready(function() {
         pageLength: 10,
         lengthChange: true,
         columnDefs: [{orderable: false, targets: [0, 4]}]
-    });
-
-    // Initialize Select2 for multi-select
-    $('#select_siswa_kelas').select2({
-        dropdownParent: $('#modal_tambah_siswa_kelas'),
-        placeholder: 'Cari dan pilih siswa...',
-        allowClear: true,
-        width: '100%'
     });
 
     // Form validation with SweetAlert2

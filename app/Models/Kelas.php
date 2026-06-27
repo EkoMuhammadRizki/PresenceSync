@@ -11,17 +11,11 @@ class Kelas extends Model
     protected $table = 'kelas';
 
     protected $fillable = [
-        'jurusan_id',
         'guru_id',
         'nama',
         'tingkat',
         'status',
     ];
-
-    public function jurusan(): BelongsTo
-    {
-        return $this->belongsTo(Jurusan::class);
-    }
 
     public function guru(): BelongsTo
     {

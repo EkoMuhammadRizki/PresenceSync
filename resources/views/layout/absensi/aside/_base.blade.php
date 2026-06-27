@@ -23,7 +23,8 @@
     <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {{--begin::Logo--}}
         <a href="{{ theme()->getPageUrl('') }}">
-            <span class="text-white fs-2 fw-bolder">PresenceSync</span>
+            <span class="text-white fs-2 fw-bolder logo-default">PresenceSync</span>
+            <span class="text-white fs-2 fw-bolder logo-minimize">PS</span>
         </a>
         {{--end::Logo--}}
 

@@ -12,10 +12,12 @@ return array(
         ),
         'css'     => array(
             'plugins/global/plugins.bundle.css',
+            'plugins/custom/datatables/datatables.bundle.css',
             'css/style.bundle.css',
         ),
         'js'      => array(
             'plugins/global/plugins.bundle.js',
+            'plugins/custom/datatables/datatables.bundle.js',
             'js/scripts.bundle.js',
             'js/custom/widgets.js',
         ),

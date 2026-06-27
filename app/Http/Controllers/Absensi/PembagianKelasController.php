@@ -14,7 +14,7 @@ class PembagianKelasController extends Controller
      */
     public function index()
     {
-        $kelas = Kelas::with(['jurusan', 'guru'])
+        $kelas = Kelas::with(['guru'])
             ->withCount('siswas')
             ->where('status', 'aktif')
             ->orderBy('tingkat')
@@ -30,7 +30,7 @@ class PembagianKelasController extends Controller
     public function show(Kelas $pembagian)
     {
         $kelas = $pembagian;
-        $kelas->load(['jurusan', 'guru', 'siswas']);
+        $kelas->load(['guru', 'siswas']);
         $kelas->loadCount('siswas');
 
         // Siswa yang belum punya kelas (untuk modal tambah siswa)

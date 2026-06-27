@@ -3,7 +3,6 @@
 use App\Models\User;
 use App\Models\Kelas;
 use App\Models\Siswa;
-use App\Models\Jurusan;
 use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -11,25 +10,59 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 test('download template works', function () {
     $user = User::factory()->create();
 
+    // Create a Kelas and a student
+    $kelas = Kelas::create([
+        'nama'    => 'X-1',
+        'tingkat' => 10,
+        'status'  => 'aktif',
+    ]);
+    
+    $studentUser = User::factory()->create([
+        'email' => 'myteststudent@siswa.presencesync.sch.id'
+    ]);
+    Siswa::create([
+        'user_id'       => $studentUser->id,
+        'kelas_id'      => $kelas->id,
+        'nama'          => 'My Test Student Name',
+        'nis'           => '99887',
+        'jenis_kelamin' => 'L',
+    ]);
+
     // Access route as authenticated user
     $response = $this->actingAs($user)->get(route('siswa.download-template'));
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Disposition', 'attachment; filename="template_import_siswa.xlsx"');
+
+    // Parse streamed response content
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'excel_download_test');
+    file_put_contents($tempFile, $content);
+
+    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
+    $sheet = $spreadsheet->getActiveSheet();
+    $rows = $sheet->toArray();
+    unlink($tempFile);
+
+    // Verify student info exists in output rows
+    $found = false;
+    foreach ($rows as $row) {
+        if (($row[0] ?? '') === 'myteststudent@siswa.presencesync.sch.id' && ($row[5] ?? '') === 'My Test Student Name') {
+            $found = true;
+            break;
+        }
+    }
+    expect($found)->toBeTrue();
 });
 
 test('import students from excel works', function () {
     $user = User::factory()->create();
 
-    // Create a Jurusan
-    $jurusan = Jurusan::create([
-        'kode' => 'IPA',
-        'nama' => 'Ilmu Pengetahuan Alam',
-    ]);
-
     // Create a Kelas
     $kelas = Kelas::create([
-        'jurusan_id' => $jurusan->id,
         'nama'       => 'X-1',
         'tingkat'    => 10,
         'status'     => 'aktif',

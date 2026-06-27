@@ -14,7 +14,7 @@ class KehadiranController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kehadiran::with(['siswa.user', 'siswa.kelas.jurusan', 'semester']);
+        $query = Kehadiran::with(['siswa.user', 'siswa.kelas', 'semester']);
 
         if ($request->filled('kelas_id')) {
             $query->whereHas('siswa', function ($q) use ($request) {
@@ -30,7 +30,7 @@ class KehadiranController extends Controller
         }
 
         $kehadirans = $query->latest()->get();
-        $kelas = Kelas::with('jurusan')->where('status', 'aktif')->orderBy('tingkat')->get();
+        $kelas = Kelas::where('status', 'aktif')->orderBy('tingkat')->get();
         $siswas = Siswa::with('user')->orderBy('nama')->get();
         
         // Get active semester or latest

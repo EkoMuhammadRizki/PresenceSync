@@ -4,20 +4,12 @@ use App\Models\User;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Guru;
-use App\Models\Jurusan;
 
 test('bulk delete siswa works and deletes associated users', function () {
     $user = User::factory()->create();
 
-    // Create a Jurusan
-    $jurusan = Jurusan::create([
-        'kode' => 'IPA',
-        'nama' => 'Ilmu Pengetahuan Alam',
-    ]);
-
     // Create a Kelas
     $kelas = Kelas::create([
-        'jurusan_id' => $jurusan->id,
         'nama'       => 'X-1',
         'tingkat'    => 10,
         'status'     => 'aktif',

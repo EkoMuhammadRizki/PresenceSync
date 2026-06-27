@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Guru;
-use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;

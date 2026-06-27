@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Guru;
-use App\Models\Jurusan;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
@@ -12,10 +11,8 @@ uses(RefreshDatabase::class);
 function createKelasWithDependencies(): Kelas
 {
     $user = User::factory()->create();
-    $jurusan = Jurusan::create(['nama' => 'IPA', 'kode' => 'IPA']);
     $guru = Guru::create(['nama' => 'Budi Santoso', 'nip' => '1234', 'email' => 'budi@test.com', 'user_id' => $user->id]);
     return Kelas::create([
-        'jurusan_id' => $jurusan->id,
         'guru_id'    => $guru->id,
         'nama'       => 'X-1',
         'tingkat'    => '10',

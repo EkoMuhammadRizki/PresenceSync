@@ -38,11 +38,6 @@ return array(
                 'view'   => 'absensi/guru',
                 'assets' => $dtAssets,
             ),
-            'jurusan' => array(
-                'title'  => 'Jurusan',
-                'view'   => 'absensi/jurusan',
-                'assets' => $dtAssets,
-            ),
             'kelas' => array(
                 'data' => array(
                     'title'  => 'Data Kelas',

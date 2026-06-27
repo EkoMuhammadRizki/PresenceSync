@@ -149,22 +149,46 @@ class GuruController extends Controller
             $sheet->setCellValue($colLetter . '1', $header);
         }
 
-        // Sample Row
-        $sheet->setCellValue('A2', 'budi.santoso@sekolah.sch.id');
-        $sheet->setCellValue('B2', 'password123');
-        $sheet->setCellValue('C2', 'password123');
-        $sheet->setCellValue('D2', 'guru');
-        $sheet->setCellValue('E2', '198105122008011003');
-        $sheet->setCellValue('F2', 'Budi Santoso, S.Pd');
-        $sheet->setCellValue('G2', '');
-        $sheet->setCellValue('H2', 'L');
-        $sheet->setCellValue('I2', 'Jakarta');
-        $sheet->setCellValue('J2', '1981-05-12');
-        $sheet->setCellValue('K2', 'Jl. Sukasenang No. 12');
-        $sheet->setCellValue('L2', '081234567890');
-        $sheet->setCellValue('M2', '');
-        $sheet->setCellValue('N2', 'aktif');
-        $sheet->setCellValue('O2', '');
+        // Populate existing teachers if any, otherwise write a sample row
+        $gurus = Guru::with('user')->orderBy('nama')->get();
+
+        if ($gurus->isEmpty()) {
+            $sheet->setCellValue('A2', 'budi.santoso@sekolah.sch.id');
+            $sheet->setCellValue('B2', 'password123');
+            $sheet->setCellValue('C2', 'password123');
+            $sheet->setCellValue('D2', 'guru');
+            $sheet->setCellValue('E2', '198105122008011003');
+            $sheet->setCellValue('F2', 'Budi Santoso, S.Pd');
+            $sheet->setCellValue('G2', '');
+            $sheet->setCellValue('H2', 'L');
+            $sheet->setCellValue('I2', 'Jakarta');
+            $sheet->setCellValue('J2', '1981-05-12');
+            $sheet->setCellValue('K2', 'Jl. Sukasenang No. 12');
+            $sheet->setCellValue('L2', '081234567890');
+            $sheet->setCellValue('M2', '');
+            $sheet->setCellValue('N2', 'aktif');
+            $sheet->setCellValue('O2', '');
+        } else {
+            $rowNum = 2;
+            foreach ($gurus as $guru) {
+                $sheet->setCellValue('A' . $rowNum, $guru->user->email ?? $guru->email ?? '');
+                $sheet->setCellValue('B' . $rowNum, 'password123');
+                $sheet->setCellValue('C' . $rowNum, 'password123');
+                $sheet->setCellValue('D' . $rowNum, 'guru');
+                $sheet->setCellValue('E' . $rowNum, $guru->nip ?? '');
+                $sheet->setCellValue('F' . $rowNum, $guru->nama);
+                $sheet->setCellValue('G' . $rowNum, '');
+                $sheet->setCellValue('H' . $rowNum, 'L');
+                $sheet->setCellValue('I' . $rowNum, '');
+                $sheet->setCellValue('J' . $rowNum, '');
+                $sheet->setCellValue('K' . $rowNum, $guru->alamat ?? '');
+                $sheet->setCellValue('L' . $rowNum, $guru->no_hp ?? '');
+                $sheet->setCellValue('M' . $rowNum, '');
+                $sheet->setCellValue('N' . $rowNum, 'aktif');
+                $sheet->setCellValue('O' . $rowNum, '');
+                $rowNum++;
+            }
+        }
 
         $sheet->getStyle('A1:O1')->getFont()->setBold(true);
 

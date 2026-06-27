@@ -60,8 +60,6 @@
                     <div class="pb-5 fs-6">
                         <div class="fw-bolder mt-5">Kelas</div>
                         <div class="text-gray-600">{{ $siswa && $siswa->kelas ? $siswa->kelas->tingkat . ' ' . $siswa->kelas->nama : 'Belum Masuk Kelas' }}</div>
-                        <div class="fw-bolder mt-5">Jurusan</div>
-                        <div class="text-gray-600">{{ $siswa && $siswa->kelas && $siswa->kelas->jurusan ? $siswa->kelas->jurusan->nama : '-' }}</div>
                         <div class="fw-bolder mt-5">Wali Kelas</div>
                         <div class="text-gray-600">{{ $siswa && $siswa->kelas && $siswa->kelas->guru ? $siswa->kelas->guru->nama : '-' }}</div>
                         <div class="fw-bolder mt-5">Jenis Kelamin</div>
@@ -250,9 +248,9 @@
                             <div class="row g-9 mb-8">
                                 <!-- Fingerprint ID -->
                                 <div class="col-md-6 fv-row">
-                                    <label class="fs-6 fw-bold mb-2">Fingerprint ID</label>
+                                    <label class="fs-6 fw-bold mb-2">Fingerprint ID (Sama dengan ID User)</label>
                                     <input type="text" name="fingerprint_id" class="form-control form-control-solid" value="{{ old('fingerprint_id', $siswa->fingerprint_id) }}" 
-                                        {{ $userRole === 'siswa' ? 'readonly' : '' }} />
+                                        readonly />
                                 </div>
                                 <!-- Status -->
                                 <div class="col-md-6 fv-row">

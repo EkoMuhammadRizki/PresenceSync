@@ -67,6 +67,16 @@ class SiswaDashboardController extends Controller
             return redirect()->back()->with('error', 'Anda sudah melakukan presensi hari ini.');
         }
 
+        // Validasi foto dan koordinat wajib ada
+        $request->validate([
+            'foto_base64' => 'required|string',
+            'latitude'    => 'required|numeric',
+            'longitude'   => 'required|numeric',
+        ], [
+            'foto_base64.required' => 'Foto kehadiran wajib diambil.',
+            'latitude.required'    => 'Lokasi GPS wajib diaktifkan.',
+        ]);
+
         $dayOfWeek = now()->format('l');
         $daysMap = [
             'Sunday' => 'Minggu',
@@ -100,10 +110,29 @@ class SiswaDashboardController extends Controller
         $now = Carbon::now();
         $currentTimeString = $now->toTimeString();
 
-        $status = 'hadir'; // Default: tepat
+        $status = 'hadir';
         if ($now->format('H:i:s') > $limitTime->format('H:i:s')) {
             $status = 'terlambat';
         }
+
+        // Simpan foto base64 sebagai file jika kolom tersedia
+        $fotoPath = null;
+        $fotoBase64 = $request->input('foto_base64');
+        if ($fotoBase64 && str_starts_with($fotoBase64, 'data:image')) {
+            $imageData = explode(',', $fotoBase64);
+            $image = base64_decode($imageData[1] ?? '');
+            if ($image) {
+                $filename = 'presensi_' . $siswa->id . '_' . $today . '.jpg';
+                $path = storage_path('app/public/presensi/' . $filename);
+                if (!file_exists(dirname($path))) {
+                    mkdir(dirname($path), 0755, true);
+                }
+                file_put_contents($path, $image);
+                $fotoPath = 'presensi/' . $filename;
+            }
+        }
+
+        $koordinat = $request->latitude . ',' . $request->longitude;
 
         Kehadiran::create([
             'siswa_id'      => $siswa->id,
@@ -112,6 +141,8 @@ class SiswaDashboardController extends Controller
             'tanggal'       => $today,
             'jam_masuk'     => $currentTimeString,
             'status'        => $status,
+            'foto'          => $fotoPath,
+            'koordinat'     => $koordinat,
         ]);
 
         $message = $status === 'hadir' ? 'Presensi berhasil! Anda masuk tepat waktu.' : 'Presensi berhasil! Anda tercatat terlambat.';
@@ -125,11 +156,17 @@ class SiswaDashboardController extends Controller
     public function izin(Request $request)
     {
         $request->validate([
-            'status'     => 'required|in:izin,sakit',
-            'keterangan' => 'required|string|max:255',
+            'status'      => 'required|in:izin,sakit',
+            'keterangan'  => 'required|string|min:500|max:5000',
+            'foto_base64' => 'required|string',
+            'latitude'    => 'required|numeric',
+            'longitude'   => 'required|numeric',
         ], [
             'status.required'     => 'Jenis izin wajib dipilih.',
-            'keterangan.required' => 'Keterangan alasan izin wajib diisi.',
+            'keterangan.required' => 'Alasan izin wajib diisi.',
+            'keterangan.min'      => 'Alasan izin minimal 500 karakter.',
+            'foto_base64.required' => 'Foto bukti wajib diambil.',
+            'latitude.required'    => 'Lokasi GPS wajib diaktifkan.',
         ]);
 
         $user = auth()->user();
@@ -172,6 +209,25 @@ class SiswaDashboardController extends Controller
             return redirect()->back()->with('error', 'Semester aktif tidak ditemukan.');
         }
 
+        // Simpan foto base64 sebagai file
+        $fotoPath = null;
+        $fotoBase64 = $request->input('foto_base64');
+        if ($fotoBase64 && str_starts_with($fotoBase64, 'data:image')) {
+            $imageData = explode(',', $fotoBase64);
+            $image = base64_decode($imageData[1] ?? '');
+            if ($image) {
+                $filename = 'izin_' . $siswa->id . '_' . $today . '.jpg';
+                $path = storage_path('app/public/presensi/' . $filename);
+                if (!file_exists(dirname($path))) {
+                    mkdir(dirname($path), 0755, true);
+                }
+                file_put_contents($path, $image);
+                $fotoPath = 'presensi/' . $filename;
+            }
+        }
+
+        $koordinat = $request->latitude . ',' . $request->longitude;
+
         Kehadiran::create([
             'siswa_id'      => $siswa->id,
             'semester_id'   => $activeSemester->id,
@@ -179,6 +235,8 @@ class SiswaDashboardController extends Controller
             'tanggal'       => $today,
             'status'        => $request->status,
             'keterangan'    => $request->keterangan,
+            'foto'          => $fotoPath,
+            'koordinat'     => $koordinat,
         ]);
 
         $statusText = $request->status === 'sakit' ? 'Sakit' : 'Izin';

@@ -13,9 +13,9 @@ class JadwalPelajaranController extends Controller
 {
     public function index()
     {
-        $jadwals        = JadwalPelajaran::with(['kelas.jurusan', 'mataPelajaran.guru', 'semester.tahunAjaran'])
+        $jadwals        = JadwalPelajaran::with(['kelas', 'mataPelajaran.guru', 'semester.tahunAjaran'])
                             ->latest()->get();
-        $kelas          = Kelas::with('jurusan')->where('status', 'aktif')->orderBy('tingkat')->get();
+        $kelas          = Kelas::where('status', 'aktif')->orderBy('tingkat')->get();
         $mataPelajarans = MataPelajaran::with('guru')->orderBy('nama')->get();
         $semesters      = Semester::with('tahunAjaran')->where('status', 'aktif')->get();
 

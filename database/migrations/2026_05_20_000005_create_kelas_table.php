@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('kelas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('jurusan_id')->constrained('jurusans')->cascadeOnDelete();
             $table->foreignId('guru_id')->nullable()->nullOnDelete()->constrained('gurus');
             $table->string('nama', 50);
             $table->unsignedTinyInteger('tingkat')->comment('10, 11, atau 12');

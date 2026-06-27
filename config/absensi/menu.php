@@ -59,13 +59,7 @@ return array(
                         'path'   => 'absensi/master/guru',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
-                    /*
-                    array(
-                        'title'  => 'Jurusan',
-                        'path'   => 'absensi/master/jurusan',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
-                    */
+
                     // Kelas (parent with Level_3 sub-menu)
                     array(
                         'title'      => 'Kelas',

@@ -28,6 +28,9 @@ class RolesSeeder extends Seeder
         return [
             ['name' => 'admin'],
             ['name' => 'editor'],
+            ['name' => 'guru'],
+            ['name' => 'kesiswaan'],
+            ['name' => 'orang_tua'],
         ];
     }
 }
