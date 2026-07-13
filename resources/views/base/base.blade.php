@@ -235,6 +235,24 @@ License: {{ theme()->getOption('product', 'license') }}
     {{-- end::Global Javascript Bundle --}}
 @endif
 
+<script>
+    // Apply saved theme mode before page renders to prevent FOUC
+    (function() {
+        var savedMode = localStorage.getItem('kt-theme-mode');
+        if (!savedMode) {
+            savedMode = getCookie('kt-theme-mode');
+        }
+        if (savedMode === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    })();
+
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+</script>
+
 @if (theme()->hasOption('page', 'assets/vendors/js'))
     {{-- begin::Page Vendors Javascript(used by this page) --}}
     @foreach (array_unique(theme()->getOption('page', 'assets/vendors/js')) as $file)
@@ -246,11 +264,74 @@ License: {{ theme()->getOption('product', 'license') }}
 @if (theme()->hasOption('page', 'assets/custom/js'))
     {{-- begin::Page Custom Javascript(used by this page) --}}
     @foreach (array_unique(theme()->getOption('page', 'assets/custom/js')) as $file)
-        <script src="{{ asset(theme()->getDemo() . '/' .$file) }}"></script>
+        @php
+            $filePath = public_path(theme()->getDemo() . '/' . $file);
+            $version = file_exists($filePath) ? filemtime($filePath) : time();
+        @endphp
+        <script src="{{ asset(theme()->getDemo() . '/' .$file) }}?v={{ $version }}"></script>
     @endforeach
     {{-- end::Page Custom Javascript --}}
 @endif
 {{-- end::Javascript --}}
+
+<script>
+    // Sync theme mode UI from saved preference
+    function syncThemeModeUI(mode) {
+        if (!mode) {
+            mode = localStorage.getItem('kt-theme-mode');
+        }
+        if (!mode) {
+            mode = getCookie('kt-theme-mode');
+        }
+        if (!mode) return;
+
+        // Sync data-kt-mode active states
+        document.querySelectorAll('[data-kt-mode]').forEach(function(link) {
+            link.classList.toggle('active', link.getAttribute('data-kt-mode') === mode);
+        });
+        // Sync user menu checkbox
+        var toggle = document.querySelector('#kt_user_menu_dark_mode_toggle');
+        if (toggle) {
+            toggle.checked = (mode === 'dark');
+        }
+    }
+
+    // Initialize theme mode from localStorage / cookie
+    (function() {
+        var savedMode = localStorage.getItem('kt-theme-mode');
+        if (!savedMode) {
+            savedMode = getCookie('kt-theme-mode');
+        }
+        if (savedMode && typeof KTApp !== 'undefined' && KTApp.setThemeMode) {
+            KTApp.setThemeMode(savedMode);
+            syncThemeModeUI(savedMode);
+            // Sync to cookie if only in localStorage
+            if (localStorage.getItem('kt-theme-mode') && !getCookie('kt-theme-mode')) {
+                document.cookie = 'kt-theme-mode=' + savedMode + ';path=/;max-age=31536000';
+            }
+        }
+    })();
+
+    // Listen for theme mode changes to sync UI components
+    document.addEventListener('kt-theme-mode-changed', function(e) {
+        var mode = e.detail.mode;
+        syncThemeModeUI(mode);
+        // Update toggle icon (sun/moon) in the header
+        var toggleBtn = document.querySelector('.theme-toggle-btn');
+        if (toggleBtn) {
+            var icon = toggleBtn.querySelector('.theme-toggle-icon');
+            if (icon) {
+                icon.className = icon.className.replace(/fonticon-(sun|moon)/, 'fonticon-' + (mode === 'dark' ? 'moon' : 'sun'));
+            }
+            toggleBtn.title = mode === 'dark' ? 'Light Mode' : 'Dark Mode';
+        }
+    });
+
+    // Re-sync after SPA navigation
+    $(document).on('page:loaded spa:loaded', function() {
+        syncThemeModeUI();
+    });
+</script>
 
 @if (theme()->getViewMode() === 'preview')
     {{ theme()->getView('partials/trackers/_ga-tag-manager-for-body') }}
@@ -611,6 +692,11 @@ License: {{ theme()->getOption('product', 'license') }}
                     if (window.KTApp && typeof KTApp.init === 'function') {
                         KTApp.init();
                     }
+
+                    // Re-sync theme mode UI after SPA navigation
+                    if (typeof syncThemeModeUI === 'function') {
+                        syncThemeModeUI();
+                    }
                     
                     completeProgress();
                 },
@@ -800,7 +886,7 @@ License: {{ theme()->getOption('product', 'license') }}
         SwalSuccess.fire({ title: 'Berhasil!', text: '{{ addslashes(session('success')) }}' });
         @endif
         @if(session('error'))
-        SwalError.fire({ title: 'Gagal!', text: '{{ addslashes(session('error')) }}' });
+        SwalError.fire({ title: 'Gagal!', html: '{!! addslashes(session('error')) !!}' });
         @endif
         @if(session('warning'))
         SwalInfo.fire({ title: 'Perhatian', text: '{{ addslashes(session('warning')) }}', icon: 'warning' });
@@ -971,7 +1057,7 @@ License: {{ theme()->getOption('product', 'license') }}
                                 window.location.reload();
                             });
                         } else {
-                            SwalError.fire({ title: 'Gagal!', text: response.message || 'Terjadi kesalahan.' });
+                            SwalError.fire({ title: 'Gagal!', html: response.message || 'Terjadi kesalahan.' });
                         }
                     },
                     error: function(xhr) {
@@ -979,7 +1065,7 @@ License: {{ theme()->getOption('product', 'license') }}
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errMsg = xhr.responseJSON.message;
                         }
-                        SwalError.fire({ title: 'Gagal!', text: errMsg });
+                        SwalError.fire({ title: 'Gagal!', html: errMsg });
                     }
                 });
             }

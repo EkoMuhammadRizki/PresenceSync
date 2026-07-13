@@ -121,7 +121,7 @@
                                         </a>
                                     </div>
                                     <div class="menu-item px-3">
-                                        <form action="{{ route('tahun-ajaran.destroy', $ta->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tahun ajaran ini?')">
+                                        <form action="{{ route('tahun-ajaran.destroy', $ta->id) }}" method="POST" class="d-inline form-konfirmasi">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
@@ -202,7 +202,7 @@
                                         </a>
                                     </div>
                                     <div class="menu-item px-3">
-                                        <form action="{{ route('semester.destroy', $sem->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus semester ini?')">
+                                        <form action="{{ route('semester.destroy', $sem->id) }}" method="POST" class="d-inline form-konfirmasi">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>

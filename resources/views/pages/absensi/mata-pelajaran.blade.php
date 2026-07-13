@@ -64,7 +64,6 @@
                     <th class="min-w-80px">Kode</th>
                     <th class="min-w-200px">Nama Mata Pelajaran</th>
                     <th class="min-w-150px">Guru Pengampu</th>
-                    <th class="min-w-100px">Jam / Minggu</th>
                     <th class="text-end min-w-70px">Aksi</th>
                 </tr>
             </thead>
@@ -77,26 +76,27 @@
                         </div>
                     </td>
                     <td><strong>{{ $mp->kode }}</strong></td>
-                    <td>{{ $mp->nama }}</td>
+                    <td><a href="{{ route('mata-pelajaran.show', $mp->id) }}" class="text-gray-800 text-hover-primary">{{ $mp->nama }}</a></td>
                     <td>{{ $mp->guru->nama ?? 'Belum Ditentukan' }}</td>
-                    <td>{{ $mp->jam_per_minggu }} jam</td>
                     <td class="text-end">
                         <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                             Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
                             <div class="menu-item px-3">
+                                <a href="{{ route('mata-pelajaran.show', $mp->id) }}" class="menu-link px-3">Detail</a>
+                            </div>
+                            <div class="menu-item px-3">
                                 <a href="#" class="menu-link px-3 btn-edit"
                                    data-id="{{ $mp->id }}"
                                    data-kode="{{ $mp->kode }}"
                                    data-nama="{{ $mp->nama }}"
-                                   data-guru="{{ $mp->guru_id ?? '' }}"
-                                   data-jam="{{ $mp->jam_per_minggu }}">
+                                   data-guru="{{ $mp->guru_id ?? '' }}">
                                     Ubah
                                 </a>
                             </div>
                             <div class="menu-item px-3">
-                                <form action="{{ route('mata-pelajaran.destroy', $mp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus mata pelajaran ini?')">
+                                <form action="{{ route('mata-pelajaran.destroy', $mp->id) }}" method="POST" class="d-inline form-konfirmasi">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
@@ -139,10 +139,6 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Jam Per Minggu</label>
-                        <input type="number" name="jam_per_minggu" class="form-control form-control-solid" min="1" max="40" value="2" required />
-                    </div>
                     <div class="text-center pt-5">
                         <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn btn-primary">Simpan</button>
@@ -182,10 +178,6 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Jam Per Minggu</label>
-                        <input type="number" name="jam_per_minggu" class="form-control form-control-solid" min="1" max="40" required />
-                    </div>
                     <div class="text-center pt-5">
                         <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
@@ -196,6 +188,16 @@
     </div>
 </div>
 
+<style>
+    #kt_table_mapel tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    #kt_table_mapel tbody tr:hover {
+        background-color: var(--bs-table-hover-bg) !important;
+    }
+</style>
+
 @section('scripts')
 <script>
 $(document).ready(function() {
@@ -205,10 +207,24 @@ $(document).ready(function() {
         order:[], 
         pageLength:5, 
         lengthChange:true, 
-        columnDefs:[{orderable:false,targets:[0,5]}] 
+        columnDefs:[{orderable:false,targets:[0,4]}] 
     });
     $('#search_mapel').on('keyup', function() { 
         table.search(this.value).draw(); 
+    });
+
+    // Row click → navigate to subject profile
+    $('#kt_table_mapel').on('click', 'tbody tr', function(e) {
+        var targetTd = $(e.target).closest('td');
+        if (targetTd.length === 0) return;
+        var idx = targetTd.index();
+        if (idx === 0 || idx === 4 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+            return;
+        }
+        var link = $(this).find('td:nth-child(3) a');
+        if (link.length) {
+            window.location.href = link.attr('href');
+        }
     });
 
     // Re-init Metronic menu instances on table redraw (pagination, search, sort)
@@ -225,14 +241,12 @@ $(document).ready(function() {
         var kode = $(this).data('kode');
         var nama = $(this).data('nama');
         var guru = $(this).data('guru');
-        var jam = $(this).data('jam');
         
         var form = $('#modal_ubah_mapel form');
         form.attr('action', '{{ url("absensi/master/mata-pelajaran") }}/' + id);
         form.find('input[name="kode"]').val(kode);
         form.find('input[name="nama"]').val(nama);
         form.find('select[name="guru_id"]').val(guru).trigger('change');
-        form.find('input[name="jam_per_minggu"]').val(jam);
         
         $('#modal_ubah_mapel').modal('show');
     });

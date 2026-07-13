@@ -22,16 +22,14 @@ class AbsensiSeeder extends Seeder
     public function run()
     {
         // 1. Aturan Jam
-        $aturanNormal = AturanJam::create([
-            'hari'                    => 'Senin',
+        $aturanNormal = AturanJam::updateOrCreate(['hari' => 'Senin'], [
             'jam_masuk'               => '07:00:00',
             'toleransi_keterlambatan' => 15,
             'jam_pulang'              => '15:30:00',
             'is_aktif'                => true,
         ]);
 
-        $aturanRamadhan = AturanJam::create([
-            'hari'                    => 'Selasa',
+        $aturanRamadhan = AturanJam::updateOrCreate(['hari' => 'Selasa'], [
             'jam_masuk'               => '07:30:00',
             'toleransi_keterlambatan' => 10,
             'jam_pulang'              => '14:00:00',
@@ -39,297 +37,128 @@ class AbsensiSeeder extends Seeder
         ]);
 
         // 2. Tahun Ajaran & Semester
-        $ta1 = TahunAjaran::create([
-            'nama'          => '2025/2026',
+        $ta1 = TahunAjaran::updateOrCreate(['nama' => '2025/2026'], [
             'bulan_mulai'   => '2025-07-01',
             'bulan_selesai' => '2026-06-30',
             'status'        => 'aktif',
         ]);
 
-        $ta2 = TahunAjaran::create([
-            'nama'          => '2024/2025',
+        $ta2 = TahunAjaran::updateOrCreate(['nama' => '2024/2025'], [
             'bulan_mulai'   => '2024-07-01',
             'bulan_selesai' => '2025-06-30',
             'status'        => 'selesai',
         ]);
 
-        $semGanjil = Semester::create([
+        $semGanjil = Semester::updateOrCreate([
             'tahun_ajaran_id' => $ta1->id,
             'jenis'           => 'ganjil',
+        ], [
             'tanggal_mulai'   => '2025-07-01',
             'tanggal_selesai' => '2025-12-31',
             'status'          => 'selesai',
         ]);
 
-        $semGenap = Semester::create([
+        $semGenap = Semester::updateOrCreate([
             'tahun_ajaran_id' => $ta1->id,
             'jenis'           => 'genap',
+        ], [
             'tanggal_mulai'   => '2026-01-01',
             'tanggal_selesai' => '2026-06-30',
             'status'          => 'aktif',
         ]);
 
-        // 3. Jurusan (Removed)
-
         // 4. Guru
-        $guruData = [
-            [
-                'nip'    => '198105122008011003',
-                'nama'   => 'Budi Santoso, S.Pd',
-                'email'  => 'budisantoso@sekolah.sch.id',
-                'no_hp'  => '081234567890',
-                'alamat' => 'Jl. Sukasenang No. 12',
-            ],
-            [
-                'nip'    => '198502152010022004',
-                'nama'   => 'Siti Rahayu, M.Pd',
-                'email'  => 'sitirahayu@sekolah.sch.id',
-                'no_hp'  => '081298765432',
-                'alamat' => 'Jl. Pahlawan No. 45',
-            ],
-            [
-                'nip'    => '199008242019031005',
-                'nama'   => 'Hendra Wijaya, S.T',
-                'email'  => 'hendrawijaya@sekolah.sch.id',
-                'no_hp'  => '085732165498',
-                'alamat' => 'Jl. Cihampelas No. 101',
-            ],
-            [
-                'nip'    => '198811022015042006',
-                'nama'   => 'Dewi Lestari, S.Pd',
-                'email'  => 'dewilestari@sekolah.sch.id',
-                'no_hp'  => '081345678912',
-                'alamat' => 'Jl. Dago No. 8',
-            ]
-        ];
+        $userGuru = User::updateOrCreate(['email' => 'guru@demo.com'], [
+            'first_name' => 'Budi',
+            'last_name'  => 'Santoso, S.Pd',
+            'password'   => Hash::make('demo'),
+        ]);
 
-        $gurus = [];
-        foreach ($guruData as $index => $data) {
-            $nameParts = explode(' ', trim($data['nama']), 2);
-            $firstName = $nameParts[0];
-            $lastName  = $nameParts[1] ?? $nameParts[0];
-
-            $user = User::create([
-                'first_name' => $firstName,
-                'last_name'  => $lastName,
-                'email'      => $data['email'],
-                'password'   => Hash::make('password123'),
-            ]);
-
-            $gurus[] = Guru::create([
-                'user_id' => $user->id,
-                'nip'     => $data['nip'],
-                'nama'    => $data['nama'],
-                'email'   => $data['email'],
-                'no_hp'   => $data['no_hp'],
-                'alamat'  => $data['alamat'],
-            ]);
-        }
-        $guru1 = $gurus[0];
-        $guru2 = $gurus[1];
-        $guru3 = $gurus[2];
-        $guru4 = $gurus[3];
+        $guru1 = Guru::updateOrCreate(['user_id' => $userGuru->id], [
+            'nip'     => '198105122008011003',
+            'nama'    => 'Budi Santoso, S.Pd',
+            'email'   => 'guru@demo.com',
+            'no_hp'   => '081234567890',
+            'alamat'  => 'Jl. Sukasenang No. 12',
+        ]);
 
         // 5. Kelas
-        $kelas1 = Kelas::create([
+        $kelas1 = Kelas::updateOrCreate([
             'guru_id'    => $guru1->id,
             'nama'       => 'X-1',
             'tingkat'    => '10',
-            'status'     => 'aktif',
-        ]);
-
-        $kelas2 = Kelas::create([
-            'guru_id'    => $guru3->id,
-            'nama'       => 'XI-1',
-            'tingkat'    => '11',
-            'status'     => 'aktif',
-        ]);
-
-        $kelas3 = Kelas::create([
-            'guru_id'    => $guru2->id,
-            'nama'       => 'XII-1',
-            'tingkat'    => '12',
+        ], [
             'status'     => 'aktif',
         ]);
 
         // 6. Siswa & User Akun
-        $siswaData = [
-            ['nama' => 'Ahmad Subarjo', 'nisn' => '0054321098', 'nis' => '10201', 'jk' => 'L', 'kelas' => $kelas1],
-            ['nama' => 'Budi Setiadi', 'nisn' => '0054321099', 'nis' => '10202', 'jk' => 'L', 'kelas' => $kelas1],
-            ['nama' => 'Candra Wijaya', 'nisn' => '0054321100', 'nis' => '10203', 'jk' => 'L', 'kelas' => $kelas1],
-            ['nama' => 'Dedi Kurniawan', 'nisn' => '0054321101', 'nis' => '10204', 'jk' => 'L', 'kelas' => $kelas1],
-            ['nama' => 'Erna Lestari', 'nisn' => '0054321102', 'nis' => '10205', 'jk' => 'P', 'kelas' => $kelas1],
-            ['nama' => 'Fahmi Idris', 'nisn' => '0061234567', 'nis' => '11301', 'jk' => 'L', 'kelas' => $kelas2],
-            ['nama' => 'Gita Gutawa', 'nisn' => '0061234568', 'nis' => '11302', 'jk' => 'P', 'kelas' => $kelas2],
-            ['nama' => 'Hendra Setiawan', 'nisn' => '0075678901', 'nis' => '12401', 'jk' => 'L', 'kelas' => $kelas3],
-        ];
+        $userSiswa = User::updateOrCreate(['email' => 'siswa@demo.com'], [
+            'first_name' => 'Ahmad',
+            'last_name'  => 'Subarjo',
+            'password'   => Hash::make('demo'),
+        ]);
 
-        $siswas = [];
-        foreach ($siswaData as $index => $data) {
-            $email = Str::slug($data['nama'], '.') . '@siswa.presencesync.sch.id';
-            
-            $nameParts = explode(' ', trim($data['nama']), 2);
-            $firstName = $nameParts[0];
-            $lastName  = $nameParts[1] ?? $nameParts[0];
-
-            $user = User::create([
-                'first_name' => $firstName,
-                'last_name'  => $lastName,
-                'email'      => $email,
-                'password'   => Hash::make('password123'),
-            ]);
-
-            $siswas[] = Siswa::create([
-                'user_id'        => $user->id,
-                'kelas_id'       => $data['kelas']->id,
-                'nama'           => $data['nama'],
-                'nisn'           => $data['nisn'],
-                'nis'            => $data['nis'],
-                'jenis_kelamin'  => $data['jk'],
-                'tanggal_lahir'  => '2009-08-15',
-                'alamat'         => 'Jl. Sukarno Hatta No. ' . ($index + 12),
-                'fingerprint_id' => 'FP00' . ($index + 1),
-            ]);
-        }
+        $siswa1 = Siswa::updateOrCreate(['user_id' => $userSiswa->id], [
+            'kelas_id'       => $kelas1->id,
+            'nama'           => 'Ahmad Subarjo',
+            'nisn'           => '0054321098',
+            'nis'            => '10201',
+            'jenis_kelamin'  => 'L',
+            'tanggal_lahir'  => '2009-08-15',
+            'alamat'         => 'Jl. Sukarno Hatta No. 12',
+            'fingerprint_id' => 'FP001',
+        ]);
 
         // 7. Mata Pelajaran
-        $mapelMatematika = MataPelajaran::create([
+        $mapelMatematika = MataPelajaran::updateOrCreate(['kode' => 'MTK'], [
             'guru_id' => $guru1->id,
-            'kode'    => 'MTK',
             'nama'    => 'Matematika Peminatan',
         ]);
 
-        $mapelFisika = MataPelajaran::create([
-            'guru_id' => $guru3->id,
-            'kode'    => 'FIS',
-            'nama'    => 'Fisika',
-        ]);
-
-        $mapelSosiologi = MataPelajaran::create([
-            'guru_id' => $guru2->id,
-            'kode'    => 'SOS',
-            'nama'    => 'Sosiologi',
-        ]);
-
         // 8. Jadwal Pelajaran
-        JadwalPelajaran::create([
+        JadwalPelajaran::updateOrCreate([
             'kelas_id'          => $kelas1->id,
             'mata_pelajaran_id' => $mapelMatematika->id,
             'semester_id'       => $semGenap->id,
             'hari'              => 'Senin',
+        ], [
             'jam_mulai'         => '07:30:00',
             'jam_selesai'       => '09:00:00',
         ]);
 
-        JadwalPelajaran::create([
-            'kelas_id'          => $kelas1->id,
-            'mata_pelajaran_id' => $mapelFisika->id,
-            'semester_id'       => $semGenap->id,
-            'hari'              => 'Senin',
-            'jam_mulai'         => '09:15:00',
-            'jam_selesai'       => '10:45:00',
-        ]);
-
-        JadwalPelajaran::create([
-            'kelas_id'          => $kelas3->id,
-            'mata_pelajaran_id' => $mapelSosiologi->id,
-            'semester_id'       => $semGenap->id,
-            'hari'              => 'Selasa',
-            'jam_mulai'         => '08:00:00',
-            'jam_selesai'       => '10:00:00',
-        ]);
-
-        // 9. Kehadirans
-        $dates = [
-            '2026-05-18', // Senin kemarin
-            '2026-05-19', // Selasa kemarin
-            '2026-05-20', // Hari ini
-        ];
-
-        $statuses = ['hadir', 'hadir', 'hadir', 'terlambat', 'sakit', 'izin', 'alpha'];
-
-        foreach ($dates as $date) {
-            foreach ($siswas as $idx => $siswa) {
-                // Hanya isikan data ke kelas 1 untuk contoh yang padat
-                if ($siswa->kelas_id !== $kelas1->id) continue;
-
-                $status = $statuses[($idx + Carbon::parse($date)->day) % count($statuses)];
-                
-                $jamMasuk = null;
-                $jamPulang = null;
-                
-                if ($status === 'hadir') {
-                    $jamMasuk = '06:50:00';
-                    $jamPulang = '15:35:00';
-                } elseif ($status === 'terlambat') {
-                    $jamMasuk = '07:20:00';
-                    $jamPulang = '15:30:00';
-                }
-
-                Kehadiran::create([
-                    'siswa_id'      => $siswa->id,
-                    'semester_id'   => $semGenap->id,
-                    'aturan_jam_id' => $aturanNormal->id,
-                    'tanggal'       => $date,
-                    'jam_masuk'     => $jamMasuk,
-                    'jam_pulang'    => $jamPulang,
-                    'status'        => $status,
-                    'keterangan'    => $status === 'izin' ? 'Ada acara keluarga' : ($status === 'sakit' ? 'Demam tinggi' : null),
-                ]);
-            }
-        }
+        // 9. Kehadirans (EMPTY - No Kehadiran records created)
 
         // 10. Assign Guru role to existing guru users
-        foreach ($gurus as $guru) {
-            $guru->user->assignRole('guru');
-        }
+        $guru1->user->assignRole('guru');
 
-        // 11. Kesiswaan Account (Guru with kesiswaan role)
-        $kesiswaanUser = User::create([
+        // 11. Kesiswaan Account
+        $kesiswaanUser = User::updateOrCreate(['email' => 'kesiswaan@demo.com'], [
             'first_name'        => 'Ratna',
             'last_name'         => 'Sari, S.Pd',
-            'email'             => 'ratnasari@sekolah.sch.id',
-            'password'          => Hash::make('password123'),
+            'password'          => Hash::make('demo'),
             'email_verified_at' => now(),
         ]);
         $kesiswaanUser->assignRole('kesiswaan');
 
-        Guru::create([
-            'user_id' => $kesiswaanUser->id,
+        Guru::updateOrCreate(['user_id' => $kesiswaanUser->id], [
             'nip'     => '199203172020042007',
             'nama'    => 'Ratna Sari, S.Pd',
-            'email'   => 'ratnasari@sekolah.sch.id',
+            'email'   => 'kesiswaan@demo.com',
             'no_hp'   => '081256789012',
             'alamat'  => 'Jl. Merdeka No. 77',
         ]);
 
         // 12. Orang Tua Accounts
-        // Orang Tua 1 - linked to Ahmad Subarjo (siswas[0])
-        $orangTua1 = User::create([
+        $orangTua1 = User::updateOrCreate(['email' => 'orangtua@demo.com'], [
             'first_name'        => 'Subarjo',
             'last_name'         => 'Hidayat',
-            'email'             => 'orangtua.ahmad@presencesync.sch.id',
-            'password'          => Hash::make('password123'),
+            'password'          => Hash::make('demo'),
             'email_verified_at' => now(),
         ]);
         $orangTua1->assignRole('orang_tua');
-        $siswas[0]->update([
+        $siswa1->update([
             'nama_orang_tua'    => 'Subarjo Hidayat',
             'orang_tua_user_id' => $orangTua1->id,
-        ]);
-
-        // Orang Tua 2 - linked to Erna Lestari (siswas[4])
-        $orangTua2 = User::create([
-            'first_name'        => 'Lestari',
-            'last_name'         => 'Wulandari',
-            'email'             => 'orangtua.erna@presencesync.sch.id',
-            'password'          => Hash::make('password123'),
-            'email_verified_at' => now(),
-        ]);
-        $orangTua2->assignRole('orang_tua');
-        $siswas[4]->update([
-            'nama_orang_tua'    => 'Lestari Wulandari',
-            'orang_tua_user_id' => $orangTua2->id,
         ]);
     }
 }

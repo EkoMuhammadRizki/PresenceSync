@@ -2985,7 +2985,15 @@ var KTWidgets = function () {
 
         if (toggle) {
             toggle.addEventListener('click', function() {
-                window.location.href = this.getAttribute('data-kt-url');
+                var isDark = this.checked;
+                var mode = isDark ? 'dark' : 'light';
+                if (typeof KTApp !== 'undefined' && KTApp.setThemeMode) {
+                    KTApp.setThemeMode(mode, function() {
+                        localStorage.setItem('kt-theme-mode', mode);
+                        document.cookie = 'kt-theme-mode=' + mode + ';path=/;max-age=31536000';
+                        document.dispatchEvent(new CustomEvent('kt-theme-mode-changed', { detail: { mode: mode } }));
+                    });
+                }
             });
         }
     }

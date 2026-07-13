@@ -99,3 +99,37 @@ test('bulk delete validation fails with invalid parameters', function () {
     $response2->assertStatus(400);
     $response2->assertJson(['success' => false]);
 });
+
+test('bulk delete pengguna works', function () {
+    $admin = User::factory()->create();
+
+    $user1 = User::factory()->create(['email' => 'user1@presencesync.sch.id']);
+    $user2 = User::factory()->create(['email' => 'user2@presencesync.sch.id']);
+
+    $response = $this->actingAs($admin)->postJson(route('bulk-delete'), [
+        'type' => 'pengguna',
+        'ids'  => [$user1->id, $user2->id],
+    ]);
+
+    $response->assertStatus(200);
+    $response->assertJson(['success' => true]);
+
+    $this->assertDatabaseMissing('users', ['id' => $user1->id]);
+    $this->assertDatabaseMissing('users', ['id' => $user2->id]);
+});
+
+test('bulk delete pengguna prevents self deletion', function () {
+    $admin = User::factory()->create();
+
+    $user1 = User::factory()->create(['email' => 'user1@presencesync.sch.id']);
+
+    $response = $this->actingAs($admin)->postJson(route('bulk-delete'), [
+        'type' => 'pengguna',
+        'ids'  => [$user1->id, $admin->id],
+    ]);
+
+    $response->assertStatus(400);
+    $response->assertJson(['success' => false]);
+    $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    $this->assertDatabaseHas('users', ['id' => $user1->id]);
+});

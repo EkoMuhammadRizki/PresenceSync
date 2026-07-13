@@ -9,7 +9,7 @@
         <!--end::Card title-->
 
         <!--begin::Action-->
-        <a href="{{ theme()->getPageUrl('account/settings') }}" class="btn btn-primary align-self-center">{{ __('Edit Profile') }}</a>
+        <a href="{{ theme()->getPageUrl('account/settings') }}" class="btn btn-primary align-self-center" data-ajax="false">{{ __('Edit Profile') }}</a>
         <!--end::Action-->
     </div>
     <!--begin::Card header-->

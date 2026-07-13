@@ -78,7 +78,7 @@
                             <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $item->id }}" />
                         </div>
                     </td>
-                    <td><strong>{{ $item->nama }}</strong></td>
+                    <td><a href="{{ route('kelas.show', $item->id) }}" class="text-gray-800 text-hover-primary"><strong>{{ $item->nama }}</strong></a></td>
                     <td>{{ $item->tingkat }}</td>
                     <td>{{ $item->guru->nama ?? 'Belum Ditentukan' }}</td>
                     <td>{{ $item->siswas_count ?? 0 }} siswa</td>
@@ -97,6 +97,9 @@
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
                             <div class="menu-item px-3">
+                                <a href="{{ route('kelas.show', $item->id) }}" class="menu-link px-3">Detail</a>
+                            </div>
+                            <div class="menu-item px-3">
                                 <a href="#" class="menu-link px-3 btn-edit"
                                    data-id="{{ $item->id }}"
                                    data-nama="{{ $item->nama }}"
@@ -107,7 +110,7 @@
                                 </a>
                             </div>
                             <div class="menu-item px-3">
-                                <form action="{{ route('kelas.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kelas ini?')">
+                                <form action="{{ route('kelas.destroy', $item->id) }}" method="POST" class="d-inline form-konfirmasi">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
@@ -148,9 +151,14 @@
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Wali Kelas</label>
                         <select name="guru_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_tambah_kelas">
-                            <option value="">-- Pilih Wali Kelas (Opsional) --</option>
+                            <option value="">-- Pilih Wali Kelas --</option>
                             @foreach($gurus as $g)
-                                <option value="{{ $g->id }}">{{ $g->nama }}</option>
+                                @php
+                                    $isAssigned = in_array($g->id, $kelas->pluck('guru_id')->filter()->toArray());
+                                @endphp
+                                <option value="{{ $g->id }}" {{ $isAssigned ? 'disabled' : '' }}>
+                                    {{ $g->nama }} {{ $isAssigned ? '(Sudah Menjadi Wali Kelas)' : '' }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -198,9 +206,14 @@
                     <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Wali Kelas</label>
                         <select name="guru_id" class="form-select form-select-solid" data-control="select2" data-dropdown-parent="#modal_ubah_kelas">
-                            <option value="">-- Pilih Wali Kelas (Opsional) --</option>
+                            <option value="">-- Pilih Wali Kelas --</option>
                             @foreach($gurus as $g)
-                                <option value="{{ $g->id }}">{{ $g->nama }}</option>
+                                @php
+                                    $isAssigned = in_array($g->id, $kelas->pluck('guru_id')->filter()->toArray());
+                                @endphp
+                                <option value="{{ $g->id }}" data-assigned="{{ $isAssigned ? 'true' : 'false' }}">
+                                    {{ $g->nama }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
@@ -221,6 +234,16 @@
     </div>
 </div>
 
+<style>
+    #kt_table_kelas tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    #kt_table_kelas tbody tr:hover {
+        background-color: var(--bs-table-hover-bg) !important;
+    }
+</style>
+
 @section('scripts')
 <script>
 $(document).ready(function() {
@@ -235,6 +258,20 @@ $(document).ready(function() {
     
     $('#search_kelas').on('keyup', function() { 
         table.search(this.value).draw(); 
+    });
+
+    // Row click → navigate to class detail
+    $('#kt_table_kelas').on('click', 'tbody tr', function(e) {
+        var targetTd = $(e.target).closest('td');
+        if (targetTd.length === 0) return;
+        var idx = targetTd.index();
+        if (idx === 0 || idx === 6 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+            return;
+        }
+        var link = $(this).find('td:nth-child(2) a');
+        if (link.length) {
+            window.location.href = link.attr('href');
+        }
     });
 
     // Re-init Metronic menu instances on table redraw (pagination, search, sort)
@@ -256,7 +293,31 @@ $(document).ready(function() {
         var form = $('#modal_ubah_kelas form');
         form.attr('action', '{{ url("absensi/master/kelas/data") }}/' + id);
         form.find('input[name="nama"]').val(nama);
-        form.find('select[name="guru_id"]').val(guru).trigger('change');
+        
+        // Dynamically adjust disabled options based on whether they are already assigned, 
+        // while allowing the current class's homeroom teacher (if any) to remain selectable.
+        var select = form.find('select[name="guru_id"]');
+        select.find('option').each(function() {
+            var val = $(this).val();
+            var isAssigned = $(this).attr('data-assigned') === 'true';
+            
+            if (val === '') {
+                $(this).prop('disabled', false);
+            } else if (parseInt(val) === parseInt(guru)) {
+                $(this).prop('disabled', false);
+                $(this).text($(this).text().replace(' (Sudah Menjadi Wali Kelas)', ''));
+            } else if (isAssigned) {
+                $(this).prop('disabled', true);
+                if (!$(this).text().includes(' (Sudah Menjadi Wali Kelas)')) {
+                    $(this).text($(this).text() + ' (Sudah Menjadi Wali Kelas)');
+                }
+            } else {
+                $(this).prop('disabled', false);
+                $(this).text($(this).text().replace(' (Sudah Menjadi Wali Kelas)', ''));
+            }
+        });
+        
+        select.val(guru).trigger('change');
         form.find('select[name="tingkat"]').val(tingkat).trigger('change');
         form.find('select[name="status"]').val(status).trigger('change');
         

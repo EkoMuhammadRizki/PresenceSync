@@ -59,7 +59,7 @@
 
     <!--begin::Card body-->
     <div class="card-body py-4">
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_pengguna">
+        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_pengguna" data-bulk-type="pengguna">
             <thead>
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                     <th class="w-30px">
@@ -96,7 +96,24 @@
                             <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $user->id }}" />
                         </div>
                     </td>
-                    <td>{{ $user->username }}</td>
+                    <td>
+                        @php
+                            $profilUrl = '#';
+                            $role = strtolower($user->role);
+                            if (in_array($role, ['admin', 'staff admin', 'kesiswaan', 'orang_tua'])) {
+                                $profilUrl = route('profil-admin.show');
+                            } elseif ($role === 'guru' && $user->guru) {
+                                $profilUrl = route('profil-guru.show', ['id' => $user->guru->id]);
+                            } elseif ($role === 'siswa' && $user->siswa) {
+                                $profilUrl = route('profil-siswa.show', ['id' => $user->siswa->id]);
+                            }
+                        @endphp
+                        @if ($profilUrl !== '#')
+                            <a href="{{ $profilUrl }}" class="text-gray-800 text-hover-primary">{{ $user->username }}</a>
+                        @else
+                            {{ $user->username }}
+                        @endif
+                    </td>
                     <td>{{ $user->email }}</td>
                     <td><span class="badge {{ $roleClass }} fw-bolder">{{ $user->role }}</span></td>
                     <td>{{ $user->created_at ? $user->created_at->format('d M Y, H:i') : '-' }}</td>
@@ -106,6 +123,11 @@
                             Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
                         </a>
                         <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            @if ($profilUrl !== '#')
+                            <div class="menu-item px-3">
+                                <a href="{{ $profilUrl }}" class="menu-link px-3">Detail</a>
+                            </div>
+                            @endif
                             <div class="menu-item px-3">
                                 <a href="#" class="menu-link px-3 btn-edit-user"
                                    data-id="{{ $user->id }}"
@@ -117,7 +139,7 @@
                                    data-bs-target="#modal_ubah_pengguna">Ubah</a>
                             </div>
                             <div class="menu-item px-3">
-                                <form action="{{ route('pengguna.destroy', $user->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">
+                                <form action="{{ route('pengguna.destroy', $user->id) }}" method="POST" class="d-inline form-konfirmasi">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
@@ -237,6 +259,16 @@
 </div>
 <!--end::Modal Ubah Pengguna-->
 
+<style>
+    #kt_table_pengguna tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    #kt_table_pengguna tbody tr:hover {
+        background-color: var(--bs-table-hover-bg) !important;
+    }
+</style>
+
 @section('scripts')
 <script>
 $(document).ready(function() {
@@ -247,6 +279,20 @@ $(document).ready(function() {
         pageLength: 10, 
         lengthChange: true,
         columnDefs: [{ orderable: false, targets: [0, 6] }]
+    });
+
+    // Row click → navigate to profile
+    $('#kt_table_pengguna').on('click', 'tbody tr', function(e) {
+        var targetTd = $(e.target).closest('td');
+        if (targetTd.length === 0) return;
+        var idx = targetTd.index();
+        if (idx === 0 || idx === 6 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+            return;
+        }
+        var link = $(this).find('td:nth-child(2) a');
+        if (link.length) {
+            window.location.href = link.attr('href');
+        }
     });
     $('#search_pengguna').on('keyup', function() { table.search(this.value).draw(); });
 

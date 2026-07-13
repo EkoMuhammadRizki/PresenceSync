@@ -126,7 +126,7 @@ class SiswaController extends Controller
             ->with('success', 'Data siswa berhasil dihapus.');
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
         $spreadsheet = new Spreadsheet();
         
@@ -158,26 +158,9 @@ class SiswaController extends Controller
             $sheet->setCellValue($colLetter . '1', $header);
         }
         
-        // Populate existing students if any, otherwise write a sample row
-        $siswas = Siswa::with(['user', 'kelas'])->orderBy('nama')->get();
-        
-        if ($siswas->isEmpty()) {
-            $sheet->setCellValue('A2', 'ahmad.subarjo@siswa.presencesync.sch.id');
-            $sheet->setCellValue('B2', 'password123');
-            $sheet->setCellValue('C2', 'password123');
-            $sheet->setCellValue('D2', 'siswa');
-            $sheet->setCellValue('E2', '10201');
-            $sheet->setCellValue('F2', 'Ahmad Subarjo');
-            $sheet->setCellValue('G2', 'FP001');
-            $sheet->setCellValue('H2', 'L');
-            $sheet->setCellValue('I2', 'Bandung');
-            $sheet->setCellValue('J2', '2009-08-15');
-            $sheet->setCellValue('K2', 'Jl. Sukarno Hatta No. 12');
-            $sheet->setCellValue('L2', '081234567890');
-            $sheet->setCellValue('M2', '081298765432');
-            $sheet->setCellValue('N2', 'aktif');
-            $sheet->setCellValue('O2', 'X-1');
-        } else {
+        // Populate existing students if requested (default / when not 'empty')
+        if (!$request->has('empty')) {
+            $siswas = Siswa::with(['user', 'kelas'])->orderBy('nama')->get();
             $rowNum = 2;
             foreach ($siswas as $siswa) {
                 $sheet->setCellValue('A' . $rowNum, $siswa->user->email ?? '');
@@ -261,6 +244,15 @@ class SiswaController extends Controller
         }
         
         $header = array_shift($rows);
+
+        // Validasi format template agar guru tidak diimport ke siswa
+        $column5 = isset($header[4]) ? strtolower(trim($header[4])) : '';
+        if ($column5 === 'nip' || $worksheet->getTitle() === 'Template Guru') {
+            return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Guru. Silakan unggah file template Siswa yang benar.']);
+        }
+        if ($column5 !== 'nis') {
+            return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Pastikan Anda menggunakan file template Siswa yang diunduh dari sistem.']);
+        }
 
         $successCount = 0;
         $skipCount = 0;

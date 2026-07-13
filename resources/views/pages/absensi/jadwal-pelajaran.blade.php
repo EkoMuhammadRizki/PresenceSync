@@ -119,7 +119,7 @@
                                 </a>
                             </div>
                             <div class="menu-item px-3">
-                                <form action="{{ route('jadwal-pelajaran.destroy', $j->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jadwal ini?')">
+                                <form action="{{ route('jadwal-pelajaran.destroy', $j->id) }}" method="POST" class="d-inline form-konfirmasi">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>

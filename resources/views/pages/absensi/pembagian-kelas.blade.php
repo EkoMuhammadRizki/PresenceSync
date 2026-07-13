@@ -1,5 +1,66 @@
 <x-base-layout>
-@include('pages.absensi._partials.toolbar')
+@include('pages.absensi._partials.toolbar', [
+    'toolbarActions' => '
+        <a href="' . route('kesiswaan.dashboard') . '" class="btn btn-sm btn-light me-2">
+            ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' Kembali
+        </a>'
+])
+
+@php
+    $totalKelas = $kelas->count();
+    $totalSiswa = $kelas->sum('siswas_count');
+    $rataSiswa = $totalKelas > 0 ? round($totalSiswa / $totalKelas) : 0;
+@endphp
+
+<!--begin::Stats Row-->
+<div class="row g-5 g-xl-8 mb-5">
+    <div class="col-xl-4">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-body d-flex align-items-center pt-10 pb-8">
+                <div class="symbol symbol-60px me-5">
+                    <div class="symbol-label bg-light-primary fs-2 fw-bolder text-primary">
+                        {!! theme()->getSvgIcon("icons/duotune/communication/com006.svg", "svg-icon-3x") !!}
+                    </div>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="text-gray-800 fw-bolder fs-1">{{ $totalKelas }}</span>
+                    <span class="text-gray-400 fw-bold fs-6">Total Kelas Aktif</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-body d-flex align-items-center pt-10 pb-8">
+                <div class="symbol symbol-60px me-5">
+                    <div class="symbol-label bg-light-success fs-2 fw-bolder text-success">
+                        {!! theme()->getSvgIcon("icons/duotune/general/gen023.svg", "svg-icon-3x") !!}
+                    </div>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="text-gray-800 fw-bolder fs-1">{{ $totalSiswa }}</span>
+                    <span class="text-gray-400 fw-bold fs-6">Total Siswa</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card card-xl-stretch mb-xl-8">
+            <div class="card-body d-flex align-items-center pt-10 pb-8">
+                <div class="symbol symbol-60px me-5">
+                    <div class="symbol-label bg-light-info fs-2 fw-bolder text-info">
+                        {!! theme()->getSvgIcon("icons/duotune/general/gen025.svg", "svg-icon-3x") !!}
+                    </div>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="text-gray-800 fw-bolder fs-1">{{ $rataSiswa }}</span>
+                    <span class="text-gray-400 fw-bold fs-6">Rata-rata per Kelas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--end::Stats Row-->
 
 @if(session('success'))
     <div class="alert alert-success d-flex align-items-center p-5 mb-10">
@@ -25,9 +86,13 @@
     </div>
 @endif
 
-<div class="card mt-2">
+<!--begin::Card-->
+<div class="card">
     <div class="card-header border-0 pt-6">
         <div class="card-title">
+            <h3 class="fw-bolder">Daftar Kelas</h3>
+        </div>
+        <div class="card-toolbar">
             <div class="d-flex align-items-center position-relative my-1">
                 {!! theme()->getSvgIcon("icons/duotune/general/gen021.svg", "svg-icon-1 position-absolute ms-6") !!}
                 <input type="text" id="search_pembagian" class="form-control form-control-solid w-250px ps-14" placeholder="Cari kelas..." />
@@ -40,6 +105,7 @@
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                     <th class="min-w-200px">Nama Kelas</th>
                     <th class="min-w-120px">Jumlah Siswa</th>
+                    <th class="min-w-150px">Wali Kelas</th>
                     <th class="text-end min-w-70px">Aksi</th>
                 </tr>
             </thead>
@@ -64,6 +130,9 @@
                             {{ $item->siswas_count }} siswa
                         </span>
                     </td>
+                    <td>
+                        <span class="text-gray-600">{{ $item->guru->nama ?? '-' }}</span>
+                    </td>
                     <td class="text-end">
                         <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                             Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
@@ -82,6 +151,7 @@
         </table>
     </div>
 </div>
+<!--end::Card-->
 
 @section('scripts')
 <script>
@@ -92,7 +162,7 @@ $(document).ready(function() {
         order: [],
         pageLength: 10,
         lengthChange: true,
-        columnDefs: [{orderable: false, targets: [2]}]
+        columnDefs: [{orderable: false, targets: [3]}]
     });
 
     $('#search_pembagian').on('keyup', function() {
@@ -121,8 +191,7 @@ $(document).ready(function() {
         transition: background-color 0.15s ease;
     }
     .row-clickable:hover {
-        background-color: rgba(var(--bs-component-hover-bg), 1) !important;
-        background-color: #f1faff !important;
+        background-color: var(--bs-table-hover-bg) !important;
         cursor: pointer;
     }
 </style>

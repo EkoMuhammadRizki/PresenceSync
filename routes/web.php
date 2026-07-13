@@ -40,8 +40,6 @@ Route::get('/', function () {
     return app(PagesController::class)->index();
 });
 
-
-
 $menu = theme()->getMenu();
 array_walk($menu, function ($val) {
     if (isset($val['path'])) {
@@ -84,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi/master/kelas/pembagian', \App\Http\Controllers\Absensi\PembagianKelasController::class)->names('pembagian-kelas')->parameters(['pembagian' => 'pembagian'])->only(['index', 'show']);
     Route::post('absensi/master/kelas/pembagian/{kelas}/add-siswa', [\App\Http\Controllers\Absensi\PembagianKelasController::class, 'addSiswa'])->name('pembagian-kelas.add-siswa');
     Route::delete('absensi/master/kelas/pembagian/{kelas}/remove-siswa/{siswa}', [\App\Http\Controllers\Absensi\PembagianKelasController::class, 'removeSiswa'])->name('pembagian-kelas.remove-siswa');
+    Route::post('absensi/master/kelas/pembagian/{kelas}/set-sekretaris/{siswa}', [\App\Http\Controllers\Absensi\PembagianKelasController::class, 'setSekretaris'])->name('pembagian-kelas.set-sekretaris');
     Route::get('absensi/master/siswa/download-template', [\App\Http\Controllers\Absensi\SiswaController::class, 'downloadTemplate'])->name('siswa.download-template');
     Route::post('absensi/master/siswa/import', [\App\Http\Controllers\Absensi\SiswaController::class, 'import'])->name('siswa.import');
     Route::post('absensi/bulk-delete', [\App\Http\Controllers\Absensi\BulkDeleteController::class, 'destroy'])->name('bulk-delete');
@@ -91,6 +90,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi/master/mata-pelajaran', \App\Http\Controllers\Absensi\MataPelajaranController::class)->names('mata-pelajaran');
     Route::resource('absensi/master/jadwal-pelajaran', \App\Http\Controllers\Absensi\JadwalPelajaranController::class)->names('jadwal-pelajaran');
     Route::resource('absensi/master/aturan-jam', \App\Http\Controllers\Absensi\AturanJamController::class)->names('aturan-jam');
+    Route::get('absensi/kehadiran/export', [\App\Http\Controllers\Absensi\KehadiranController::class, 'export'])->name('kehadiran.export');
     Route::resource('absensi/kehadiran', \App\Http\Controllers\Absensi\KehadiranController::class)->names('kehadiran');
 
     Route::get('absensi/profil-siswa', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'show'])->name('profil-siswa.show');
@@ -106,14 +106,22 @@ Route::middleware('auth')->group(function () {
     Route::put('absensi/profil-admin/password', [\App\Http\Controllers\Absensi\AdminProfileController::class, 'changePassword'])->name('profil-admin.changePassword');
     
     Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
+    Route::get('absensi/panduan', [\App\Http\Controllers\Absensi\PanduanController::class, 'index'])->name('panduan.index');
+    Route::get('absensi/guru/kelas-wali', [\App\Http\Controllers\Absensi\GuruKelasController::class, 'index'])->name('guru.kelas-wali');
+
+    // Pengaturan Restriksi Halaman & Simpan
+    Route::get('absensi/pengaturan-restriksi/kelas', [\App\Http\Controllers\Absensi\RestriksiKelasController::class, 'index'])->name('pengaturan-restriksi.kelas.index');
+    Route::post('absensi/pengaturan-restriksi/kelas', [\App\Http\Controllers\Absensi\RestriksiKelasController::class, 'update'])->name('pengaturan-restriksi.kelas.update');
 
     // Student Dashboard Routes
     Route::get('absensi/siswa/dashboard', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'index'])->name('siswa.dashboard');
+    Route::get('absensi/siswa/dashboard/export', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'export'])->name('siswa.dashboard.export');
     Route::post('absensi/siswa/presensi', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'presensi'])->name('siswa.presensi');
     Route::post('absensi/siswa/izin', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'izin'])->name('siswa.izin');
 
     // Guru Dashboard Routes
     Route::get('absensi/guru/dashboard', [\App\Http\Controllers\Absensi\GuruDashboardController::class, 'index'])->name('guru.dashboard');
+
 
     // Kesiswaan Dashboard Routes
     Route::get('absensi/kesiswaan/dashboard', [\App\Http\Controllers\Absensi\KesiswaanDashboardController::class, 'index'])->name('kesiswaan.dashboard');

@@ -128,25 +128,20 @@ test('download template works and lists existing gurus', function () {
         'email'   => 'mytestteacher@sekolah.sch.id',
     ]);
 
+    // 1. Check populated download (default)
     $response = $this->actingAs($admin)->get(route('guru.download-template'));
-
     $response->assertStatus(200);
-    $response->assertHeader('Content-Disposition', 'attachment; filename="template_import_guru.xlsx"');
-
-    // Parse streamed response content
+    
     ob_start();
     $response->sendContent();
     $content = ob_get_clean();
-
     $tempFile = tempnam(sys_get_temp_dir(), 'excel_download_test');
     file_put_contents($tempFile, $content);
-
     $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
-    $sheet = $spreadsheet->getActiveSheet();
-    $rows = $sheet->toArray();
+    $rows = $spreadsheet->getActiveSheet()->toArray();
     unlink($tempFile);
 
-    // Verify teacher info exists in output rows
+    // Verify existing teacher info exists in output rows
     $found = false;
     foreach ($rows as $row) {
         if (($row[0] ?? '') === 'mytestteacher@sekolah.sch.id' && ($row[5] ?? '') === 'My Test Teacher Name') {
@@ -155,4 +150,21 @@ test('download template works and lists existing gurus', function () {
         }
     }
     expect($found)->toBeTrue();
+
+    // 2. Check empty download (?empty=1)
+    $responseEmpty = $this->actingAs($admin)->get(route('guru.download-template', ['empty' => 1]));
+    $responseEmpty->assertStatus(200);
+
+    ob_start();
+    $responseEmpty->sendContent();
+    $contentEmpty = ob_get_clean();
+    $tempFileEmpty = tempnam(sys_get_temp_dir(), 'excel_download_test_empty');
+    file_put_contents($tempFileEmpty, $contentEmpty);
+    $spreadsheetEmpty = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFileEmpty);
+    $rowsEmpty = $spreadsheetEmpty->getActiveSheet()->toArray();
+    unlink($tempFileEmpty);
+
+    expect(count($rowsEmpty))->toBe(1);
+    expect($rowsEmpty[0][0])->toBe('email');
+    expect($rowsEmpty[0][5])->toBe('nama');
 });

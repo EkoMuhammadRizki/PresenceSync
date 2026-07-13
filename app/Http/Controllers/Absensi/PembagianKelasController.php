@@ -77,4 +77,33 @@ class PembagianKelasController extends Controller
         return redirect()->route('pembagian-kelas.show', $kelas->id)
             ->with('success', 'Siswa ' . $siswa->nama . ' berhasil dikeluarkan dari kelas.');
     }
+
+    /**
+     * Set atau unset status sekretaris siswa.
+     */
+    public function setSekretaris(Request $request, Kelas $kelas, Siswa $siswa)
+    {
+        if ($siswa->kelas_id !== $kelas->id) {
+            return redirect()->route('pembagian-kelas.show', $kelas->id)
+                ->with('error', 'Siswa tidak terdaftar di kelas ini.');
+        }
+
+        $currentSekretarisCount = $kelas->siswas()->where('is_sekretaris', true)->count();
+
+        if ($siswa->is_sekretaris) {
+            $siswa->update(['is_sekretaris' => false]);
+            return redirect()->route('pembagian-kelas.show', $kelas->id)
+                ->with('success', 'Siswa ' . $siswa->nama . ' berhasil dicopot dari Sekretaris.');
+        }
+
+        if ($currentSekretarisCount >= 2) {
+            return redirect()->route('pembagian-kelas.show', $kelas->id)
+                ->with('error', 'Maksimal 2 sekretaris per kelas. Lepaskan salah satu sekretaris terlebih dahulu.');
+        }
+
+        $siswa->update(['is_sekretaris' => true]);
+
+        return redirect()->route('pembagian-kelas.show', $kelas->id)
+            ->with('success', 'Siswa ' . $siswa->nama . ' berhasil ditetapkan sebagai Sekretaris.');
+    }
 }

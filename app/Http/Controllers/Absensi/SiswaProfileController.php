@@ -97,18 +97,37 @@ class SiswaProfileController extends Controller
         $currentUser = auth()->user();
         $userRole = $this->getUserRole($currentUser);
 
+        // Normalize phone numbers: strip non-digit characters
+        if ($request->filled('no_hp')) {
+            $request->merge(['no_hp' => preg_replace('/[^0-9]/', '', $request->no_hp)]);
+        } elseif ($request->has('no_hp')) {
+            $request->merge(['no_hp' => null]);
+        }
+        if ($request->filled('no_hp_orang_tua')) {
+            $request->merge(['no_hp_orang_tua' => preg_replace('/[^0-9]/', '', $request->no_hp_orang_tua)]);
+        } elseif ($request->has('no_hp_orang_tua')) {
+            $request->merge(['no_hp_orang_tua' => null]);
+        }
+
+        $canStudentEditClass = (\App\Models\Setting::where('key', 'restriksi_kelas')->value('value') ?? 'off') === 'on';
+
         // Validation Rules (Role Restricted)
         $rules = [
-            'kelas_id'        => 'nullable|exists:kelas,id',
             'nama_orang_tua'  => 'nullable|string|max:150',
-            'no_hp'           => 'nullable|string|max:20',
-            'no_hp_orang_tua' => 'nullable|string|max:20',
+            'no_hp'           => 'nullable|regex:/^[0-9]{8,15}$/',
+            'no_hp_orang_tua' => 'nullable|regex:/^[0-9]{8,15}$/',
             'alamat'          => 'nullable|string',
             'avatar'          => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
 
+        if ($userRole === 'admin' || $userRole === 'guru' || $userRole === 'kesiswaan' || $canStudentEditClass) {
+            $rules['kelas_id'] = 'nullable|exists:kelas,id';
+        }
+
         $messages = [
-            'kelas_id.exists' => 'Kelas tidak valid.',
+            'kelas_id.exists'        => 'Kelas tidak valid.',
+            'no_hp.regex'            => 'Nomor HP siswa hanya boleh berisi angka (8-15 digit).',
+            'no_hp_orang_tua.regex'  => 'Nomor HP orang tua hanya boleh berisi angka (8-15 digit).',
         ];
 
         // Admin / Guru / Kesiswaan can update everything
@@ -138,9 +157,11 @@ class SiswaProfileController extends Controller
 
         // Apply role restrictions on update fields
         if ($userRole === 'siswa' || $userRole === 'orang_tua') {
-            $siswa->update($request->only(
-                'kelas_id', 'nama_orang_tua', 'no_hp', 'no_hp_orang_tua', 'alamat'
-            ));
+            $allowedFields = ['nama_orang_tua', 'no_hp', 'no_hp_orang_tua', 'alamat'];
+            if ($canStudentEditClass) {
+                $allowedFields[] = 'kelas_id';
+            }
+            $siswa->update($request->only($allowedFields));
         } else {
             $siswa->update($request->only(
                 'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tempat_lahir',
@@ -170,7 +191,8 @@ class SiswaProfileController extends Controller
                 if ($info->avatar) {
                     Storage::delete($info->avatar);
                 }
-                $info->avatar = Storage::disk('public')->putFile('images', $request->file('avatar'), 'public');
+                $path = 'avatars/siswa/' . $siswa->id;
+                $info->avatar = Storage::disk('public')->putFileAs($path, $request->file('avatar'), 'avatar.jpg', 'public');
             }
 
             if ($request->boolean('avatar_remove')) {

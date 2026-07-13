@@ -28,23 +28,17 @@ test('download template works', function () {
         'jenis_kelamin' => 'L',
     ]);
 
-    // Access route as authenticated user
+    // 1. Check populated download (default)
     $response = $this->actingAs($user)->get(route('siswa.download-template'));
-
     $response->assertStatus(200);
-    $response->assertHeader('Content-Disposition', 'attachment; filename="template_import_siswa.xlsx"');
 
-    // Parse streamed response content
     ob_start();
     $response->sendContent();
     $content = ob_get_clean();
-
     $tempFile = tempnam(sys_get_temp_dir(), 'excel_download_test');
     file_put_contents($tempFile, $content);
-
     $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFile);
-    $sheet = $spreadsheet->getActiveSheet();
-    $rows = $sheet->toArray();
+    $rows = $spreadsheet->getActiveSheet()->toArray();
     unlink($tempFile);
 
     // Verify student info exists in output rows
@@ -56,6 +50,23 @@ test('download template works', function () {
         }
     }
     expect($found)->toBeTrue();
+
+    // 2. Check empty download (?empty=1)
+    $responseEmpty = $this->actingAs($user)->get(route('siswa.download-template', ['empty' => 1]));
+    $responseEmpty->assertStatus(200);
+
+    ob_start();
+    $responseEmpty->sendContent();
+    $contentEmpty = ob_get_clean();
+    $tempFileEmpty = tempnam(sys_get_temp_dir(), 'excel_download_test_empty');
+    file_put_contents($tempFileEmpty, $contentEmpty);
+    $spreadsheetEmpty = \PhpOffice\PhpSpreadsheet\IOFactory::load($tempFileEmpty);
+    $rowsEmpty = $spreadsheetEmpty->getActiveSheet()->toArray();
+    unlink($tempFileEmpty);
+
+    expect(count($rowsEmpty))->toBe(1);
+    expect($rowsEmpty[0][0])->toBe('email');
+    expect($rowsEmpty[0][5])->toBe('nama');
 });
 
 test('import students from excel works', function () {
@@ -169,6 +180,94 @@ test('import students from excel works', function () {
     ]);
 
     // Cleanup temp file
+    if (file_exists($tempFile)) {
+        unlink($tempFile);
+    }
+});
+
+test('import student rejects guru template', function () {
+    $user = User::factory()->create();
+
+    // Create a temporary Teacher template Excel file
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Template Guru');
+    $sheet->setCellValue('A1', 'email');
+    $sheet->setCellValue('B1', 'password');
+    $sheet->setCellValue('C1', 'kata_sandi');
+    $sheet->setCellValue('D1', 'jenis_pengguna');
+    $sheet->setCellValue('E1', 'nip');
+    $sheet->setCellValue('F1', 'nama');
+    
+    // Add a dummy data row to bypass the empty check
+    $sheet->setCellValue('A2', 'teacher@demo.com');
+    $sheet->setCellValue('E2', '19920317');
+    $sheet->setCellValue('F2', 'Teacher Name');
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'excel_import_test_guru_on_siswa');
+    $writer = new Xlsx($spreadsheet);
+    $writer->save($tempFile);
+
+    $uploadedFile = new UploadedFile(
+        $tempFile,
+        'template_import_guru.xlsx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        null,
+        true
+    );
+
+    $response = $this->actingAs($user)->post(route('siswa.import'), [
+        'file' => $uploadedFile,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors(['error']);
+    expect(session('errors')->first('error'))->toContain('template Guru');
+
+    if (file_exists($tempFile)) {
+        unlink($tempFile);
+    }
+});
+
+test('import teacher rejects student template', function () {
+    $user = User::factory()->create();
+
+    // Create a temporary Student template Excel file
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Template Siswa');
+    $sheet->setCellValue('A1', 'email');
+    $sheet->setCellValue('B1', 'password');
+    $sheet->setCellValue('C1', 'kata_sandi');
+    $sheet->setCellValue('D1', 'jenis_pengguna');
+    $sheet->setCellValue('E1', 'nis');
+    $sheet->setCellValue('F1', 'nama');
+
+    // Add a dummy data row to bypass the empty check
+    $sheet->setCellValue('A2', 'student@demo.com');
+    $sheet->setCellValue('E2', '12345');
+    $sheet->setCellValue('F2', 'Student Name');
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'excel_import_test_siswa_on_guru');
+    $writer = new Xlsx($spreadsheet);
+    $writer->save($tempFile);
+
+    $uploadedFile = new UploadedFile(
+        $tempFile,
+        'template_import_siswa.xlsx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        null,
+        true
+    );
+
+    $response = $this->actingAs($user)->post(route('guru.import'), [
+        'file' => $uploadedFile,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors(['error']);
+    expect(session('errors')->first('error'))->toContain('template Siswa');
+
     if (file_exists($tempFile)) {
         unlink($tempFile);
     }

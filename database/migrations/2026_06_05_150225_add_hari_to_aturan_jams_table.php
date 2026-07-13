@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('aturan_jams', function (Blueprint $table) {
-            $table->enum('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'])
+            $table->enum('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
                   ->nullable()
                   ->after('nama')
                   ->comment('Hari berlakunya aturan jam');

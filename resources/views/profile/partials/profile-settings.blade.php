@@ -29,6 +29,7 @@
     };
 
     $isStudentUser = ($userRole === 'siswa' || $userRole === 'orang_tua');
+    $canStudentEditClass = (\App\Models\Setting::where('key', 'restriksi_kelas')->value('value') ?? 'off') === 'on';
 @endphp
 
 <!--begin::Card - Edit Profil-->
@@ -106,7 +107,8 @@
                 </div>
 
             @elseif($profileRole === 'guru' || $profileRole === 'kesiswaan')
-                <!-- Nama & NIP (Guru) -->
+                @php $isOwnGuruProfile = ($userRole === 'guru' || $userRole === 'kesiswaan'); @endphp
+                <!-- Nama Lengkap -->
                 <div class="row mb-6">
                     <label class="col-lg-4 col-form-label required fw-bold fs-6">Nama Lengkap</label>
                     <div class="col-lg-8 fv-row">
@@ -114,29 +116,31 @@
                     </div>
                 </div>
 
+                <!-- NIP (readonly untuk own profile) -->
                 <div class="row mb-6">
                     <label class="col-lg-4 col-form-label fw-bold fs-6">NIP (Nomor Induk Pegawai)</label>
                     <div class="col-lg-8 fv-row">
-                        <input type="text" name="nip" class="form-control form-control-lg form-control-solid" placeholder="NIP" value="{{ old('nip', $guru->nip) }}" />
+                        <input type="text" name="nip" class="form-control form-control-lg form-control-solid" placeholder="NIP" value="{{ old('nip', $guru->nip) }}" {{ $isOwnGuruProfile ? 'readonly' : '' }} />
                     </div>
                 </div>
 
-                <!-- Email & No HP (Guru) -->
+                <!-- Email (readonly untuk own profile) -->
                 <div class="row mb-6">
                     <label class="col-lg-4 col-form-label fw-bold fs-6">Alamat Email</label>
                     <div class="col-lg-8 fv-row">
-                        <input type="email" name="email" class="form-control form-control-lg form-control-solid" placeholder="Email" value="{{ old('email', $guru->email) }}" />
+                        <input type="email" name="email" class="form-control form-control-lg form-control-solid" placeholder="Email" value="{{ old('email', $guru->email) }}" {{ $isOwnGuruProfile ? 'readonly' : '' }} />
                     </div>
                 </div>
 
+                <!-- No HP -->
                 <div class="row mb-6">
                     <label class="col-lg-4 col-form-label fw-bold fs-6">Nomor HP</label>
                     <div class="col-lg-8 fv-row">
-                        <input type="text" name="no_hp" class="form-control form-control-lg form-control-solid" placeholder="Nomor HP" value="{{ old('no_hp', $guru->no_hp) }}" />
+                        <input type="text" name="no_hp" class="form-control form-control-lg form-control-solid" placeholder="Nomor HP" value="{{ old('no_hp', $guru->no_hp) }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
                     </div>
                 </div>
 
-                <!-- Alamat (Guru) -->
+                <!-- Alamat -->
                 <div class="row mb-6">
                     <label class="col-lg-4 col-form-label fw-bold fs-6">Alamat Lengkap</label>
                     <div class="col-lg-8 fv-row">
@@ -174,7 +178,7 @@
                 <div class="row mb-6">
                     <label class="col-lg-4 col-form-label fw-bold fs-6">Kelas</label>
                     <div class="col-lg-8 fv-row">
-                        @if ($isStudentUser)
+                        @if ($isStudentUser && !$canStudentEditClass)
                             <input type="text" class="form-control form-control-lg form-control-solid" value="{{ ($siswa->kelas->tingkat ?? '') . ' ' . ($siswa->kelas->nama ?? '') }}" readonly />
                         @else
                             <select name="kelas_id" class="form-select form-select-lg form-select-solid" data-control="select2">
@@ -235,11 +239,11 @@
                         <div class="row">
                             <div class="col-lg-6 fv-row">
                                 <label class="fs-8 text-muted">No. HP Siswa</label>
-                                <input type="text" name="no_hp" class="form-control form-control-lg form-control-solid" placeholder="No HP Siswa" value="{{ old('no_hp', $siswa->no_hp) }}" />
+                                <input type="text" name="no_hp" class="form-control form-control-lg form-control-solid" placeholder="No HP Siswa" value="{{ old('no_hp', $siswa->no_hp) }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
                             </div>
                             <div class="col-lg-6 fv-row">
                                 <label class="fs-8 text-muted">No. HP Orang Tua / Wali</label>
-                                <input type="text" name="no_hp_orang_tua" class="form-control form-control-lg form-control-solid" placeholder="No HP Orang Tua" value="{{ old('no_hp_orang_tua', $siswa->no_hp_orang_tua) }}" />
+                                <input type="text" name="no_hp_orang_tua" class="form-control form-control-lg form-control-solid" placeholder="No HP Orang Tua" value="{{ old('no_hp_orang_tua', $siswa->no_hp_orang_tua) }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
                             </div>
                         </div>
                     </div>
@@ -324,6 +328,58 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (window.jQuery) {
+            // Filter non-numeric input on phone fields
+            $(document).on('input', 'input[inputmode="numeric"]', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+
+            // Image Compression untuk Avatar Upload
+            var MAX_WIDTH = 800;
+            var MAX_HEIGHT = 800;
+            var QUALITY = 0.7;
+
+            $('input[name="avatar"]').on('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+
+                // Skip if file is already small enough
+                if (file.size <= 100 * 1024) return;
+
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var canvas = document.createElement('canvas');
+                        var w = img.width, h = img.height;
+
+                        if (w > MAX_WIDTH || h > MAX_HEIGHT) {
+                            var ratio = Math.min(MAX_WIDTH / w, MAX_HEIGHT / h);
+                            w = Math.round(w * ratio);
+                            h = Math.round(h * ratio);
+                        }
+
+                        canvas.width = w;
+                        canvas.height = h;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+
+                        canvas.toBlob(function(blob) {
+                            if (blob.size < file.size) {
+                                var newFile = new File([blob], file.name, {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                var dt = new DataTransfer();
+                                dt.items.add(newFile);
+                                e.target.files = dt.files;
+                            }
+                        }, 'image/jpeg', QUALITY);
+                    };
+                    img.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
             // Handle SweetAlert2 Confirmation for Edit Profile
             $('#form_edit_profil').on('submit', function(e) {
                 e.preventDefault();

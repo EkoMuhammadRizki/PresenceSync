@@ -25,7 +25,7 @@
 <div class="row g-6 g-xl-9 mb-8">
     <div class="col-md-4">
         <!--begin::Card-->
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
+        <div class="card card-dashed flex-center min-w-175px my-3 p-6 h-100">
             <span class="fs-4 fw-bold text-info pb-1px">Status Hari Ini</span>
             @if ($hasCheckedInToday && $kehadiranHariIni)
                 @if ($kehadiranHariIni->status === 'hadir')
@@ -51,7 +51,7 @@
 
     <div class="col-md-4">
         <!--begin::Card-->
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
+        <div class="card card-dashed flex-center min-w-175px my-3 p-6 h-100">
             <span class="fs-4 fw-bold text-success pb-1px">Total Hadir</span>
             <span class="fs-2hx fw-bolder text-dark">{{ $kehadirans->whereIn('status', ['hadir', 'terlambat'])->count() }}</span>
             <span class="fs-7 fw-bold text-gray-400">Pertemuan Semester Ini</span>
@@ -61,7 +61,7 @@
 
     <div class="col-md-4">
         <!--begin::Card-->
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
+        <div class="card card-dashed flex-center min-w-175px my-3 p-6 h-100">
             <span class="fs-4 fw-bold text-warning pb-1px">Ketidakhadiran & Izin</span>
             <span class="fs-2hx fw-bolder text-dark">{{ $kehadirans->whereIn('status', ['sakit', 'izin', 'alpha'])->count() }}</span>
             <span class="fs-7 fw-bold text-gray-400">Sakit, Izin & Alpha</span>
@@ -71,100 +71,124 @@
 </div>
 <!--end::Info Cards-->
 
-<!--begin::Card - Riwayat Kehadiran-->
-<div class="card">
-    <!--begin::Card Header-->
-    <div class="card-header border-0 pt-6">
-        <div class="card-title">
-            <h3 class="fw-bolder">Daftar Kehadiran</h3>
-        </div>
-        <div class="card-toolbar">
-            @if (!$hasCheckedInToday)
-                <!-- Tombol Izin -->
-                <button type="button" class="btn btn-warning btn-sm me-3" data-bs-toggle="modal" data-bs-target="#modal_izin">
-                    {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg", "svg-icon-3") !!}
-                    Izin
-                </button>
+<!--begin::Izin & Presensi Buttons-->
+<div class="d-flex justify-content-end gap-2 mb-4">
+    @if (!$hasCheckedInToday)
+        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modal_izin">
+            {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg", "svg-icon-3") !!}
+            Izin
+        </button>
 
-                <!-- Tombol Presensi -->
-                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modal_presensi">
-                    {!! theme()->getSvgIcon("icons/duotune/general/gen048.svg", "svg-icon-3") !!}
-                    Presensi
-                </button>
-            @else
-                <button type="button" class="btn btn-light-success btn-sm disabled" disabled>
-                    {!! theme()->getSvgIcon("icons/duotune/general/gen043.svg", "svg-icon-3") !!}
-                    Sudah Absen Hari Ini
-                </button>
-            @endif
-        </div>
-    </div>
-    <!--end::Card Header-->
-
-    <!--begin::Card Body-->
-    <div class="card-body py-4">
-        @php
-            $daysIndo = [
-                'Sunday' => 'Minggu',
-                'Monday' => 'Senin',
-                'Tuesday' => 'Selasa',
-                'Wednesday' => 'Rabu',
-                'Thursday' => 'Kamis',
-                'Friday' => 'Jumat',
-                'Saturday' => 'Sabtu',
-            ];
-        @endphp
-
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_kehadiran_siswa">
-            <thead>
-                <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-50px">No</th>
-                    <th class="min-w-150px">Nama</th>
-                    <th class="min-w-100px">Hari</th>
-                    <th class="min-w-120px">Tanggal</th>
-                    <th class="min-w-100px">Jam Masuk</th>
-                    <th class="min-w-150px">Keterangan Masuk</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-600 fw-bold">
-                @foreach ($kehadirans as $kh)
-                    @php
-                        $dateObj = \Carbon\Carbon::parse($kh->tanggal);
-                        $hari = $daysIndo[$dateObj->format('l')] ?? 'Senin';
-                        $tanggalFormatted = $dateObj->translatedFormat('d F Y');
-                        $dayNumber = $dateObj->day;
-                    @endphp
-                    <tr>
-                        <td class="text-gray-800">{{ $dayNumber }}</td>
-                        <td>{{ $siswa->nama }}</td>
-                        <td>{{ $hari }}</td>
-                        <td>{{ $tanggalFormatted }}</td>
-                        <td>{{ $kh->jam_masuk ?? '-' }}</td>
-                        <td>
-                            @if ($kh->status === 'hadir')
-                                <span class="badge badge-light-success fw-bolder">Tepat</span>
-                            @elseif ($kh->status === 'terlambat')
-                                <span class="badge badge-light-warning fw-bolder">Terlambat</span>
-                            @elseif ($kh->status === 'sakit')
-                                <span class="badge badge-light-primary fw-bolder">Sakit</span>
-                            @elseif ($kh->status === 'izin')
-                                <span class="badge badge-light-info fw-bolder">Izin</span>
-                            @else
-                                <span class="badge badge-light-danger fw-bolder">Alpha</span>
-                            @endif
-
-                            @if($kh->keterangan)
-                                <div class="fs-7 text-muted fw-normal mt-1">{{ $kh->keterangan }}</div>
-                            @endif
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-    <!--end::Card Body-->
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modal_presensi">
+            {!! theme()->getSvgIcon("icons/duotune/general/gen048.svg", "svg-icon-3") !!}
+            Presensi
+        </button>
+    @else
+        <button type="button" class="btn btn-light-success btn-sm disabled" disabled>
+            {!! theme()->getSvgIcon("icons/duotune/general/gen043.svg", "svg-icon-3") !!}
+            Sudah Absen Hari Ini
+        </button>
+    @endif
 </div>
-<!--end::Card-->
+<!--end::Izin & Presensi Buttons-->
+
+<!--begin::Card - Riwayat Kehadiran-->
+<div class="card card-flush shadow-sm">
+    <!-- Title bar with blue background -->
+    <div class="card-header bg-primary py-3 rounded-top">
+        <div class="card-title text-white fw-bolder fs-5 m-0 d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text text-white fs-4"></i> Daftar Kehadiran
+        </div>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="card-body py-4 border-bottom">
+        <form method="GET" action="{{ route('siswa.dashboard') }}" id="filter_form" class="d-flex align-items-center flex-wrap gap-5 justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <label class="form-label fw-bold mb-0 me-2 text-nowrap">Periode:</label>
+                <select name="periode" class="form-select form-select-solid form-select-sm w-180px" onchange="document.getElementById('filter_form').submit()">
+                    @php
+                        $startMonth = \Carbon\Carbon::now()->startOfMonth()->subMonths(6);
+                    @endphp
+                    @for ($i = 0; $i < 13; $i++)
+                        @php
+                            $pVal = $startMonth->format('Ym');
+                            $pLabel = $startMonth->isoFormat('MMMM Y');
+                            $startMonth->addMonth();
+                        @endphp
+                        <option value="{{ $pVal }}" {{ $periode == $pVal ? 'selected' : '' }}>
+                            {{ $pLabel }}
+                        </option>
+                    @endfor
+                </select>
+                
+                @if($periode)
+                    @php
+                        $selectedMonthName = \Carbon\Carbon::createFromDate(substr($periode, 0, 4), substr($periode, 4, 2), 1)->isoFormat('MMMM Y');
+                    @endphp
+                    <div class="d-flex align-items-center bg-light-primary rounded border border-primary border-dashed px-3 py-1 fs-7 text-primary fw-bolder">
+                        Periode: {{ $selectedMonthName }}
+                        <a href="{{ route('siswa.dashboard') }}" class="btn btn-icon btn-xs btn-active-color-primary ms-2 text-primary p-0">✗</a>
+                    </div>
+                @endif
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ route('siswa.dashboard.export', ['periode' => $periode]) }}" class="btn btn-light-success btn-sm btn-md-md">
+                    {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
+                    <span class="d-none d-sm-inline">Ekspor Daftar Kehadiran</span>
+                    <span class="d-inline d-sm-none">Ekspor</span>
+                </a>
+
+                <div class="text-gray-600 fs-7 fw-bold" id="showing_count_label">
+                    Menampilkan 1-{{ $daysInMonth }} dari {{ $daysInMonth }} data
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle gs-4 gy-3 mb-0" id="kt_table_kehadiran_siswa">
+                <thead>
+                    <tr class="bg-light fw-bolder fs-7 text-uppercase text-gray-800 text-center border-bottom border-gray-300">
+                        <th class="w-50px border-end">No</th>
+                        <th class="min-w-100px border-end">NISN</th>
+                        <th class="min-w-150px border-end">Nama</th>
+                        <th class="w-150px border-end">Tanggal</th>
+                        <th class="w-80px border-end">Msk/Lbr</th>
+                        <th class="w-100px border-end">Masuk Jam</th>
+                        <th class="min-w-120px border-end">Keterangan</th>
+                    </tr>
+                </thead>
+
+                <tbody class="text-gray-700 fw-bold fs-7">
+                    @foreach ($attendanceRows as $row)
+                        <tr class="{{ $row['is_libur'] ? 'bg-light-danger text-muted' : '' }} border-bottom border-gray-200">
+                            <td class="text-center border-end" data-col="no">{{ $row['no'] }}</td>
+                            <td class="border-end" data-col="nisn">{{ $row['nisn'] }}</td>
+                            <td class="border-end" data-col="nama">{{ $row['nama'] }}</td>
+                            <td class="border-end" data-col="tanggal">{{ $row['tanggal'] }}</td>
+                            <td class="text-center border-end" data-col="msk_lbr">
+                                @if ($row['msk_lbr'] === '✓')
+                                    <span class="text-success fw-bolder fs-5">✓</span>
+                                @elseif ($row['msk_lbr'] === '✗')
+                                    <span class="text-danger fw-bolder fs-5">✗</span>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="text-center border-end text-danger" data-col="msk_jam">{{ $row['msk_jam'] ?: '-' }}</td>
+                            <td class="border-end" data-col="keterangan">{{ $row['keterangan'] ?: '-' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!--end::Card - Riwayat Kehadiran-->
 
 <!--begin::Modal Presensi-->
 <div class="modal fade" id="modal_presensi" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -181,23 +205,24 @@
                     <!-- Kamera -->
                     <div class="fv-row mb-5">
                         <label class="required fw-bold fs-6 mb-2">Foto Kehadiran</label>
-                        <div class="position-relative rounded overflow-hidden bg-dark" style="width:100%; aspect-ratio:4/3;">
+                        <div class="position-relative rounded overflow-hidden bg-dark mb-3" style="width:100%; aspect-ratio:4/3;">
                             <video id="presensi_video" autoplay playsinline muted
                                    style="width:100%; height:100%; object-fit:cover; display:block;"></video>
                             <canvas id="presensi_canvas" style="display:none;"></canvas>
                             <!-- Preview hasil foto -->
                             <img id="presensi_preview" src="" alt="Preview"
                                  style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" />
-                            <!-- Overlay tombol -->
-                            <div id="camera_controls" class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-3 p-3">
+                        </div>
+                        <!-- Tombol Kontrol Kamera di Bawah Frame -->
+                        <div class="d-flex justify-content-center gap-3 mb-3">
+                            <div id="camera_controls">
                                 <button type="button" id="btn_capture" class="btn btn-success btn-sm px-5">
                                     <i class="bi bi-camera-fill me-1"></i> Ambil Foto
                                 </button>
                             </div>
-                            <div id="retake_controls" style="display:none;"
-                                 class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-3 p-3">
-                                <button type="button" id="btn_retake" class="btn btn-light btn-sm px-5">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Ulangi
+                            <div id="retake_controls" style="display:none;">
+                                <button type="button" id="btn_retake" class="btn btn-icon btn-light-warning btn-sm rounded-circle" title="Ambil Ulang Foto">
+                                    <i class="bi bi-arrow-counterclockwise fs-3"></i>
                                 </button>
                             </div>
                         </div>
@@ -264,23 +289,24 @@
                     <!-- Kamera -->
                     <div class="fv-row mb-5">
                         <label class="required fw-bold fs-6 mb-2">Foto Bukti</label>
-                        <div class="position-relative rounded overflow-hidden bg-dark" style="width:100%; aspect-ratio:4/3;">
+                        <div class="position-relative rounded overflow-hidden bg-dark mb-3" style="width:100%; aspect-ratio:4/3;">
                             <video id="izin_video" autoplay playsinline muted
                                    style="width:100%; height:100%; object-fit:cover; display:block;"></video>
                             <canvas id="izin_canvas" style="display:none;"></canvas>
                             <!-- Preview hasil foto -->
                             <img id="izin_preview" src="" alt="Preview"
                                  style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" />
-                            <!-- Overlay tombol -->
-                            <div id="izin_camera_controls" class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-3 p-3">
+                        </div>
+                        <!-- Tombol Kontrol Kamera di Bawah Frame -->
+                        <div class="d-flex justify-content-center gap-3 mb-3">
+                            <div id="izin_camera_controls">
                                 <button type="button" id="btn_capture_izin" class="btn btn-warning btn-sm px-5">
                                     <i class="bi bi-camera-fill me-1"></i> Ambil Foto
                                 </button>
                             </div>
-                            <div id="izin_retake_controls" style="display:none;"
-                                 class="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center gap-3 p-3">
-                                <button type="button" id="btn_retake_izin" class="btn btn-light btn-sm px-5">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Ulangi
+                            <div id="izin_retake_controls" style="display:none;">
+                                <button type="button" id="btn_retake_izin" class="btn btn-icon btn-light-warning btn-sm rounded-circle" title="Ambil Ulang Foto">
+                                    <i class="bi bi-arrow-counterclockwise fs-3"></i>
                                 </button>
                             </div>
                         </div>
@@ -312,14 +338,14 @@
                     <div class="fv-row mb-2">
                         <label class="required fw-bold fs-6 mb-2">Alasan Izin</label>
                         <textarea name="keterangan" id="textarea_izin" class="form-control form-control-solid"
-                                  rows="6" placeholder="Tuliskan alasan izin secara detail (minimal 500 karakter)..."
-                                  required minlength="500"></textarea>
+                                  rows="6" placeholder="Tuliskan alasan izin secara detail (maksimal 500 karakter)..."
+                                  required maxlength="500"></textarea>
                         <div class="d-flex justify-content-between mt-1">
                             <div id="izin_length_error" class="text-danger fs-7" style="display:none;">
-                                Alasan izin minimal 500 karakter.
+                                Alasan izin maksimal 500 karakter.
                             </div>
                             <div class="text-muted fs-7 ms-auto">
-                                <span id="izin_char_count">0</span> / 500 karakter minimum
+                                <span id="izin_char_count">0</span> / 500 karakter maksimal
                             </div>
                         </div>
                     </div>
@@ -338,6 +364,11 @@
 </div>
 <!--end::Modal Izin-->
 
+@section('styles')
+<style>
+</style>
+@endsection
+
 @section('scripts')
 {{-- Leaflet.js untuk peta --}}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -347,11 +378,10 @@
 $(document).ready(function() {
     // ─── DataTable ───────────────────────────────────────────────
     $('#kt_table_kehadiran_siswa').DataTable({
-        dom:"<'table-responsive'tr><'row'<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'li><'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>>",
-        info: true,
-        order: [],
-        pageLength: 10,
-        lengthChange: true
+        paging: false,
+        searching: false,
+        info: false,
+        order: []
     });
 
     // ─── Modal Presensi: Kamera & Maps ───────────────────────────
@@ -604,7 +634,7 @@ $(document).ready(function() {
     $('#textarea_izin').on('input', function() {
         var len = $(this).val().length;
         $('#izin_char_count').text(len);
-        if (len < 500) {
+        if (len > 500) {
             $('#izin_char_count').addClass('text-danger').removeClass('text-success');
         } else {
             $('#izin_char_count').addClass('text-success').removeClass('text-danger');
@@ -631,7 +661,7 @@ $(document).ready(function() {
 
         // Validasi karakter
         var len = $('#textarea_izin').val().length;
-        if (len < 500) {
+        if (len > 500) {
             $('#izin_length_error').show();
             $('#textarea_izin').focus();
             valid = false;

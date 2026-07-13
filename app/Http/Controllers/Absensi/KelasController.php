@@ -17,6 +17,14 @@ class KelasController extends Controller
         return view('pages.absensi.kelas-data', compact('kelas', 'gurus'));
     }
 
+    public function show(Kelas $kelas)
+    {
+        $kelas->load(['guru', 'siswas', 'jadwalPelajarans.kelas']);
+        $kelas->loadCount('siswas');
+
+        return view('pages.absensi.profil-kelas', compact('kelas'));
+    }
+
     public function store(Request $request)
     {
         // Validasi: guru harus sudah ada di database
@@ -36,6 +44,13 @@ class KelasController extends Controller
             'tingkat.in'          => 'Tingkat kelas harus 10, 11, atau 12.',
         ]);
 
+        if ($request->guru_id) {
+            $alreadyAssigned = Kelas::where('guru_id', $request->guru_id)->exists();
+            if ($alreadyAssigned) {
+                return redirect()->back()->withInput()->withErrors(['guru_id' => 'Guru tersebut sudah menjadi wali kelas di kelas lain.']);
+            }
+        }
+
         Kelas::create($request->only('guru_id', 'nama', 'tingkat', 'status'));
 
         return redirect()->route('kelas.index')
@@ -51,6 +66,15 @@ class KelasController extends Controller
             'status'     => 'required|in:aktif,nonaktif',
         ]);
 
+        if ($request->guru_id) {
+            $alreadyAssigned = Kelas::where('guru_id', $request->guru_id)
+                ->where('id', '!=', $kelas->id)
+                ->exists();
+            if ($alreadyAssigned) {
+                return redirect()->back()->withInput()->withErrors(['guru_id' => 'Guru tersebut sudah menjadi wali kelas di kelas lain.']);
+            }
+        }
+
         $kelas->update($request->only('guru_id', 'nama', 'tingkat', 'status'));
 
         return redirect()->route('kelas.index')
@@ -59,9 +83,26 @@ class KelasController extends Controller
 
     public function destroy(Kelas $kelas)
     {
+        $relations = [];
         if ($kelas->siswas()->exists()) {
+            $relations[] = 'data siswa';
+        }
+        if ($kelas->jadwalPelajarans()->exists()) {
+            $relations[] = 'jadwal pelajaran';
+        }
+        if (!empty($relations)) {
+            $relationsStr = implode(' dan ', $relations);
+            $directions = [];
+            if ($kelas->siswas()->exists()) {
+                $directions[] = '<a href="' . route('siswa.index') . '" class="text-primary fw-bold text-decoration-underline">Data Siswa</a>';
+            }
+            if ($kelas->jadwalPelajarans()->exists()) {
+                $directions[] = '<a href="' . route('jadwal-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Jadwal Pelajaran</a>';
+            }
+            $msg = "Kelas ini tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
+            
             return redirect()->route('kelas.index')
-                ->with('error', 'Kelas tidak dapat dihapus karena masih memiliki data siswa.');
+                ->with('error', $msg);
         }
 
         $kelas->delete();

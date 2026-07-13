@@ -81,12 +81,19 @@ var KTSigninGeneral = function () {
                             });
                         })
                         .catch(function (error) {
-                            let dataMessage = error.response.data.message;
+                            let dataMessage = "";
                             let dataErrors = error.response.data.errors;
 
-                            for (const errorsKey in dataErrors) {
-                                if (!dataErrors.hasOwnProperty(errorsKey)) continue;
-                                dataMessage += "\r\n" + dataErrors[errorsKey];
+                            if (dataErrors) {
+                                let errorList = [];
+                                for (const errorsKey in dataErrors) {
+                                    if (dataErrors.hasOwnProperty(errorsKey)) {
+                                        errorList.push(dataErrors[errorsKey]);
+                                    }
+                                }
+                                dataMessage = errorList.join("\r\n");
+                            } else {
+                                dataMessage = error.response.data.message || "Terjadi kesalahan.";
                             }
 
                             if (error.response) {

@@ -59,6 +59,11 @@
                             <div class="fs-6 fw-bolder text-gray-700">{{ $kelas->siswas_count }}</div>
                             <div class="fw-bold text-gray-400 fs-7">Total Siswa</div>
                         </div>
+                        @php $sekretarisCount = $kelas->siswas->where('is_sekretaris', true)->count(); @endphp
+                        <div class="border border-dashed rounded min-w-90px py-3 px-4 mx-2 mb-3">
+                            <div class="fs-6 fw-bolder text-gray-700">{{ $sekretarisCount }}</div>
+                            <div class="fw-bold text-gray-400 fs-7">Sekretaris</div>
+                        </div>
                     </div>
                 </div>
                 <!--end::Summary-->
@@ -119,7 +124,8 @@
                                     <th class="min-w-100px">NIS</th>
                                     <th class="min-w-150px">Nama</th>
                                     <th class="min-w-90px">Jenis Kelamin</th>
-                                    <th class="text-end min-w-70px">Aksi</th>
+                                    <th class="min-w-70px">Sekretaris</th>
+                                    <th class="text-end min-w-120px">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="text-gray-600 fw-bold">
@@ -134,17 +140,40 @@
                                             </div>
                                         </div>
                                         <span>{{ $siswa->nama }}</span>
+                                        @if ($siswa->is_sekretaris)
+                                            <span class="badge badge-light-warning fw-bolder ms-2 fs-8 py-1 px-3">Sekretaris</span>
+                                        @endif
                                     </td>
                                     <td>{{ $siswa->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
-                                    <td class="text-end">
-                                        <form action="{{ route('pembagian-kelas.remove-siswa', [$kelas->id, $siswa->id]) }}" method="POST" class="d-inline form-remove-siswa">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-light-danger btn-sm btn-remove-siswa">
-                                                {!! theme()->getSvgIcon("icons/duotune/general/gen027.svg", "svg-icon-4") !!}
-                                                Keluarkan
-                                            </button>
-                                        </form>
+                                    <td>
+                                        @if ($siswa->is_sekretaris)
+                                            <span class="badge badge-success">Aktif</span>
+                                        @else
+                                            <span class="badge badge-secondary">Tidak</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 justify-content-end">
+                                            <form action="{{ route('pembagian-kelas.set-sekretaris', [$kelas->id, $siswa->id]) }}" method="POST" class="form-set-sekretaris">
+                                                @csrf
+                                                @if ($siswa->is_sekretaris)
+                                                    <button type="submit" class="btn btn-light-warning btn-sm">
+                                                        Copot Sekretaris
+                                                    </button>
+                                                @else
+                                                    <button type="submit" class="btn btn-light-primary btn-sm" {{ $sekretarisCount >= 2 ? 'disabled' : '' }}>
+                                                        Set Sekretaris
+                                                    </button>
+                                                @endif
+                                            </form>
+                                            <form action="{{ route('pembagian-kelas.remove-siswa', [$kelas->id, $siswa->id]) }}" method="POST" class="form-remove-siswa">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-light-danger btn-sm btn-remove-siswa">
+                                                    Keluarkan
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -194,6 +223,12 @@
 
 @section('styles')
 <style>
+    #kt_table_siswa_kelas td:last-child .btn {
+        min-width: 115px;
+    }
+    .dataTables_info {
+        padding-left: 12px !important;
+    }
     /* Sembunyikan tag choice di dalam box, biarkan placeholder tetap tampil */
     #select_siswa_kelas ~ .select2-container .select2-selection__choice {
         display: none !important;
@@ -267,7 +302,7 @@ $(document).ready(function() {
         order: [],
         pageLength: 10,
         lengthChange: true,
-        columnDefs: [{orderable: false, targets: [0, 4]}]
+        columnDefs: [{orderable: false, targets: [0, 5]}]
     });
 
     // Form validation with SweetAlert2
@@ -314,6 +349,29 @@ $(document).ready(function() {
             confirmButtonText: 'Ya, Keluarkan',
             cancelButtonText: 'Batal',
             confirmButtonColor: '#F1416C',
+            cancelButtonColor: '#7E8299',
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
+
+    $(document).on('submit', '.form-set-sekretaris', function(e) {
+        e.preventDefault();
+        var form = this;
+        var button = $(this).find('button[type="submit"]');
+        var isActive = button.text().trim().includes('Copot');
+        var title = isActive ? 'Copot Sekretaris?' : 'Set sebagai Sekretaris?';
+        var text = isActive ? 'Siswa akan dicopot dari jabatan sekretaris kelas.' : 'Siswa akan ditetapkan sebagai sekretaris kelas.';
+        Swal.fire({
+            icon: 'question',
+            title: title,
+            text: text,
+            showCancelButton: true,
+            confirmButtonText: isActive ? 'Ya, Copot' : 'Ya, Set',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: isActive ? '#F1416C' : '#009EF7',
             cancelButtonColor: '#7E8299',
         }).then(function(result) {
             if (result.isConfirmed) {

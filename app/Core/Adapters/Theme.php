@@ -359,8 +359,14 @@ class Theme extends \App\Core\Theme
      */
     public static function getCurrentMode()
     {
-        if (self::isDarkModeEnabled() && isset($_REQUEST['mode']) && $_REQUEST['mode']) {
-            return $_REQUEST['mode'];
+        if (self::isDarkModeEnabled()) {
+            if (isset($_REQUEST['mode']) && $_REQUEST['mode']) {
+                return $_REQUEST['mode'];
+            }
+
+            if (isset($_COOKIE['kt-theme-mode']) && $_COOKIE['kt-theme-mode'] === 'dark') {
+                return 'dark';
+            }
         }
 
         return 'light';

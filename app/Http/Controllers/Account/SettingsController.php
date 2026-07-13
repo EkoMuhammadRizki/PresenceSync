@@ -62,8 +62,12 @@ class SettingsController extends Controller
         }
 
         // include to save avatar
-        if ($avatar = $this->upload()) {
-            $info->avatar = $avatar;
+        if ($request->hasFile('avatar')) {
+            if ($info->avatar) {
+                Storage::delete($info->avatar);
+            }
+            $path = 'avatars/admin/' . auth()->id();
+            $info->avatar = Storage::disk('public')->putFileAs($path, $request->file('avatar'), 'avatar.jpg', 'public');
         }
 
         if ($request->boolean('avatar_remove')) {

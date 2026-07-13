@@ -21,9 +21,7 @@ return array(
         'title'  => 'Login',
         'assets' => array(
             'custom' => array(
-                'js' => array(
-                    'js/custom/authentication/sign-in/general.js',
-                ),
+                'js' => array(),
             ),
         ),
         'layout' => array(

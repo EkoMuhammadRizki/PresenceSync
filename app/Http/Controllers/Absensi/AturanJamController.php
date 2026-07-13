@@ -17,7 +17,7 @@ class AturanJamController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'jam_masuk'               => 'required',
             'toleransi_keterlambatan' => 'required|integer|min:0',
             'jam_pulang'              => 'required',
@@ -51,7 +51,7 @@ class AturanJamController extends Controller
     public function update(Request $request, AturanJam $aturanJam)
     {
         $request->validate([
-            'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'jam_masuk'               => 'required',
             'toleransi_keterlambatan' => 'required|integer|min:0',
             'jam_pulang'              => 'required',

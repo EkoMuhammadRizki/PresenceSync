@@ -13,7 +13,6 @@ return new class extends Migration
             $table->foreignId('guru_id')->nullable()->nullOnDelete()->constrained('gurus');
             $table->string('nama', 100);
             $table->string('kode', 20)->unique();
-            $table->unsignedTinyInteger('jam_per_minggu')->default(2);
             $table->timestamps();
         });
     }

@@ -154,9 +154,31 @@
                         <div class="card-title"><h3 class="fw-bolder">Edit Informasi Profil</h3></div>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('profil-siswa.update', $siswa->id) }}" method="POST" id="form_edit_profil_siswa">
+                        <form action="{{ route('profil-siswa.update', $siswa->id) }}" method="POST" enctype="multipart/form-data" id="form_edit_profil_siswa">
                             @csrf
                             @method('PUT')
+
+                            <!-- Avatar Upload -->
+                            <div class="row g-9 mb-8">
+                                <div class="col-md-12 fv-row">
+                                    <label class="fs-6 fw-bold mb-2">Foto Profil</label>
+                                    <div class="image-input image-input-outline {{ !($siswa->user->info->avatar ?? null) ? 'image-input-empty' : '' }}" data-kt-image-input="true" style="background-image: url({{ asset('absensi/media/avatars/blank.png') }})">
+                                        <div class="image-input-wrapper w-125px h-125px" style="background-image: url({{ $siswa->user->avatar_url ?? asset('absensi/media/avatars/blank.png') }}); background-size: cover; background-position: center;"></div>
+                                        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="change" data-bs-toggle="tooltip" title="Ubah foto">
+                                            <i class="bi bi-pencil-fill fs-7"></i>
+                                            <input type="file" name="avatar" accept=".png, .jpg, .jpeg" />
+                                            <input type="hidden" name="avatar_remove" />
+                                        </label>
+                                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="cancel" data-bs-toggle="tooltip" title="Batalkan">
+                                            <i class="bi bi-x fs-2"></i>
+                                        </span>
+                                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="remove" data-bs-toggle="tooltip" title="Hapus foto">
+                                            <i class="bi bi-x fs-2"></i>
+                                        </span>
+                                    </div>
+                                    <div class="form-text">Ekstensi file yang diperbolehkan: png, jpg, jpeg. Maksimal 2MB.</div>
+                                </div>
+                            </div>
 
                             <div class="row g-9 mb-8">
                                 <!-- Nama -->
@@ -230,12 +252,12 @@
                                 <!-- No HP -->
                                 <div class="col-md-3 fv-row">
                                     <label class="fs-6 fw-bold mb-2">No. Telepon Siswa</label>
-                                    <input type="text" name="no_hp" class="form-control form-control-solid" value="{{ old('no_hp', $siswa->no_hp) }}" />
+                                    <input type="text" name="no_hp" class="form-control form-control-solid" value="{{ old('no_hp', $siswa->no_hp) }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
                                 </div>
                                 <!-- No HP Orang Tua -->
                                 <div class="col-md-3 fv-row">
                                     <label class="fs-6 fw-bold mb-2">No. Telepon Orang Tua</label>
-                                    <input type="text" name="no_hp_orang_tua" class="form-control form-control-solid" value="{{ old('no_hp_orang_tua', $siswa->no_hp_orang_tua) }}" />
+                                    <input type="text" name="no_hp_orang_tua" class="form-control form-control-solid" value="{{ old('no_hp_orang_tua', $siswa->no_hp_orang_tua) }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
                                 </div>
                             </div>
 
@@ -288,6 +310,11 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Filter non-numeric input on phone fields
+    $(document).on('input', 'input[inputmode="numeric"]', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
     $('#kt_table_riwayat').DataTable({ 
         dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', 
         info:true, 
@@ -295,6 +322,48 @@ $(document).ready(function() {
         pageLength:5, 
         lengthChange:true, 
         columnDefs:[{orderable:false,targets:0}] 
+    });
+
+    // Image Compression untuk Avatar Upload
+    var MAX_WIDTH = 800;
+    var MAX_HEIGHT = 800;
+    var QUALITY = 0.7;
+
+    $('input[name="avatar"]').on('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (file.size <= 100 * 1024) return;
+
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var w = img.width, h = img.height;
+                if (w > MAX_WIDTH || h > MAX_HEIGHT) {
+                    var ratio = Math.min(MAX_WIDTH / w, MAX_HEIGHT / h);
+                    w = Math.round(w * ratio);
+                    h = Math.round(h * ratio);
+                }
+                canvas.width = w;
+                canvas.height = h;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob(function(blob) {
+                    if (blob.size < file.size) {
+                        var newFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        var dt = new DataTransfer();
+                        dt.items.add(newFile);
+                        e.target.files = dt.files;
+                    }
+                }, 'image/jpeg', QUALITY);
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
     });
 
     // Handle SweetAlert2 Confirmation for updating profile

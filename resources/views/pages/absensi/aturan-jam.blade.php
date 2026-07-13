@@ -102,7 +102,7 @@
                                 </a>
                             </div>
                             <div class="menu-item px-3">
-                                <form action="{{ route('aturan-jam.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aturan jam ini?')">
+                                <form action="{{ route('aturan-jam.destroy', $item->id) }}" method="POST" class="d-inline form-konfirmasi">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
@@ -132,7 +132,7 @@
                         <label class="required fw-bold fs-6 mb-2">Hari</label>
                         <select name="hari" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_tambah_jam" required>
                             <option value="">-- Pilih Hari --</option>
-                            @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $h)
+                            @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'] as $h)
                                 <option value="{{ $h }}">{{ $h }}</option>
                             @endforeach
                         </select>
@@ -184,7 +184,7 @@
                         <label class="required fw-bold fs-6 mb-2">Hari</label>
                         <select name="hari" class="form-select form-select-solid fw-bolder" id="edit_hari" data-control="select2" data-dropdown-parent="#modal_ubah_jam" required>
                             <option value="">-- Pilih Hari --</option>
-                            @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $h)
+                            @foreach(['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'] as $h)
                                 <option value="{{ $h }}">{{ $h }}</option>
                             @endforeach
                         </select>

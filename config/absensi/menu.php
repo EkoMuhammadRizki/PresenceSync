@@ -10,6 +10,13 @@ return array(
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
         ),
 
+        // Data Kelas Wali (Only visible for Guru)
+        array(
+            'title' => 'Data Kelas Wali',
+            'path'  => 'absensi/guru/kelas-wali',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com014.svg", "svg-icon-2"),
+        ),
+
         // Kehadiran Siswa (Only visible for Siswa)
         array(
             'title' => 'Kehadiran',
@@ -144,6 +151,24 @@ return array(
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen005.svg", "svg-icon-2"),
         ),
 
+        // Pengaturan Restriksi
+        array(
+            'title'      => 'Pengaturan Restriksi',
+            'icon'       => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen019.svg", "svg-icon-2"),
+            'classes'    => array('item' => 'menu-accordion'),
+            'attributes' => array('data-kt-menu-trigger' => 'click'),
+            'sub'        => array(
+                'class' => 'menu-sub-accordion menu-active-bg',
+                'items' => array(
+                    array(
+                        'title'  => 'Restriksi Kelas',
+                        'path'   => 'absensi/pengaturan-restriksi/kelas',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                ),
+            ),
+        ),
+
         // Akun Saya
         array(
             'title' => 'Akun Saya',
@@ -151,9 +176,16 @@ return array(
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com013.svg", "svg-icon-2"),
         ),
 
-        // Logout
+        // Panduan
         array(
-            'title' => 'Logout',
+            'title' => 'Panduan',
+            'path'  => 'absensi/panduan',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/book-icon.svg", "svg-icon-2"),
+        ),
+
+        // Keluar
+        array(
+            'title' => 'Keluar',
             'path'  => 'logout',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/arrows/arr076.svg", "svg-icon-2"),
         ),

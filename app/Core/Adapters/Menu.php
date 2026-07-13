@@ -109,7 +109,7 @@ class Menu extends \App\Core\Menu
                     continue;
                 }
             } elseif ($isGuru) {
-                $allowedPaths = ['absensi/dashboard', 'absensi/kehadiran', 'logout'];
+                $allowedPaths = ['absensi/dashboard', 'absensi/kehadiran', 'absensi/guru/kelas-wali', 'logout'];
                 if (isset($value['path'])) {
                     if (!in_array($value['path'], $allowedPaths)) {
                         unset($array[$key]);

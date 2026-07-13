@@ -131,7 +131,7 @@
                     Swal.fire({
                         icon             : 'success',
                         title            : 'Login Berhasil!',
-                        text             : 'Selamat datang kembali di PresenceSync 🎉',
+                        text             : 'Selamat datang kembali di PresenceSync',
                         timer            : 1800,
                         timerProgressBar : true,
                         showConfirmButton : false,

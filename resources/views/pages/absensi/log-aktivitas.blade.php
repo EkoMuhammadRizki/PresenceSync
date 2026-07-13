@@ -33,31 +33,31 @@
                 </tr>
             </thead>
             <tbody class="text-gray-600 fw-bold">
-                <tr>
+                <tr class="row-clickable" data-username="admin.sekolah" data-nama="Administrator" data-aktivitas="Login ke sistem" data-metode="POST" data-waktu="15 Mei 2026, 08:30">
                     <td>1</td><td>admin.sekolah</td><td>Administrator</td>
                     <td>Login ke sistem</td>
                     <td><span class="badge badge-light-success fw-bolder">POST</span></td>
                     <td>15 Mei 2026, 08:30</td>
                 </tr>
-                <tr>
+                <tr class="row-clickable" data-username="guru.budi" data-nama="Budi Santoso" data-aktivitas="Melihat data kehadiran kelas X-1" data-metode="GET" data-waktu="15 Mei 2026, 09:15">
                     <td>2</td><td>guru.budi</td><td>Budi Santoso</td>
                     <td>Melihat data kehadiran kelas X-1</td>
                     <td><span class="badge badge-light-primary fw-bolder">GET</span></td>
                     <td>15 Mei 2026, 09:15</td>
                 </tr>
-                <tr>
+                <tr class="row-clickable" data-username="admin.sekolah" data-nama="Administrator" data-aktivitas="Menambah data siswa baru" data-metode="POST" data-waktu="15 Mei 2026, 10:00">
                     <td>3</td><td>admin.sekolah</td><td>Administrator</td>
                     <td>Menambah data siswa baru</td>
                     <td><span class="badge badge-light-success fw-bolder">POST</span></td>
                     <td>15 Mei 2026, 10:00</td>
                 </tr>
-                <tr>
+                <tr class="row-clickable" data-username="guru.siti" data-nama="Siti Rahayu" data-aktivitas="Mengubah jadwal pelajaran Matematika" data-metode="PUT" data-waktu="15 Mei 2026, 11:30">
                     <td>4</td><td>guru.siti</td><td>Siti Rahayu</td>
                     <td>Mengubah jadwal pelajaran Matematika</td>
                     <td><span class="badge badge-light-warning fw-bolder">PUT</span></td>
                     <td>15 Mei 2026, 11:30</td>
                 </tr>
-                <tr>
+                <tr class="row-clickable" data-username="siswa.ahmad" data-nama="Ahmad Subarjo" data-aktivitas="Melakukan presensi masuk (fingerprint)" data-metode="POST" data-waktu="15 Mei 2026, 06:45">
                     <td>5</td><td>siswa.ahmad</td><td>Ahmad Subarjo</td>
                     <td>Melakukan presensi masuk (fingerprint)</td>
                     <td><span class="badge badge-light-success fw-bolder">POST</span></td>
@@ -67,6 +67,16 @@
         </table>
     </div>
 </div>
+<style>
+    .row-clickable {
+        transition: background-color 0.15s ease;
+    }
+    .row-clickable:hover {
+        background-color: var(--bs-table-hover-bg) !important;
+        cursor: pointer;
+    }
+</style>
+
 @section('scripts')
 <script src="{{ asset(theme()->getDemo() . '/plugins/custom/flatpickr/flatpickr.bundle.js') }}"></script>
 <script>
@@ -78,6 +88,28 @@ $(document).ready(function() {
         pageLength: 5, 
         lengthChange: true, 
         columnDefs: [{orderable: false, targets: 0}] 
+    });
+
+    $(document).on('click', '.row-clickable', function() {
+        var el = $(this);
+        var metode = el.data('metode');
+        var metodeClass = metode === 'POST' ? 'success' : (metode === 'PUT' ? 'warning' : 'primary');
+        Swal.fire({
+            title: 'Detail Log Aktivitas',
+            html: '<div class="text-start">' +
+                '<div class="mb-3"><strong>Username:</strong> ' + el.data('username') + '</div>' +
+                '<div class="mb-3"><strong>Nama:</strong> ' + el.data('nama') + '</div>' +
+                '<div class="mb-3"><strong>Aktivitas:</strong> ' + el.data('aktivitas') + '</div>' +
+                '<div class="mb-3"><strong>Metode:</strong> <span class="badge badge-light-' + metodeClass + ' fw-bolder">' + metode + '</span></div>' +
+                '<div class="mb-3"><strong>Waktu:</strong> ' + el.data('waktu') + '</div>' +
+                '</div>',
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#009EF7',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'btn btn-primary'
+            }
+        });
     });
 
     $('#search_log').on('keyup', function() { 

@@ -14,6 +14,11 @@ return array(
             'view'  => 'absensi/dashboard',
         ),
 
+        'panduan' => array(
+            'title' => 'Panduan',
+            'view'  => 'absensi/panduan',
+        ),
+
         'pengguna' => array(
             'data' => array(
                 'title'  => 'Data Pengguna & Hak Akses',
@@ -115,9 +120,25 @@ return array(
             ),
         ),
 
+        'guru' => array(
+            'kelas-wali' => array(
+                'title'  => 'Data Kelas Wali',
+                'view'   => 'absensi/guru-kelas-wali',
+                'assets' => $dtAssets,
+            ),
+        ),
+
         'laporan' => array(
             'title' => 'Laporan',
             'view'  => 'absensi/placeholder',
+        ),
+
+        'pengaturan-restriksi' => array(
+            'kelas' => array(
+                'title'  => 'Restriksi Kelas',
+                'view'   => 'absensi/pengaturan-restriksi-kelas',
+                'assets' => $dtAssets,
+            ),
         ),
 
         'akun' => array(

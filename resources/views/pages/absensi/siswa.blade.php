@@ -26,13 +26,13 @@
 @endif
 
 @if(session('import_success'))
-    <div class="alert alert-info d-flex align-items-center p-5 mb-10">
-        <span class="svg-icon svg-icon-2hx svg-icon-info me-4">
+    <div class="alert bg-light-primary border border-primary d-flex align-items-center p-5 mb-10">
+        <span class="svg-icon svg-icon-2hx svg-icon-primary me-4">
             {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
         </span>
         <div class="d-flex flex-column">
-            <h4 class="mb-1 text-dark">Informasi Import Data Siswa</h4>
-            <span>
+            <h4 class="mb-1 text-primary">Informasi Import Data Siswa</h4>
+            <span class="text-primary">
                 Berhasil diimport: <strong>{{ session('import_success')['success_count'] }}</strong> siswa.<br>
                 Tidak diimport (sudah ada di database): <strong>{{ session('import_success')['skip_count'] }}</strong> siswa.
             </span>
@@ -63,10 +63,15 @@
         </div>
         <div class="card-toolbar my-0">
             <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('siswa.download-template') }}" class="btn btn-light-success btn-sm btn-md-md">
+                <a href="{{ route('siswa.download-template', ['empty' => 1]) }}" class="btn btn-light-warning btn-sm btn-md-md">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
                     <span class="d-none d-sm-inline">Download Template</span>
                     <span class="d-inline d-sm-none">Template</span>
+                </a>
+                <a href="{{ route('siswa.download-template') }}" class="btn btn-light-success btn-sm btn-md-md">
+                    {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
+                    <span class="d-none d-sm-inline">Ekspor Data Siswa</span>
+                    <span class="d-inline d-sm-none">Ekspor</span>
                 </a>
                 <button type="button" class="btn btn-light-primary btn-sm btn-md-md" data-bs-toggle="modal" data-bs-target="#modal_import_siswa">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
@@ -158,7 +163,7 @@
                                     </a>
                                 </div>
                                 <div class="menu-item px-3">
-                                    <form action="{{ route('siswa.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus siswa ini? Akun login terkait juga akan dihapus.')">
+                                    <form action="{{ route('siswa.destroy', $item->id) }}" method="POST" class="d-inline form-konfirmasi">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="menu-link px-3 text-danger border-0 bg-transparent w-100 text-start">Hapus</button>
@@ -285,10 +290,14 @@
                         </span>
                         <div class="d-flex flex-stack flex-grow-1">
                             <div class="fw-bold">
-                                <h4 class="text-gray-900 fw-bolder">Template Excel</h4>
+                                <h4 class="text-gray-900 fw-bolder">Petunjuk Import</h4>
                                 <div class="fs-6 text-gray-700">
-                                    Silakan unduh template excel terlebih dahulu untuk mengisi data siswa dengan benar.
-                                    <a href="{{ route('siswa.download-template') }}" class="fw-bolder text-primary">Download Template Excel</a>
+                                    <ul class="ps-4 mb-0">
+                                        <li>Gunakan template Excel Kosong yang telah disediakan. <a href="{{ route('siswa.download-template', ['empty' => 1]) }}" class="fw-bolder text-primary text-decoration-underline">Download Template Excel</a></li>
+                                        <li>Kolom utama: <strong>Nama, NIS, Email, Kelas, Jenis Kelamin, Alamat</strong>.</li>
+                                        <li>Siswa dengan NIS atau Email yang sudah ada akan dilewati (tidak digandakan).</li>
+                                        <li>Format file: <strong>.xlsx</strong> atau <strong>.xls</strong>.</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -383,7 +392,7 @@
         transition: background-color 0.2s ease;
     }
     #kt_table_siswa tbody tr:hover {
-        background-color: #f5f8fa !important;
+        background-color: var(--bs-table-hover-bg) !important;
     }
 </style>
 

@@ -18,28 +18,26 @@ class UsersSeeder extends Seeder
     public function run(Generator $faker)
     {
         $demoUser = User::create([
-            'first_name'        => $faker->firstName,
-            'last_name'         => $faker->lastName,
+            'first_name'        => 'Demo',
+            'last_name'         => 'Admin',
             'email'             => 'demo@demo.com',
             'password'          => Hash::make('demo'),
             'email_verified_at' => now(),
         ]);
 
         $this->addDummyInfo($faker, $demoUser);
+        $demoUser->assignRole('admin');
 
         $demoUser2 = User::create([
-            'first_name'        => $faker->firstName,
-            'last_name'         => $faker->lastName,
+            'first_name'        => 'Admin',
+            'last_name'         => '',
             'email'             => 'admin@demo.com',
             'password'          => Hash::make('demo'),
             'email_verified_at' => now(),
         ]);
 
         $this->addDummyInfo($faker, $demoUser2);
-
-        User::factory(100)->create()->each(function (User $user) use ($faker) {
-            $this->addDummyInfo($faker, $user);
-        });
+        $demoUser2->assignRole('admin');
     }
 
     private function addDummyInfo(Generator $faker, User $user)

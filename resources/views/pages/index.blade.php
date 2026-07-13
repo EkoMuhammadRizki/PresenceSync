@@ -78,4 +78,6 @@
     </div>
     <!--end::Row-->
 
+    <!--end::Row-->
+
 </x-base-layout>

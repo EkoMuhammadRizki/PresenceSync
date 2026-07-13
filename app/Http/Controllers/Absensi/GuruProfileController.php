@@ -40,7 +40,7 @@ class GuruProfileController extends Controller
         $stats = [
             'total_kelas' => Kelas::where('guru_id', $guru->id)->count(),
             'total_mapel' => MataPelajaran::where('guru_id', $guru->id)->count(),
-            'weekly_hours' => MataPelajaran::where('guru_id', $guru->id)->sum('jam_per_minggu'),
+            'weekly_hours' => 0,
         ];
 
         // Wali Kelas Class Data
@@ -86,20 +86,49 @@ class GuruProfileController extends Controller
             return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk mengubah profil guru.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'nama'   => 'required|string|max:150',
-            'nip'    => 'nullable|string|max:30|unique:gurus,nip,' . $guru->id,
-            'email'  => 'nullable|email|max:150|unique:gurus,email,' . $guru->id . '|unique:users,email,' . ($guru->user_id ?? 0),
-            'no_hp'  => 'nullable|string|max:20',
-            'alamat' => 'nullable|string',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
+        // Restrict own profile editing for guru/kesiswaan (only nama, no_hp, alamat)
+        $isOwnProfile = ($guru->user_id === auth()->id()) && ($userRole === 'guru' || $userRole === 'kesiswaan');
+
+        // Normalize phone number: strip non-digit characters
+        if ($request->filled('no_hp')) {
+            $request->merge(['no_hp' => preg_replace('/[^0-9]/', '', $request->no_hp)]);
+        } elseif ($request->has('no_hp')) {
+            $request->merge(['no_hp' => null]);
+        }
+
+        if ($isOwnProfile) {
+            $rules = [
+                'nama'   => 'required|string|max:150',
+                'no_hp'  => 'nullable|regex:/^[0-9]{8,15}$/',
+                'alamat' => 'nullable|string',
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ];
+        } else {
+            $rules = [
+                'nama'   => 'required|string|max:150',
+                'nip'    => 'nullable|string|max:30|unique:gurus,nip,' . $guru->id,
+                'email'  => 'nullable|email|max:150|unique:gurus,email,' . $guru->id . '|unique:users,email,' . ($guru->user_id ?? 0),
+                'no_hp'  => 'nullable|regex:/^[0-9]{8,15}$/',
+                'alamat' => 'nullable|string',
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ];
+        }
+
+        $messages = [
+            'no_hp.regex' => 'Nomor HP hanya boleh berisi angka (8-15 digit).',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $guru->update($request->only('nama', 'nip', 'email', 'no_hp', 'alamat'));
+        if ($isOwnProfile) {
+            $guru->update($request->only('nama', 'no_hp', 'alamat'));
+        } else {
+            $guru->update($request->only('nama', 'nip', 'email', 'no_hp', 'alamat'));
+        }
 
         // Update User model
         if ($guru->user) {
@@ -112,7 +141,7 @@ class GuruProfileController extends Controller
                 'last_name'  => $lastName,
             ];
 
-            if ($request->email) {
+            if (!$isOwnProfile && $request->email) {
                 $userData['email'] = $request->email;
             }
 
@@ -127,7 +156,8 @@ class GuruProfileController extends Controller
                 if ($info->avatar) {
                     Storage::delete($info->avatar);
                 }
-                $info->avatar = Storage::disk('public')->putFile('images', $request->file('avatar'), 'public');
+                $path = 'avatars/guru/' . $guru->id;
+                $info->avatar = Storage::disk('public')->putFileAs($path, $request->file('avatar'), 'avatar.jpg', 'public');
             }
 
             if ($request->boolean('avatar_remove')) {

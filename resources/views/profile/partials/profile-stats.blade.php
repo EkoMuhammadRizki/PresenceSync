@@ -44,14 +44,6 @@
         <div class="fw-bold fs-6 text-gray-400">Total Mapel</div>
     </div>
 
-    <!-- Beban Mengajar -->
-    <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-        <div class="d-flex align-items-center">
-            {!! theme()->getSvgIcon("icons/duotune/graphs/gra008.svg", "svg-icon-3 svg-icon-info me-2") !!}
-            <div class="fs-2 fw-bolder">{{ $stats['weekly_hours'] ?? 0 }} JP</div>
-        </div>
-        <div class="fw-bold fs-6 text-gray-400">Beban Mengajar</div>
-    </div>
 @elseif($userRole === 'siswa')
     <!-- Total Mapel -->
     <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">

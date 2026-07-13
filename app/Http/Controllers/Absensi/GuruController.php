@@ -103,9 +103,26 @@ class GuruController extends Controller
 
     public function destroy(Guru $guru)
     {
-        if ($guru->kelas()->exists() || $guru->mataPelajarans()->exists()) {
+        $relations = [];
+        if ($guru->kelas()->exists()) {
+            $relations[] = 'data kelas';
+        }
+        if ($guru->mataPelajarans()->exists()) {
+            $relations[] = 'mata pelajaran';
+        }
+        if (!empty($relations)) {
+            $relationsStr = implode(' dan ', $relations);
+            $directions = [];
+            if ($guru->kelas()->exists()) {
+                $directions[] = '<a href="' . route('kelas.index') . '" class="text-primary fw-bold text-decoration-underline">Data Kelas</a>';
+            }
+            if ($guru->mataPelajarans()->exists()) {
+                $directions[] = '<a href="' . route('mata-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Mata Pelajaran</a>';
+            }
+            $msg = "Guru ini tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
+            
             return redirect()->route('guru.index')
-                ->with('error', 'Guru tidak dapat dihapus karena masih memiliki data kelas atau mata pelajaran.');
+                ->with('error', $msg);
         }
 
         $user = $guru->user;
@@ -119,7 +136,7 @@ class GuruController extends Controller
             ->with('success', 'Data guru berhasil dihapus.');
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
         $spreadsheet = new Spreadsheet();
 
@@ -149,26 +166,9 @@ class GuruController extends Controller
             $sheet->setCellValue($colLetter . '1', $header);
         }
 
-        // Populate existing teachers if any, otherwise write a sample row
-        $gurus = Guru::with('user')->orderBy('nama')->get();
-
-        if ($gurus->isEmpty()) {
-            $sheet->setCellValue('A2', 'budi.santoso@sekolah.sch.id');
-            $sheet->setCellValue('B2', 'password123');
-            $sheet->setCellValue('C2', 'password123');
-            $sheet->setCellValue('D2', 'guru');
-            $sheet->setCellValue('E2', '198105122008011003');
-            $sheet->setCellValue('F2', 'Budi Santoso, S.Pd');
-            $sheet->setCellValue('G2', '');
-            $sheet->setCellValue('H2', 'L');
-            $sheet->setCellValue('I2', 'Jakarta');
-            $sheet->setCellValue('J2', '1981-05-12');
-            $sheet->setCellValue('K2', 'Jl. Sukasenang No. 12');
-            $sheet->setCellValue('L2', '081234567890');
-            $sheet->setCellValue('M2', '');
-            $sheet->setCellValue('N2', 'aktif');
-            $sheet->setCellValue('O2', '');
-        } else {
+        // Populate existing teachers if requested (default / when not 'empty')
+        if (!$request->has('empty')) {
+            $gurus = Guru::with('user')->orderBy('nama')->get();
             $rowNum = 2;
             foreach ($gurus as $guru) {
                 $sheet->setCellValue('A' . $rowNum, $guru->user->email ?? $guru->email ?? '');
@@ -232,7 +232,16 @@ class GuruController extends Controller
             return redirect()->back()->withErrors(['error' => 'File Excel kosong atau hanya berisi header.']);
         }
 
-        array_shift($rows); // Buang header
+        $header = array_shift($rows); // Buang header
+
+        // Validasi format template agar siswa tidak diimport ke guru
+        $column5 = isset($header[4]) ? strtolower(trim($header[4])) : '';
+        if ($column5 === 'nis' || $worksheet->getTitle() === 'Template Siswa') {
+            return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Siswa. Silakan unggah file template Guru yang benar.']);
+        }
+        if ($column5 !== 'nip') {
+            return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Pastikan Anda menggunakan file template Guru yang diunduh dari sistem.']);
+        }
 
         $successCount = 0;
         $skipCount    = 0;
