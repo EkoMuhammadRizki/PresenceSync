@@ -31,7 +31,7 @@
             <div class="modal-body scroll-y mx-5 mx-xl-10 pt-0 pb-8">
                 <div class="text-center mb-6">
                     <span class="svg-icon svg-icon-2hx svg-icon-primary mb-2 d-block text-center justify-content-center">
-                        {!! theme()->getSvgIcon("demo1/media/icons/duotune/general/gen008.svg", "svg-icon-2hx svg-icon-primary") !!}
+                        {!! theme()->getSvgIcon("demo1/media/icons/duotune/general/book-icon.svg", "svg-icon-2hx svg-icon-primary") !!}
                     </span>
                     <h2 class="mb-1 text-gray-900 fs-2">Panduan Singkat Penggunaan</h2>
                     <div class="text-muted fw-bold fs-6">Langkah cepat mengonfigurasi sistem Presence Sync</div>
@@ -91,14 +91,14 @@
 
 @if($showPanduan)
     @php session()->put('panduan_singkat_shown', true); @endphp
-    @section('scripts')
+    @push('scripts')
     <script>
         $(document).ready(function() {
             var modal = new bootstrap.Modal(document.getElementById('modal_panduan_singkat'));
             modal.show();
         });
     </script>
-    @endsection
+    @endpush
 @endif
 
 </x-base-layout>

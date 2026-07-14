@@ -15,6 +15,7 @@ return array(
             'title' => 'Data Kelas Wali',
             'path'  => 'absensi/guru/kelas-wali',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com014.svg", "svg-icon-2"),
+            'role'  => ['guru'],
         ),
 
         // Kehadiran Siswa (Only visible for Siswa)
@@ -50,7 +51,7 @@ return array(
         // Master Data
         array(
             'title'      => 'Master Data',
-            'icon'       => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen025.svg", "svg-icon-2"),
+            'icon'       => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
             'classes'    => array('item' => 'menu-accordion'),
             'attributes' => array('data-kt-menu-trigger' => 'click'),
             'sub'        => array(

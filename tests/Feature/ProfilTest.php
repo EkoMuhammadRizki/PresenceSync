@@ -51,8 +51,8 @@ test('siswa can only update permitted fields', function () {
         'nis'             => '9999',
         'alamat'          => 'New Address',
         'nama_orang_tua'  => 'Wali Andi',
-        'no_hp'           => '0812345',
-        'no_hp_orang_tua' => '0854321',
+        'no_hp'           => '08123456',
+        'no_hp_orang_tua' => '08543210',
     ]);
 
     $response->assertRedirect();
@@ -63,8 +63,8 @@ test('siswa can only update permitted fields', function () {
         'id'              => $siswa->id,
         'alamat'          => 'New Address',
         'nama_orang_tua'  => 'Wali Andi',
-        'no_hp'           => '0812345',
-        'no_hp_orang_tua' => '0854321',
+        'no_hp'           => '08123456',
+        'no_hp_orang_tua' => '08543210',
     ]);
 
     // Assert that restricted fields are NOT updated

@@ -37,30 +37,34 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Hapus penanda modal panduan singkat agar selalu muncul setelah login baru
+        $request->session()->forget('panduan_singkat_shown');
+
         $user = auth()->user();
 
         // Save email and password in cookies for login form population on logout
         cookie()->queue('logged_in_email', $request->email, 60 * 24 * 30);
         cookie()->queue('logged_in_password', $request->password, 60 * 24 * 30);
 
-        // Redirect berdasarkan role
+        // Tentukan target redirect berdasarkan role
+        $redirectUrl = RouteServiceProvider::HOME;
         if (\App\Models\Siswa::where('user_id', $user->id)->exists()) {
-            return redirect()->intended('/absensi/siswa/dashboard');
+            $redirectUrl = '/absensi/siswa/dashboard';
+        } elseif ($user->hasRole('orang_tua')) {
+            $redirectUrl = '/absensi/orangtua/dashboard';
+        } elseif ($user->hasRole('kesiswaan')) {
+            $redirectUrl = '/absensi/kesiswaan/dashboard';
+        } elseif (\App\Models\Guru::where('user_id', $user->id)->exists()) {
+            $redirectUrl = '/absensi/guru/dashboard';
         }
 
-        if ($user->hasRole('orang_tua')) {
-            return redirect()->intended('/absensi/orangtua/dashboard');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'redirect' => redirect()->intended($redirectUrl)->getTargetUrl()
+            ]);
         }
 
-        if ($user->hasRole('kesiswaan')) {
-            return redirect()->intended('/absensi/kesiswaan/dashboard');
-        }
-
-        if (\App\Models\Guru::where('user_id', $user->id)->exists()) {
-            return redirect()->intended('/absensi/guru/dashboard');
-        }
-
-        return redirect()->intended(RouteServiceProvider::HOME);
+        return redirect()->intended($redirectUrl);
     }
 
     /**

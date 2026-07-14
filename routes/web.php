@@ -48,6 +48,8 @@ array_walk($menu, function ($val) {
             // Redirect GET logout to login page (for prototype mode)
             Route::get('logout', function () {
                 auth()->logout();
+                request()->session()->invalidate();
+                request()->session()->regenerateToken();
                 return redirect('/login');
             });
         } else {

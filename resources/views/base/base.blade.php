@@ -578,6 +578,7 @@ License: {{ theme()->getOption('product', 'license') }}
 
 <div id="page-scripts-container">
     @yield('scripts')
+@stack('scripts')
 </div>
 
 <script>
