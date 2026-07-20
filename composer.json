@@ -8,6 +8,7 @@
     ],
     "license": "MIT",
     "require": {
+        "dompdf/dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.8",
         "jackiedo/log-reader": "@dev",
         "laravel/framework": "^13.0",

@@ -8,172 +8,110 @@
     <div class="card-body p-9">
         <div class="d-flex align-items-center">
             <div class="symbol symbol-60px symbol-circle me-5">
-                <div class="symbol-label fs-1 bg-light-warning text-warning fw-bolder">
-                    {{ substr($user->first_name, 0, 1) }}
+                <div class="symbol-label fs-1 bg-light-primary text-primary fw-bolder">
+                    {{ substr($siswa->nama, 0, 1) }}
                 </div>
             </div>
             <div class="flex-grow-1">
-                <h1 class="text-gray-800 fw-boldest mb-1">{{ $user->name }}</h1>
+                <h1 class="text-gray-800 fw-boldest mb-1">{{ $siswa->nama }}</h1>
                 <div class="text-muted fw-bold fs-6">
-                    Orang Tua &bull;
-                    {{ collect($dataAnak)->pluck('siswa.nama')->join(', ') }}
+                    Anak dari Orang Tua: {{ $user->name }} | Kelas: {{ $siswa->kelas ? $siswa->kelas->tingkat . ' ' . $siswa->kelas->nama : 'Belum Masuk Kelas' }}
                 </div>
-            </div>
-            <div class="d-flex align-items-center">
-                <span class="badge badge-light-warning fs-7 fw-bold px-4 py-3">
-                    {!! theme()->getSvgIcon("icons/duotune/communication/com006.svg", "svg-icon-4 me-1") !!}
-                    Orang Tua
-                </span>
             </div>
         </div>
     </div>
 </div>
 <!--end::Welcome Card-->
 
-@php
-    $daysIndo = [
-        'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
-        'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
-    ];
-@endphp
-
-@foreach ($dataAnak as $anakIndex => $data)
-<!--begin::Child Section-->
-<div class="mb-8">
-    <!--begin::Info Cards-->
-    <div class="row g-6 g-xl-9 mb-6">
-        <div class="col-12">
-            <div class="d-flex align-items-center mb-3">
-                <div class="symbol symbol-40px symbol-circle me-3">
-                    <div class="symbol-label fs-5 bg-light-primary text-primary fw-bolder">
-                        {{ substr($data['siswa']->nama, 0, 1) }}
-                    </div>
-                </div>
-                <div>
-                    <h3 class="fw-bolder text-gray-800 mb-0">{{ $data['siswa']->nama }}</h3>
-                    <span class="text-muted fw-bold fs-7">
-                        Kelas: {{ $data['siswa']->kelas ? $data['siswa']->kelas->tingkat . ' ' . $data['siswa']->kelas->nama : 'Belum Masuk Kelas' }}
-                        &bull; NIS: {{ $data['siswa']->nis ?? '-' }}
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-                <span class="fs-4 fw-bold text-info pb-1px">Status Hari Ini</span>
-                @if ($data['kehadiranHariIni'])
-                    @if ($data['kehadiranHariIni']->status === 'hadir')
-                        <span class="fs-2hx fw-bolder text-success">Tepat Waktu</span>
-                        <span class="fs-7 fw-bold text-gray-400">Jam Masuk: {{ $data['kehadiranHariIni']->jam_masuk }}</span>
-                    @elseif ($data['kehadiranHariIni']->status === 'terlambat')
-                        <span class="fs-2hx fw-bolder text-warning">Terlambat</span>
-                        <span class="fs-7 fw-bold text-gray-400">Jam Masuk: {{ $data['kehadiranHariIni']->jam_masuk }}</span>
-                    @elseif ($data['kehadiranHariIni']->status === 'sakit')
-                        <span class="fs-2hx fw-bolder text-primary">Sakit</span>
-                        <span class="fs-7 fw-bold text-gray-400">{{ $data['kehadiranHariIni']->keterangan }}</span>
-                    @elseif ($data['kehadiranHariIni']->status === 'izin')
-                        <span class="fs-2hx fw-bolder text-info">Izin</span>
-                        <span class="fs-7 fw-bold text-gray-400">{{ $data['kehadiranHariIni']->keterangan }}</span>
-                    @endif
-                @else
-                    <span class="fs-2hx fw-bolder text-danger">Belum Absen</span>
-                    <span class="fs-7 fw-bold text-gray-400">Anak Anda belum melakukan presensi</span>
-                @endif
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-                <span class="fs-4 fw-bold text-success pb-1px">Total Hadir</span>
-                <span class="fs-2hx fw-bolder text-dark">{{ $data['totalHadir'] }}</span>
-                <span class="fs-7 fw-bold text-gray-400">Pertemuan Semester Ini</span>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-                <span class="fs-4 fw-bold text-warning pb-1px">Ketidakhadiran</span>
-                <span class="fs-2hx fw-bolder text-dark">{{ $data['totalAbsen'] }}</span>
-                <span class="fs-7 fw-bold text-gray-400">Sakit, Izin & Alpha</span>
-            </div>
+<!--begin::Card - Riwayat Kehadiran Anak-->
+<div class="card card-flush shadow-sm">
+    <!-- Title bar with blue background -->
+    <div class="card-header bg-primary py-3 rounded-top">
+        <div class="card-title text-white fw-bolder fs-5 m-0 d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text text-white fs-4"></i> Rekapitulasi Kehadiran Anak
         </div>
     </div>
-    <!--end::Info Cards-->
 
-    <!--begin::Riwayat Kehadiran-->
-    <div class="card">
-        <div class="card-header border-0 pt-6">
-            <div class="card-title">
-                <h3 class="fw-bolder">Riwayat Kehadiran — {{ $data['siswa']->nama }}</h3>
+    <!-- Filter Toolbar -->
+    <div class="card-body py-4 border-bottom">
+        <form method="GET" action="{{ route('orangtua.dashboard') }}" id="filter_form" class="d-flex align-items-center flex-wrap gap-5 justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <label class="form-label fw-bold mb-0 me-2 text-nowrap">Periode:</label>
+                <select name="periode" class="form-select form-select-solid form-select-sm w-180px" onchange="document.getElementById('filter_form').submit()">
+                    @php
+                        $startMonth = \Carbon\Carbon::now()->startOfMonth()->subMonths(6);
+                    @endphp
+                    @for ($i = 0; $i < 13; $i++)
+                        @php
+                            $pVal = $startMonth->format('Ym');
+                            $pLabel = $startMonth->isoFormat('MMMM Y');
+                            $startMonth->addMonth();
+                        @endphp
+                        <option value="{{ $pVal }}" {{ $periode == $pVal ? 'selected' : '' }}>
+                            {{ $pLabel }}
+                        </option>
+                    @endfor
+                </select>
+                
+                @if($periode)
+                    @php
+                        $selectedMonthName = \Carbon\Carbon::createFromDate(substr($periode, 0, 4), substr($periode, 4, 2), 1)->isoFormat('MMMM Y');
+                    @endphp
+                    <div class="d-flex align-items-center bg-light-primary rounded border border-primary border-dashed px-3 py-1 fs-7 text-primary fw-bolder">
+                        Periode: {{ $selectedMonthName }}
+                        <a href="{{ route('orangtua.dashboard') }}" class="btn btn-icon btn-xs btn-active-color-primary ms-2 text-primary p-0">✗</a>
+                    </div>
+                @endif
             </div>
-        </div>
 
-        <div class="card-body py-4">
-            <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_orangtua_{{ $anakIndex }}">
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-gray-600 fs-7 fw-bold" id="showing_count_label">
+                    Menampilkan 1-{{ $daysInMonth }} dari {{ $daysInMonth }} data
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle gs-4 gy-3 mb-0" id="kt_table_kehadiran_anak">
                 <thead>
-                    <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                        <th class="w-50px">No</th>
-                        <th class="min-w-100px">Hari</th>
-                        <th class="min-w-120px">Tanggal</th>
-                        <th class="min-w-100px">Jam Masuk</th>
-                        <th class="min-w-150px">Status</th>
+                    <tr class="bg-light fw-bolder fs-7 text-uppercase text-gray-800 text-center border-bottom border-gray-300">
+                        <th class="w-50px border-end">No</th>
+                        <th class="min-w-100px border-end">NISN</th>
+                        <th class="min-w-150px border-end">Nama</th>
+                        <th class="w-150px border-end">Tanggal</th>
+                        <th class="w-80px border-end">Msk/Lbr</th>
+                        <th class="w-100px border-end">Masuk Jam</th>
+                        <th class="min-w-120px border-end">Keterangan</th>
                     </tr>
                 </thead>
-                <tbody class="text-gray-600 fw-bold">
-                    @foreach ($data['kehadirans'] as $kh)
-                        @php
-                            $dateObj = \Carbon\Carbon::parse($kh->tanggal);
-                            $hari = $daysIndo[$dateObj->format('l')] ?? 'Senin';
-                            $tanggalFormatted = $dateObj->translatedFormat('d F Y');
-                            $dayNumber = $dateObj->day;
-                        @endphp
-                        <tr>
-                            <td class="text-gray-800">{{ $dayNumber }}</td>
-                            <td>{{ $hari }}</td>
-                            <td>{{ $tanggalFormatted }}</td>
-                            <td>{{ $kh->jam_masuk ?? '-' }}</td>
-                            <td>
-                                @if ($kh->status === 'hadir')
-                                    <span class="badge badge-light-success fw-bolder">Tepat</span>
-                                @elseif ($kh->status === 'terlambat')
-                                    <span class="badge badge-light-warning fw-bolder">Terlambat</span>
-                                @elseif ($kh->status === 'sakit')
-                                    <span class="badge badge-light-primary fw-bolder">Sakit</span>
-                                @elseif ($kh->status === 'izin')
-                                    <span class="badge badge-light-info fw-bolder">Izin</span>
-                                @else
-                                    <span class="badge badge-light-danger fw-bolder">Alpha</span>
-                                @endif
 
-                                @if($kh->keterangan)
-                                    <div class="fs-7 text-muted fw-normal mt-1">{{ $kh->keterangan }}</div>
+                <tbody class="text-gray-700 fw-bold fs-7">
+                    @foreach ($attendanceRows as $row)
+                        <tr class="{{ $row['is_libur'] ? 'bg-light-danger text-muted' : '' }} border-bottom border-gray-200">
+                            <td class="text-center border-end" data-col="no">{{ $row['no'] }}</td>
+                            <td class="border-end" data-col="nisn">{{ $row['nisn'] }}</td>
+                            <td class="border-end" data-col="nama">{{ $row['nama'] }}</td>
+                            <td class="border-end" data-col="tanggal">{{ $row['tanggal'] }}</td>
+                            <td class="text-center border-end" data-col="msk_lbr">
+                                @if ($row['msk_lbr'] === '✓')
+                                    <span class="text-success fw-bolder fs-5">✓</span>
+                                @elseif ($row['msk_lbr'] === '✗')
+                                    <span class="text-danger fw-bolder fs-5">✗</span>
+                                @else
+                                    -
                                 @endif
                             </td>
+                            <td class="text-center border-end text-danger" data-col="msk_jam">{{ $row['msk_jam'] ?: '-' }}</td>
+                            <td class="border-end" data-col="keterangan">{{ $row['keterangan'] ?: '-' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
     </div>
-    <!--end::Riwayat Kehadiran-->
 </div>
-<!--end::Child Section-->
-@endforeach
-
-@section('scripts')
-<script>
-$(document).ready(function() {
-    @foreach ($dataAnak as $anakIndex => $data)
-    $('#kt_table_orangtua_{{ $anakIndex }}').DataTable({
-        dom:"<'table-responsive'tr><'row'<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'li><'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>>",
-        info: true,
-        order: [],
-        pageLength: 10,
-        lengthChange: true
-    });
-    @endforeach
-});
-</script>
-@endsection
+<!--end::Card - Riwayat Kehadiran Anak-->
 </x-base-layout>

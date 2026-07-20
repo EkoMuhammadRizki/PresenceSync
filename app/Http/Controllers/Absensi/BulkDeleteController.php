@@ -66,28 +66,6 @@ class BulkDeleteController extends Controller
                         ], 400);
                     }
                     if ($user->guru) {
-                        $relations = [];
-                        if ($user->guru->kelas()->exists()) {
-                            $relations[] = 'data kelas';
-                        }
-                        if ($user->guru->mataPelajarans()->exists()) {
-                            $relations[] = 'mata pelajaran';
-                        }
-                        if (!empty($relations)) {
-                            $relationsStr = implode(' dan ', $relations);
-                            $directions = [];
-                            if ($user->guru->kelas()->exists()) {
-                                $directions[] = '<a href="' . route('kelas.index') . '" class="text-primary fw-bold text-decoration-underline">Data Kelas</a>';
-                            }
-                            if ($user->guru->mataPelajarans()->exists()) {
-                                $directions[] = '<a href="' . route('mata-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Mata Pelajaran</a>';
-                            }
-                            $msg = "User Guru '{$user->username}' tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
-                            return response()->json([
-                                'success' => false,
-                                'message' => $msg
-                            ], 400);
-                        }
                         $user->guru->delete();
                     }
                     if ($user->siswa) {
@@ -98,28 +76,6 @@ class BulkDeleteController extends Controller
             } elseif ($type === 'guru') {
                 $gurus = Guru::whereIn('id', $ids)->get();
                 foreach ($gurus as $guru) {
-                    $relations = [];
-                    if ($guru->kelas()->exists()) {
-                        $relations[] = 'data kelas';
-                    }
-                    if ($guru->mataPelajarans()->exists()) {
-                        $relations[] = 'mata pelajaran';
-                    }
-                    if (!empty($relations)) {
-                        $relationsStr = implode(' dan ', $relations);
-                        $directions = [];
-                        if ($guru->kelas()->exists()) {
-                            $directions[] = '<a href="' . route('kelas.index') . '" class="text-primary fw-bold text-decoration-underline">Data Kelas</a>';
-                        }
-                        if ($guru->mataPelajarans()->exists()) {
-                            $directions[] = '<a href="' . route('mata-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Mata Pelajaran</a>';
-                        }
-                        $msg = "Guru '{$guru->nama}' tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
-                        return response()->json([
-                            'success' => false,
-                            'message' => $msg
-                        ], 400);
-                    }
                     $user = $guru->user;
                     $guru->delete();
                     if ($user) {
@@ -129,40 +85,11 @@ class BulkDeleteController extends Controller
             } elseif ($type === 'kelas') {
                 $classes = Kelas::whereIn('id', $ids)->get();
                 foreach ($classes as $kelas) {
-                    $relations = [];
-                    if ($kelas->siswas()->exists()) {
-                        $relations[] = 'data siswa';
-                    }
-                    if ($kelas->jadwalPelajarans()->exists()) {
-                        $relations[] = 'jadwal pelajaran';
-                    }
-                    if (!empty($relations)) {
-                        $relationsStr = implode(' dan ', $relations);
-                        $directions = [];
-                        if ($kelas->siswas()->exists()) {
-                            $directions[] = '<a href="' . route('siswa.index') . '" class="text-primary fw-bold text-decoration-underline">Data Siswa</a>';
-                        }
-                        if ($kelas->jadwalPelajarans()->exists()) {
-                            $directions[] = '<a href="' . route('jadwal-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Jadwal Pelajaran</a>';
-                        }
-                        $msg = "Kelas '{$kelas->nama}' tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
-                        return response()->json([
-                            'success' => false,
-                            'message' => $msg
-                        ], 400);
-                    }
                     $kelas->delete();
                 }
             } elseif ($type === 'mata-pelajaran') {
                 $subjects = MataPelajaran::whereIn('id', $ids)->get();
                 foreach ($subjects as $mp) {
-                    if ($mp->jadwalPelajarans()->exists()) {
-                        $msg = "Mata pelajaran '{$mp->nama}' tidak dapat dihapus karena masih terkait dengan jadwal pelajaran. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman <a href=\"" . route('jadwal-pelajaran.index') . "\" class=\"text-primary fw-bold text-decoration-underline\">Jadwal Pelajaran</a>.";
-                        return response()->json([
-                            'success' => false,
-                            'message' => $msg
-                        ], 400);
-                    }
                     $mp->delete();
                 }
             } else {

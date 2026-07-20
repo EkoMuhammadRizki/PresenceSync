@@ -110,6 +110,8 @@ Route::middleware('auth')->group(function () {
     Route::get('absensi/profil-kelas', [PagesController::class, 'index']);
     Route::get('absensi/panduan', [\App\Http\Controllers\Absensi\PanduanController::class, 'index'])->name('panduan.index');
     Route::get('absensi/guru/kelas-wali', [\App\Http\Controllers\Absensi\GuruKelasController::class, 'index'])->name('guru.kelas-wali');
+    Route::get('absensi/guru/kelas-wali/export-pdf', [\App\Http\Controllers\Absensi\GuruKelasController::class, 'exportPdf'])->name('guru.kelas-wali.export-pdf');
+    Route::get('absensi/guru/kelas-wali/export-excel', [\App\Http\Controllers\Absensi\GuruKelasController::class, 'exportExcel'])->name('guru.kelas-wali.export-excel');
 
     // Pengaturan Restriksi Halaman & Simpan
     Route::get('absensi/pengaturan-restriksi/kelas', [\App\Http\Controllers\Absensi\RestriksiKelasController::class, 'index'])->name('pengaturan-restriksi.kelas.index');
@@ -121,15 +123,41 @@ Route::middleware('auth')->group(function () {
     Route::post('absensi/siswa/presensi', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'presensi'])->name('siswa.presensi');
     Route::post('absensi/siswa/izin', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'izin'])->name('siswa.izin');
 
+    // Sekretaris Pages
+    Route::get('absensi/siswa/kehadiran-mp', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'kehadiranMataPelajaran'])->name('siswa.kehadiran-mp');
+    Route::get('absensi/siswa/kehadiran-mp/export', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'exportKehadiranMp'])->name('siswa.kehadiran-mp.export');
+    Route::get('absensi/siswa/kehadiran-mp/profiling/{tanggal}', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'profilingKehadiranMp'])->name('siswa.kehadiran-mp.profiling');
+    Route::get('absensi/siswa/pengaduan', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'pengaduan'])->name('siswa.pengaduan');
+    Route::post('absensi/siswa/pengaduan', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'storePengaduan'])->name('siswa.pengaduan.store');
+
+    // Sekretaris Routes
+    Route::prefix('absensi/siswa/sekretaris')->name('siswa.sekretaris.')->group(function () {
+        Route::get('jadwal', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'getJadwalByTanggal'])->name('jadwal');
+        Route::post('kehadiran-mp', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'storeKehadiranMataPelajaran'])->name('kehadiran-mp.store');
+        Route::get('kehadiran-mp', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'getKehadiranMataPelajaranData'])->name('kehadiran-mp.data');
+        Route::get('kehadiran-mp/{id}/daftar-hadir', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'kehadiranMataPelajaranDetailPage'])->name('kehadiran-mp.daftar-hadir');
+        Route::get('kehadiran-mp/{id}/detail', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'getKehadiranMataPelajaranDetail'])->name('kehadiran-mp.detail');
+        Route::post('kehadiran-mp/{id}/simpan', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'saveKehadiranMataPelajaranDetail'])->name('kehadiran-mp.simpan');
+        Route::post('kehadiran-mp/{id}/konfirmasi-guru', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'konfirmasiGuru'])->name('kehadiran-mp.konfirmasi-guru');
+        Route::delete('kehadiran-mp/{id}', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'destroyKehadiranMataPelajaran'])->name('kehadiran-mp.destroy');
+    });
+
     // Guru Dashboard Routes
     Route::get('absensi/guru/dashboard', [\App\Http\Controllers\Absensi\GuruDashboardController::class, 'index'])->name('guru.dashboard');
+    Route::get('absensi/guru/pengaduan', [\App\Http\Controllers\Absensi\GuruDashboardController::class, 'pengaduan'])->name('guru.pengaduan');
+    Route::get('absensi/guru/pengaduan/export', [\App\Http\Controllers\Absensi\GuruDashboardController::class, 'exportPengaduan'])->name('guru.pengaduan.export');
 
 
-    // Kesiswaan Dashboard Routes
-    Route::get('absensi/kesiswaan/dashboard', [\App\Http\Controllers\Absensi\KesiswaanDashboardController::class, 'index'])->name('kesiswaan.dashboard');
+    // Admin & Kesiswaan Dashboard Routes
+    Route::get('absensi/dashboard', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('absensi/dashboard/trend-data', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'getTrendData'])->name('admin.dashboard.trend-data');
+    Route::get('absensi/kesiswaan/dashboard', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'index'])->name('kesiswaan.dashboard');
 
     // Orang Tua Dashboard Routes
     Route::get('absensi/orangtua/dashboard', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'index'])->name('orangtua.dashboard');
+    Route::get('absensi/orangtua/pengaduan', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'pengaduan'])->name('orangtua.pengaduan');
+    Route::get('absensi/orangtua/profil', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'profil'])->name('orangtua.profil');
+    Route::post('absensi/orangtua/profil', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'updateProfil'])->name('orangtua.profil.update');
 });
 
 

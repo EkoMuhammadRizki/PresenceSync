@@ -37,6 +37,9 @@ class PagesController extends Controller
 
         // Check if the page view file exist
         if (view()->exists('pages.'.$view)) {
+            if ($view === 'absensi/dashboard') {
+                return app(\App\Http\Controllers\Absensi\AdminDashboardController::class)->index();
+            }
             return view('pages.'.$view);
         }
 

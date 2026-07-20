@@ -9,6 +9,38 @@ return array(
             'path'  => 'absensi/dashboard',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
         ),
+ 
+        // Data Siswa (Single Level, Kesiswaan Only)
+        array(
+            'title' => 'Data Siswa',
+            'path'  => 'absensi/master/siswa',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com006.svg", "svg-icon-2"),
+            'role'  => ['kesiswaan'],
+        ),
+ 
+        // Kelas (Multi Level, Kesiswaan Only)
+        array(
+            'title'      => 'Kelas',
+            'icon'       => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen025.svg", "svg-icon-2"),
+            'classes'    => array('item' => 'menu-accordion'),
+            'attributes' => array('data-kt-menu-trigger' => 'click'),
+            'role'       => ['kesiswaan'],
+            'sub'        => array(
+                'class' => 'menu-sub-accordion menu-active-bg',
+                'items' => array(
+                    array(
+                        'title'  => 'Data Kelas',
+                        'path'   => 'absensi/master/kelas/data',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                    array(
+                        'title'  => 'Pembagian Kelas',
+                        'path'   => 'absensi/master/kelas/pembagian',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                ),
+            ),
+        ),
 
         // Data Kelas Wali (Only visible for Guru)
         array(
@@ -18,11 +50,57 @@ return array(
             'role'  => ['guru'],
         ),
 
+        // Pengaduan Wali Kelas (Only visible for Guru)
+        array(
+            'title' => 'Pengaduan',
+            'path'  => 'absensi/guru/pengaduan',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen044.svg", "svg-icon-2"),
+            'role'  => ['guru'],
+        ),
+
+        // Rekapitulasi Kehadiran Anak (Only visible for Orang Tua)
+        array(
+            'title' => 'Kehadiran Anak',
+            'path'  => 'absensi/orangtua/dashboard',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
+            'role'  => ['orang_tua'],
+        ),
+
+        // Pengaduan Orang Tua (Only visible for Orang Tua)
+        array(
+            'title' => 'Pengaduan',
+            'path'  => 'absensi/orangtua/pengaduan',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen044.svg", "svg-icon-2"),
+            'role'  => ['orang_tua'],
+        ),
+
+        // Edit Profil Orang Tua (Only visible for Orang Tua)
+        array(
+            'title' => 'Edit Profil',
+            'path'  => 'absensi/orangtua/profil',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com006.svg", "svg-icon-2"),
+            'role'  => ['orang_tua'],
+        ),
+
         // Kehadiran Siswa (Only visible for Siswa)
         array(
             'title' => 'Kehadiran',
             'path'  => 'absensi/siswa/dashboard',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
+        ),
+
+        // Kehadiran Mata Pelajaran (Only visible for Siswa Sekretaris)
+        array(
+            'title' => 'Kehadiran Mata Pelajaran',
+            'path'  => 'absensi/siswa/kehadiran-mp',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
+        ),
+
+        // Pengaduan (Only visible for Siswa Sekretaris)
+        array(
+            'title' => 'Pengaduan',
+            'path'  => 'absensi/siswa/pengaduan',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen044.svg", "svg-icon-2"),
         ),
 
         // Manajemen Pengguna & Peran

@@ -118,12 +118,26 @@ return array(
                 'view'   => 'absensi/siswa-dashboard',
                 'assets' => $dtAssets,
             ),
+            'kehadiran-mp' => array(
+                'title'  => 'Kehadiran Mata Pelajaran',
+                'view'   => 'absensi/kehadiran-mata-pelajaran',
+                'assets' => $dtAssets,
+            ),
+            'pengaduan' => array(
+                'title'  => 'Pengaduan',
+                'view'   => 'absensi/pengaduan',
+            ),
         ),
 
         'guru' => array(
             'kelas-wali' => array(
                 'title'  => 'Data Kelas Wali',
                 'view'   => 'absensi/guru-kelas-wali',
+                'assets' => $dtAssets,
+            ),
+            'pengaduan' => array(
+                'title'  => 'Daftar Pengaduan',
+                'view'   => 'absensi/guru-pengaduan',
                 'assets' => $dtAssets,
             ),
         ),
@@ -144,6 +158,24 @@ return array(
         'akun' => array(
             'title' => 'Akun Saya',
             'view'  => 'absensi/placeholder',
+        ),
+
+        'orangtua' => array(
+            'dashboard' => array(
+                'title'  => 'Rekapitulasi Kehadiran Anak',
+                'view'   => 'absensi/orangtua-dashboard',
+                'assets' => $dtAssets,
+            ),
+            'pengaduan' => array(
+                'title'  => 'Pengaduan',
+                'view'   => 'absensi/orangtua-pengaduan',
+                'assets' => $dtAssets,
+            ),
+            'profil' => array(
+                'title'  => 'Edit Profil',
+                'view'   => 'absensi/orangtua-profil',
+                'assets' => $dtAssets,
+            ),
         ),
     ),
 );

@@ -58,12 +58,6 @@ class MataPelajaranController extends Controller
 
     public function destroy(MataPelajaran $mataPelajaran)
     {
-        if ($mataPelajaran->jadwalPelajarans()->exists()) {
-            $msg = 'Mata pelajaran ini tidak dapat dihapus karena masih terkait dengan jadwal pelajaran. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman <a href="' . route('jadwal-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Jadwal Pelajaran</a>.';
-            return redirect()->route('mata-pelajaran.index')
-                ->with('error', $msg);
-        }
-
         $mataPelajaran->delete();
         return redirect()->route('mata-pelajaran.index')
             ->with('success', 'Mata pelajaran berhasil dihapus.');

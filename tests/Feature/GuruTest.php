@@ -168,3 +168,54 @@ test('download template works and lists existing gurus', function () {
     expect($rowsEmpty[0][0])->toBe('email');
     expect($rowsEmpty[0][5])->toBe('nama');
 });
+
+test('destroy deletes guru with related kelas and mata_pelajarn by setting guru_id to null', function () {
+    $admin = User::factory()->create();
+    $this->actingAs($admin);
+
+    $user = User::create([
+        'first_name' => 'Guru',
+        'last_name'  => 'Relasi',
+        'email'      => 'relasi.guru@sekolah.sch.id',
+        'password'   => bcrypt('password123'),
+    ]);
+
+    $guru = Guru::create([
+        'user_id' => $user->id,
+        'nama'    => 'Guru Relasi',
+        'nip'     => '44444',
+        'email'   => 'relasi.guru@sekolah.sch.id',
+    ]);
+
+    $kelas = App\Models\Kelas::create([
+        'guru_id' => $guru->id,
+        'nama'    => 'X-RPL-1',
+        'tingkat' => 10,
+        'status'  => 'aktif',
+    ]);
+
+    $mp = App\Models\MataPelajaran::create([
+        'guru_id' => $guru->id,
+        'nama'    => 'Matematika',
+        'kode'    => 'MTK-10',
+    ]);
+
+    $response = $this->delete(route('guru.destroy', $guru->id));
+
+    $response->assertRedirect(route('guru.index'));
+    $response->assertSessionHas('success', 'Data guru berhasil dihapus.');
+
+    $this->assertDatabaseMissing('gurus', ['id' => $guru->id]);
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+
+    $this->assertDatabaseHas('kelas', [
+        'id' => $kelas->id,
+        'guru_id' => null,
+    ]);
+
+    $this->assertDatabaseHas('mata_pelajarans', [
+        'id' => $mp->id,
+        'guru_id' => null,
+    ]);
+});
+

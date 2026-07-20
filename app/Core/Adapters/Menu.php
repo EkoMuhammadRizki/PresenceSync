@@ -77,8 +77,14 @@ class Menu extends \App\Core\Menu
 
             // Allowed paths definition per role
             if ($isSiswa) {
+                $allowedSiswaPaths = ['absensi/siswa/dashboard', 'logout'];
+                $siswaModel = \App\Models\Siswa::where('user_id', $user->id)->first();
+                if ($siswaModel && $siswaModel->is_sekretaris) {
+                    $allowedSiswaPaths[] = 'absensi/siswa/kehadiran-mp';
+                    $allowedSiswaPaths[] = 'absensi/siswa/pengaduan';
+                }
                 if (isset($value['path'])) {
-                    if ($value['path'] !== 'absensi/siswa/dashboard' && $value['path'] !== 'logout') {
+                    if (!in_array($value['path'], $allowedSiswaPaths)) {
                         unset($array[$key]);
                         continue;
                     }
@@ -93,50 +99,10 @@ class Menu extends \App\Core\Menu
                     continue;
                 }
             } elseif ($isOrangTua) {
-                if (isset($value['path'])) {
-                    if ($value['path'] !== 'absensi/dashboard' && $value['path'] !== 'logout') {
-                        unset($array[$key]);
-                        continue;
-                    }
-                } elseif (isset($value['sub']['items'])) {
-                    self::filterMenuPermissions($value['sub']['items']);
-                    if (empty($value['sub']['items'])) {
-                        unset($array[$key]);
-                        continue;
-                    }
-                } else {
-                    unset($array[$key]);
-                    continue;
-                }
-            } elseif ($isGuru) {
-                $allowedPaths = ['absensi/dashboard', 'absensi/kehadiran', 'absensi/guru/kelas-wali', 'logout'];
-                if (isset($value['path'])) {
-                    if (!in_array($value['path'], $allowedPaths)) {
-                        unset($array[$key]);
-                        continue;
-                    }
-                } elseif (isset($value['sub']['items'])) {
-                    self::filterMenuPermissions($value['sub']['items']);
-                    if (empty($value['sub']['items'])) {
-                        unset($array[$key]);
-                        continue;
-                    }
-                } else {
-                    unset($array[$key]);
-                    continue;
-                }
-            } elseif ($isKesiswaan) {
                 $allowedPaths = [
-                    'absensi/dashboard',
-                    'absensi/master/siswa',
-                    'absensi/master/kelas/data',
-                    'absensi/master/kelas/pembagian',
-                    'absensi/master/tahun-ajaran',
-                    'absensi/master/mata-pelajaran',
-                    'absensi/aturan-jam', // wait, let's verify if the path in menu.php is absensi/master/aturan-jam or absensi/aturan-jam
-                    'absensi/master/aturan-jam',
-                    'absensi/kehadiran',
-                    'absensi/laporan',
+                    'absensi/orangtua/dashboard',
+                    'absensi/orangtua/pengaduan',
+                    'absensi/orangtua/profil',
                     'logout'
                 ];
                 if (isset($value['path'])) {
@@ -154,9 +120,55 @@ class Menu extends \App\Core\Menu
                     unset($array[$key]);
                     continue;
                 }
+            } elseif ($isKesiswaan) {
+                if (isset($value['title']) && $value['title'] === 'Master Data') {
+                    unset($array[$key]);
+                    continue;
+                }
+ 
+                $allowedPaths = [
+                    'absensi/dashboard',
+                    'absensi/kesiswaan/dashboard',
+                    'absensi/master/siswa',
+                    'absensi/master/kelas/data',
+                    'absensi/master/kelas/pembagian',
+                    'logout'
+                ];
+                if (isset($value['path'])) {
+                    if (!in_array($value['path'], $allowedPaths)) {
+                        unset($array[$key]);
+                        continue;
+                    }
+                } elseif (isset($value['sub']['items'])) {
+                    self::filterMenuPermissions($value['sub']['items']);
+                    if (empty($value['sub']['items'])) {
+                        unset($array[$key]);
+                        continue;
+                    }
+                } else {
+                    unset($array[$key]);
+                    continue;
+                }
+            } elseif ($isGuru) {
+                $allowedPaths = ['absensi/dashboard', 'absensi/kehadiran', 'absensi/guru/kelas-wali', 'absensi/guru/pengaduan', 'logout'];
+                if (isset($value['path'])) {
+                    if (!in_array($value['path'], $allowedPaths)) {
+                        unset($array[$key]);
+                        continue;
+                    }
+                } elseif (isset($value['sub']['items'])) {
+                    self::filterMenuPermissions($value['sub']['items']);
+                    if (empty($value['sub']['items'])) {
+                        unset($array[$key]);
+                        continue;
+                    }
+                } else {
+                    unset($array[$key]);
+                    continue;
+                }
             } else {
-                // Admin or fallback: hide student dashboard
-                if (isset($value['path']) && $value['path'] === 'absensi/siswa/dashboard') {
+                // Admin or fallback: hide student-only dashboard items
+                if (isset($value['path']) && in_array($value['path'], ['absensi/siswa/dashboard', 'absensi/siswa/kehadiran-mp', 'absensi/siswa/pengaduan'])) {
                     unset($array[$key]);
                     continue;
                 }

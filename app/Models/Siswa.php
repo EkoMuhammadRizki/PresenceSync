@@ -65,4 +65,14 @@ class Siswa extends Model
     {
         return $this->belongsTo(User::class, 'orang_tua_user_id');
     }
+
+    public function kehadiranMataPelajarans(): HasMany
+    {
+        return $this->hasMany(KehadiranMataPelajaran::class, 'created_by');
+    }
+
+    public function kehadiranMataPelajaranDetails(): HasMany
+    {
+        return $this->hasMany(KehadiranMataPelajaranDetail::class);
+    }
 }

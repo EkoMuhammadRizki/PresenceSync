@@ -145,8 +145,22 @@
     <div class="tab-pane fade show active" id="tab_siswa" role="tabpanel">
         <div class="card">
             <div class="card-header border-0 pt-6">
-                <div class="card-title">
-                    <h3 class="fw-bolder">Daftar Siswa</h3>
+                <div class="card-title d-flex align-items-center gap-3">
+                    <h3 class="fw-bolder mb-0">Daftar Siswa</h3>
+                    <div class="d-flex align-items-center position-relative my-1">
+                        {!! theme()->getSvgIcon("icons/duotune/general/gen021.svg", "svg-icon-2 position-absolute ms-4") !!}
+                        <input type="text" id="search_siswa" class="form-control form-control-solid w-200px ps-12" placeholder="Cari siswa..." />
+                    </div>
+                </div>
+                <div class="card-toolbar">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ route('guru.kelas-wali.export-pdf') }}" class="btn btn-sm btn-danger">
+                            {!! theme()->getSvgIcon("icons/duotune/files/fil003.svg", "svg-icon-4") !!} Export PDF
+                        </a>
+                        <a href="{{ route('guru.kelas-wali.export-excel') }}" class="btn btn-sm btn-success">
+                            {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-4") !!} Export Excel
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="card-body py-4">
@@ -305,13 +319,17 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#kt_table_siswa').DataTable({
+    var table = $('#kt_table_siswa').DataTable({
         dom: "<'table-responsive'tr><'row'<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'li><'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>>",
         info: true,
         order: [],
         pageLength: 10,
         lengthChange: true,
         columnDefs: [{ orderable: false, targets: 0 }]
+    });
+
+    $('#search_siswa').on('keyup', function() {
+        table.search(this.value).draw();
     });
 });
 </script>

@@ -100,6 +100,7 @@ class AbsensiSeeder extends Seeder
 
         $siswa1 = Siswa::updateOrCreate(['user_id' => $userSiswa->id], [
             'kelas_id'       => $kelas1->id,
+            'is_sekretaris'  => true,
             'nama'           => 'Ahmad Subarjo',
             'nisn'           => '0054321098',
             'nis'            => '10201',

@@ -83,9 +83,27 @@ class SiswaProfileController extends Controller
 
         $completionRate = $this->calculateCompletionRate($siswa, $user);
 
+        // Parent Profile Info
+        $parentProfile = null;
+        if ($siswa->orang_tua_user_id) {
+            $parentProfile = \App\Models\ParentProfile::where('parent_user_id', $siswa->orang_tua_user_id)->first();
+        }
+
+        // Attendance grid data (cloned from SiswaDashboardController)
+        $periode = $request->input('periode', date('Ym'));
+        $attendanceData = $this->buildAttendanceData($siswa->id, $periode);
+        $attendanceRows = $attendanceData['rows'];
+        $daysInMonth = $attendanceData['daysInMonth'];
+
+        // Secretary Complaints Laporan Pengaduan
+        $pengaduans = \App\Models\Pengaduan::where('siswa_id', $siswa->id)
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
         return view('profile.siswa', compact(
             'siswa', 'user', 'info', 'stats', 'kelas',
-            'semesters', 'tahunAjarans', 'schedules', 'userRole', 'completionRate'
+            'semesters', 'tahunAjarans', 'schedules', 'userRole', 'completionRate',
+            'parentProfile', 'periode', 'attendanceRows', 'daysInMonth', 'pengaduans'
         ));
     }
 
@@ -280,5 +298,103 @@ class SiswaProfileController extends Controller
         }
 
         return round(($filled / count($fields)) * 100);
+    }
+
+    /**
+     * Helper to build monthly attendance grid (cloned from SiswaDashboardController).
+     */
+    private function buildAttendanceData($siswaId, $periode)
+    {
+        $year = substr($periode, 0, 4);
+        $month = substr($periode, 4, 2);
+        
+        $startDate = \Illuminate\Support\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+        $daysInMonth = $startDate->daysInMonth;
+
+        $siswa = Siswa::with('kelas')->find($siswaId);
+        if (!$siswa) {
+            return [
+                'siswa' => null,
+                'rows' => [],
+                'daysInMonth' => $daysInMonth
+            ];
+        }
+
+        $aturanJam = \App\Models\AturanJam::where('is_aktif', true)->first();
+
+        $kehadirans = \App\Models\Kehadiran::where('siswa_id', $siswa->id)
+            ->whereBetween('tanggal', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')])
+            ->get()
+            ->keyBy(function($item) {
+                return \Illuminate\Support\Carbon::parse($item->tanggal)->format('Y-m-d');
+            });
+
+        $rows = [];
+        $hariMap = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = $startDate->copy()->addDays($day - 1);
+            $dateStr = $date->format('Y-m-d');
+            $dayOfWeek = $date->dayOfWeek;
+            
+            $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
+            $hariLabel = $hariMap[$dayOfWeek];
+            $tanggalLabel = $hariLabel . ', ' . $date->format('d-m-Y');
+
+            $row = [
+                'no' => $day,
+                'nisn' => $siswa->nisn ?? $siswa->nis ?? '-',
+                'nama' => $siswa->nama,
+                'tanggal' => $tanggalLabel,
+                'tanggal_raw' => $dateStr,
+                'is_libur' => $isWeekend,
+                'msk_lbr' => '',
+                'msk_jam' => '',
+                'keterangan' => '',
+            ];
+
+            if ($isWeekend) {
+                $row['msk_lbr'] = '✗';
+                $row['keterangan'] = 'Libur';
+            } else {
+                $record = $kehadirans->get($dateStr);
+                
+                if ($record) {
+                    $row['status'] = $record->status;
+                    
+                    if (in_array($record->status, ['hadir', 'terlambat'])) {
+                        $row['msk_lbr'] = '✓';
+                        $row['msk_jam'] = $record->jam_masuk ? \Illuminate\Support\Carbon::parse($record->jam_masuk)->format('H:i:s') : '';
+
+                        if ($record->status === 'terlambat') {
+                            $row['keterangan'] = 'Terlambat';
+                        } else {
+                            $row['keterangan'] = 'Tepat Waktu';
+                        }
+                    } else if ($record->status === 'sakit') {
+                        $row['msk_lbr'] = '✗';
+                        $row['keterangan'] = 'Sakit';
+                    } else if ($record->status === 'izin') {
+                        $row['msk_lbr'] = '✗';
+                        $row['keterangan'] = 'Izin';
+                    } else {
+                        $row['msk_lbr'] = '✗';
+                        $row['keterangan'] = '-';
+                    }
+                } else {
+                    $row['msk_lbr'] = '✗';
+                    $row['keterangan'] = '-';
+                }
+            }
+
+            $rows[] = $row;
+        }
+
+        return [
+            'siswa' => $siswa,
+            'rows' => $rows,
+            'daysInMonth' => $daysInMonth
+        ];
     }
 }

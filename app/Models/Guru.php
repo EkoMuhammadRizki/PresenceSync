@@ -18,6 +18,16 @@ class Guru extends Model
         'alamat',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($guru) {
+            $guru->kelas()->update(['guru_id' => null]);
+            $guru->mataPelajarans()->update(['guru_id' => null]);
+        });
+    }
+
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);

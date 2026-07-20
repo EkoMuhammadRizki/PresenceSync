@@ -190,6 +190,7 @@
 </div>
 <!--end::Card - Riwayat Kehadiran-->
 
+
 <!--begin::Modal Presensi-->
 <div class="modal fade" id="modal_presensi" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered mw-550px">
@@ -363,6 +364,8 @@
     </div>
 </div>
 <!--end::Modal Izin-->
+
+
 
 @section('styles')
 <style>
@@ -687,6 +690,7 @@ $(document).ready(function() {
             }
         });
     });
+
 });
 </script>
 

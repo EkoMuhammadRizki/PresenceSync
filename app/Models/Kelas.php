@@ -17,6 +17,15 @@ class Kelas extends Model
         'status',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($kelas) {
+            $kelas->siswas()->update(['kelas_id' => null]);
+        });
+    }
+
     public function guru(): BelongsTo
     {
         return $this->belongsTo(Guru::class);
@@ -35,6 +44,11 @@ class Kelas extends Model
     /**
      * Nama lengkap kelas, misal: "X RPL 1"
      */
+    public function kehadiranMataPelajarans(): HasMany
+    {
+        return $this->hasMany(KehadiranMataPelajaran::class);
+    }
+
     public function getNamaLengkapAttribute(): string
     {
         return $this->tingkat . ' ' . $this->nama;

@@ -140,3 +140,65 @@ test('student can submit excuse successfully', function () {
     expect($kehadiran->status)->toBe('izin');
     expect($kehadiran->keterangan)->toBe($keteranganLong);
 });
+
+test('secretary student can view subject attendance detail page and save data', function () {
+    $data = createActiveSemesterAndRules();
+    
+    $user = User::factory()->create();
+    $kelas = \App\Models\Kelas::create([
+        'nama' => 'X-1',
+        'tingkat' => '10',
+        'status' => 'aktif',
+    ]);
+    $siswa = Siswa::create([
+        'user_id'       => $user->id,
+        'nama'          => 'Budiono',
+        'jenis_kelamin' => 'L',
+        'is_sekretaris' => true,
+        'kelas_id'      => $kelas->id,
+        'nis'           => '12345'
+    ]);
+
+    $mapel = \App\Models\MataPelajaran::create([
+        'nama' => 'Matematika',
+        'kode' => 'MTK01',
+    ]);
+
+    $record = \App\Models\KehadiranMataPelajaran::create([
+        'kelas_id'          => $kelas->id,
+        'semester_id'       => $data['semester']->id,
+        'mata_pelajaran_id' => $mapel->id,
+        'tanggal'           => now()->toDateString(),
+        'jam_mulai'         => '08:00',
+        'jam_selesai'       => '09:30',
+        'created_by'        => $siswa->id,
+    ]);
+
+    // View detail page
+    $response = $this->actingAs($user)->get(route('siswa.sekretaris.kehadiran-mp.daftar-hadir', $record->id));
+    $response->assertStatus(200);
+    $response->assertSee('Matematika');
+    $response->assertSee('Budiono');
+    $response->assertSee('12345');
+
+    // Save attendance data
+    $saveResponse = $this->actingAs($user)->post(route('siswa.sekretaris.kehadiran-mp.simpan', $record->id), [
+        'siswa' => [
+            [
+                'siswa_id' => $siswa->id,
+                'status' => 1,
+                'keterangan' => 'Hadir tepat waktu'
+            ]
+        ]
+    ]);
+    $saveResponse->assertStatus(200);
+    $saveResponse->assertJson(['success' => true]);
+
+    $this->assertDatabaseHas('kehadiran_mata_pelajaran_details', [
+        'kehadiran_mata_pelajaran_id' => $record->id,
+        'siswa_id' => $siswa->id,
+        'status' => true,
+        'keterangan' => 'Hadir tepat waktu'
+    ]);
+});
+

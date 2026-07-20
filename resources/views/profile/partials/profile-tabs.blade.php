@@ -6,13 +6,23 @@
     <!-- Student-specific Tabs -->
     @if($profileType === 'siswa')
         <li class="nav-item">
-            <a class="nav-link text-active-primary me-6 active" data-bs-toggle="tab" href="#tab_riwayat_kehadiran">
+            <a class="nav-link text-active-primary me-6 {{ request()->has('periode') ? '' : 'active' }}" data-bs-toggle="tab" href="#tab_riwayat_kehadiran">
                 Informasi Siswa
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-active-primary me-6" data-bs-toggle="tab" href="#tab_riwayat">
+            <a class="nav-link text-active-primary me-6 {{ request()->has('periode') ? 'active' : '' }}" data-bs-toggle="tab" href="#tab_riwayat">
                 Riwayat Kehadiran
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-active-primary me-6" data-bs-toggle="tab" href="#tab_pengaduan_sekretaris">
+                Laporan Pengaduan
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-active-primary me-6" data-bs-toggle="tab" href="#tab_orang_tua">
+                Informasi Orang Tua
             </a>
         </li>
     @endif

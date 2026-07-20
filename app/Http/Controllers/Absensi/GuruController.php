@@ -103,28 +103,6 @@ class GuruController extends Controller
 
     public function destroy(Guru $guru)
     {
-        $relations = [];
-        if ($guru->kelas()->exists()) {
-            $relations[] = 'data kelas';
-        }
-        if ($guru->mataPelajarans()->exists()) {
-            $relations[] = 'mata pelajaran';
-        }
-        if (!empty($relations)) {
-            $relationsStr = implode(' dan ', $relations);
-            $directions = [];
-            if ($guru->kelas()->exists()) {
-                $directions[] = '<a href="' . route('kelas.index') . '" class="text-primary fw-bold text-decoration-underline">Data Kelas</a>';
-            }
-            if ($guru->mataPelajarans()->exists()) {
-                $directions[] = '<a href="' . route('mata-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Mata Pelajaran</a>';
-            }
-            $msg = "Guru ini tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
-            
-            return redirect()->route('guru.index')
-                ->with('error', $msg);
-        }
-
         $user = $guru->user;
         $guru->delete();
 
@@ -229,7 +207,7 @@ class GuruController extends Controller
         }
 
         if (count($rows) <= 1) {
-            return redirect()->back()->withErrors(['error' => 'File Excel kosong atau hanya berisi header.']);
+            return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Siswa. Silakan unggah file template Guru yang benar.']);
         }
 
         $header = array_shift($rows); // Buang header

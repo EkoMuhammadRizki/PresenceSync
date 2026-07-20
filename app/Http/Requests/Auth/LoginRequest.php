@@ -29,7 +29,7 @@ class LoginRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|string|email',
+            'email' => 'required|string',
             'password' => 'required|string',
         ];
     }
@@ -45,13 +45,24 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $user = \App\Models\User::where('email', $this->email)->first();
+        $user = null;
+
+        // Try lookup by child's NIS (for parent login)
+        $siswa = \App\Models\Siswa::where('nis', $this->email)->first();
+        if ($siswa && $siswa->orang_tua_user_id) {
+            $user = \App\Models\User::find($siswa->orang_tua_user_id);
+        }
+
+        // If not found, try lookup by email (normal login)
+        if (!$user) {
+            $user = \App\Models\User::where('email', $this->email)->first();
+        }
 
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => ['Email tidak terdaftar.'],
+                'email' => ['Kredensial tidak terdaftar.'],
             ]);
         }
 

@@ -138,12 +138,8 @@ class PenggunaController extends Controller
                 ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
-        // Check if user is a Guru and has classes/subjects assigned
+        // Delete Guru if exists
         if ($pengguna->guru) {
-            if ($pengguna->guru->kelas()->exists() || $pengguna->guru->mataPelajarans()->exists()) {
-                return redirect()->route('pengguna.index')
-                    ->with('error', 'User Guru ini tidak dapat dihapus karena masih terkait dengan data kelas atau mata pelajaran.');
-            }
             $pengguna->guru->delete();
         }
 

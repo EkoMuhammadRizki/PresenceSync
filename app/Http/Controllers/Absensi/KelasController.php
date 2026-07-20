@@ -83,28 +83,6 @@ class KelasController extends Controller
 
     public function destroy(Kelas $kelas)
     {
-        $relations = [];
-        if ($kelas->siswas()->exists()) {
-            $relations[] = 'data siswa';
-        }
-        if ($kelas->jadwalPelajarans()->exists()) {
-            $relations[] = 'jadwal pelajaran';
-        }
-        if (!empty($relations)) {
-            $relationsStr = implode(' dan ', $relations);
-            $directions = [];
-            if ($kelas->siswas()->exists()) {
-                $directions[] = '<a href="' . route('siswa.index') . '" class="text-primary fw-bold text-decoration-underline">Data Siswa</a>';
-            }
-            if ($kelas->jadwalPelajarans()->exists()) {
-                $directions[] = '<a href="' . route('jadwal-pelajaran.index') . '" class="text-primary fw-bold text-decoration-underline">Jadwal Pelajaran</a>';
-            }
-            $msg = "Kelas ini tidak dapat dihapus karena masih terkait dengan {$relationsStr}. Silakan hapus keterkaitan data tersebut terlebih dahulu di halaman " . implode(' dan ', $directions) . ".";
-            
-            return redirect()->route('kelas.index')
-                ->with('error', $msg);
-        }
-
         $kelas->delete();
         return redirect()->route('kelas.index')
             ->with('success', 'Data kelas berhasil dihapus.');
