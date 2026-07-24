@@ -1060,7 +1060,7 @@ License: {{ theme()->getOption('product', 'license') }}
                         } else {
                             SwalError.fire({ title: 'Gagal!', html: response.message || 'Terjadi kesalahan.' });
                         }
-                    },
+                    }, 
                     error: function(xhr) {
                         var errMsg = 'Terjadi kesalahan saat menghapus data.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {

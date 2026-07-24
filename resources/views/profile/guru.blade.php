@@ -32,40 +32,9 @@
                 'user' => $user,
                 'info' => $info,
                 'userRole' => $userRole,
-                'guru' => $guru
+                'guru' => $guru,
+                'kelasDiwali' => $kelasDiwali
             ])
-
-            <!-- Kelas yang Diwali Card -->
-            <div class="card mb-5 mb-xl-8 mt-5">
-                <div class="card-header border-0 pt-6">
-                    <div class="card-title">
-                        <h3 class="fw-bolder">Kelas yang Diwali</h3>
-                    </div>
-                </div>
-                <div class="card-body py-4">
-                    @forelse($kelasDiwali as $kelasItem)
-                        <div class="d-flex align-items-center mb-7">
-                            <div class="symbol symbol-50px me-5">
-                                <div class="symbol-label bg-light-primary text-primary fw-bolder fs-5">
-                                    {{ $kelasItem->tingkat }}
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <span class="text-dark fw-bolder fs-6">{{ $kelasItem->nama_lengkap }}</span>
-                                <span class="text-muted d-block fw-bold">
-                                    {{ $kelasItem->siswas_count }} Siswa • Status: {{ ucfirst($kelasItem->status) }}
-                                </span>
-                            </div>
-                            <a href="{{ url('absensi/master/kelas/pembagian/' . $kelasItem->id) }}" class="btn btn-sm btn-light-primary">Lihat Detail Kelas</a>
-                        </div>
-                    @empty
-                        <div class="text-center text-muted py-10">
-                            Guru ini tidak/belum menjadi Wali Kelas di kelas manapun.
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-            <!--end::Card - Kelas yang Diwali-->
         </div>
         <!--end::Tab Pane - Informasi Dasar-->
 

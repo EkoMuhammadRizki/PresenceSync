@@ -86,6 +86,40 @@
                 </div>
             </div>
         </div>
+
+        @if(isset($kelasDiwali))
+            <!-- Card - Kelas yang Diwali -->
+            <div class="card mb-5 mb-xxl-8">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bolder fs-3 text-dark">Kelas yang Diwali</span>
+                        <span class="text-muted mt-1 fw-bold fs-7">Daftar kelas tempat Anda menjadi Wali Kelas</span>
+                    </h3>
+                </div>
+                <div class="card-body pt-3">
+                    @forelse($kelasDiwali as $kelasItem)
+                        <div class="d-flex align-items-center {{ !$loop->last ? 'mb-7' : '' }}">
+                            <div class="symbol symbol-50px me-5">
+                                <div class="symbol-label bg-light-primary text-primary fw-bolder fs-5">
+                                    {{ $kelasItem->tingkat }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <span class="text-dark fw-bolder fs-6">{{ $kelasItem->nama_lengkap }}</span>
+                                <span class="text-muted d-block fw-bold fs-7">
+                                    {{ $kelasItem->siswas_count }} Siswa • Status: {{ ucfirst($kelasItem->status) }}
+                                </span>
+                            </div>
+                            <a href="{{ url('absensi/master/kelas/pembagian/' . $kelasItem->id) }}" class="btn btn-sm btn-light-primary">Lihat Detail Kelas</a>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-5">
+                            Guru ini tidak/belum menjadi Wali Kelas di kelas manapun.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        @endif
     </div>
     <!--end::Col-->
 

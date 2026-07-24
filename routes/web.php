@@ -151,6 +151,7 @@ Route::middleware('auth')->group(function () {
     // Admin & Kesiswaan Dashboard Routes
     Route::get('absensi/dashboard', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('absensi/dashboard/trend-data', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'getTrendData'])->name('admin.dashboard.trend-data');
+    Route::get('absensi/dashboard/guru-trend-data', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'getGuruTrendData'])->name('admin.dashboard.guru-trend-data');
     Route::get('absensi/kesiswaan/dashboard', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'index'])->name('kesiswaan.dashboard');
 
     // Orang Tua Dashboard Routes

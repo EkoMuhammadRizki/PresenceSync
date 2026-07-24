@@ -51,7 +51,10 @@
                 @else
                     <li class="breadcrumb-item text-muted">
                         @if ( ! empty($item['path']) )
-                            <a href="{{ theme()->getPageUrl($item['path']) }}" class="text-muted text-hover-primary">
+                            @php
+                                $url = ($item['path'] === 'index' || strtolower($item['title']) === 'home') ? 'javascript:location.reload()' : theme()->getPageUrl($item['path']);
+                            @endphp
+                            <a href="{{ $url }}" class="text-muted text-hover-primary">
                                 {{ $item['title'] }}
                             </a>
                         @else

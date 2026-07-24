@@ -9,15 +9,109 @@
     .scrollable-table-container {
         max-height: 420px;
         overflow-y: auto;
+        overflow-x: hidden;
+        width: 100%;
+        display: block;
     }
-    /* Dynamic bottom border highlight for Trend parameter cards */
+    .late-table {
+        table-layout: fixed;
+        width: 100%;
+        margin-bottom: 0;
+    }
+    .late-table th,
+    .late-table td {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+        vertical-align: middle;
+    }
+    .late-table .col-nama {
+        width: 28%;
+        max-width: 0;
+    }
+    .late-table .col-kelas {
+        width: 10%;
+    }
+    .late-table .col-status {
+        width: 15%;
+    }
+    .late-table .col-masuk {
+        width: 18%;
+    }
+    .late-table .col-durasi {
+        width: 19%;
+    }
+    .late-table th:last-child,
+    .late-table td:last-child {
+        padding-right: 0;
+    }
+    .late-table .col-durasi span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .late-card-body {
+        overflow: hidden;
+    }
+    .late-table .nama-cell {
+        min-width: 0;
+    }
+    .late-table .nama-cell .symbol {
+        flex-shrink: 0;
+    }
+    .late-table .nama-cell .nama-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
+    /* Accent Top Border styling for parameter cards */
     .trend-summary-card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        transition: all 0.25s ease-in-out;
         cursor: pointer;
+        user-select: none;
+        border-radius: 0.5rem !important;
+        position: relative;
     }
     .trend-summary-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+
+    .trend-summary-card.active {
+        opacity: 1 !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06) !important;
+    }
+
+    .trend-summary-card:not(.active) {
+        opacity: 0.55 !important;
+        background-color: #f8f9fa !important;
+        box-shadow: none !important;
+    }
+
+    .trend-summary-card-guru {
+        transition: all 0.25s ease-in-out;
+        cursor: pointer;
+        user-select: none;
+        border-radius: 0.5rem !important;
+        position: relative;
+    }
+    .trend-summary-card-guru:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+
+    .trend-summary-card-guru.active {
+        opacity: 1 !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06) !important;
+    }
+
+    .trend-summary-card-guru:not(.active) {
+        opacity: 0.55 !important;
+        background-color: #f8f9fa !important;
+        box-shadow: none !important;
     }
 </style>
 @endpush
@@ -30,7 +124,7 @@
             
             <!-- Card 1: Jumlah Siswa -->
             <div class="col">
-                <div class="card card-dashed flex-center min-w-100px p-6 bg-light-primary border-primary border-dashed">
+                <div class="card flex-center min-w-100px p-6 bg-light-primary border border-primary">
                     <span class="svg-icon svg-icon-3x svg-icon-primary mb-2">
                         {!! theme()->getSvgIcon("icons/duotune/communication/com013.svg", "svg-icon-3x svg-icon-primary") !!}
                     </span>
@@ -42,7 +136,7 @@
 
             <!-- Card 2: Jumlah Guru -->
             <div class="col">
-                <div class="card card-dashed flex-center min-w-100px p-6 bg-light-success border-success border-dashed">
+                <div class="card flex-center min-w-100px p-6 bg-light-success border border-success">
                     <span class="svg-icon svg-icon-3x svg-icon-success mb-2">
                         {!! theme()->getSvgIcon("icons/duotune/communication/com014.svg", "svg-icon-3x svg-icon-success") !!}
                     </span>
@@ -54,7 +148,7 @@
 
             <!-- Card 3: Jumlah Kelas -->
             <div class="col">
-                <div class="card card-dashed flex-center min-w-100px p-6 bg-light-info border-info border-dashed">
+                <div class="card flex-center min-w-100px p-6 bg-light-info border border-info">
                     <span class="svg-icon svg-icon-3x svg-icon-info mb-2">
                         {!! theme()->getSvgIcon("icons/duotune/general/gen025.svg", "svg-icon-3x svg-icon-info") !!}
                     </span>
@@ -66,7 +160,7 @@
 
             <!-- Card 4: Kehadiran Hari Ini -->
             <div class="col">
-                <div class="card card-dashed flex-center min-w-100px p-6 bg-light-warning border-warning border-dashed">
+                <div class="card flex-center min-w-100px p-6 bg-light-warning border border-warning">
                     <span class="svg-icon svg-icon-3x svg-icon-warning mb-2">
                         {!! theme()->getSvgIcon("icons/duotune/general/gen014.svg", "svg-icon-3x svg-icon-warning") !!}
                     </span>
@@ -78,7 +172,7 @@
 
             <!-- Card 5: Terlambat Hari Ini -->
             <div class="col">
-                <div class="card card-dashed flex-center min-w-100px p-6 bg-light-danger border-danger border-dashed">
+                <div class="card flex-center min-w-100px p-6 bg-light-danger border border-danger">
                     <span class="svg-icon svg-icon-3x svg-icon-danger mb-2">
                         {!! theme()->getSvgIcon("icons/duotune/general/gen050.svg", "svg-icon-3x svg-icon-danger") !!}
                     </span>
@@ -123,9 +217,12 @@
                                 
                                 <!-- Filters: Date Range & Class Dropdown -->
                                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-5 gap-3">
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <label class="fs-7 fw-bold text-gray-700">Periode:</label>
-                                        <input class="form-control form-control-solid form-control-sm w-200px" placeholder="Pilih Tanggal..." id="filter_tanggal" />
+                                        <div class="d-flex align-items-center position-relative my-1">
+                                            {!! theme()->getSvgIcon("icons/duotune/general/gen014.svg", "svg-icon-2 position-absolute ms-3") !!}
+                                            <input type="text" id="filter_tanggal" class="form-control form-control-solid form-control-sm w-225px w-md-275px ps-10" placeholder="Pilih Rentang Tanggal" readonly="readonly" />
+                                        </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         <label class="fs-7 fw-bold text-gray-700">Kelas:</label>
@@ -142,38 +239,47 @@
                                 <div class="row row-cols-2 row-cols-sm-5 g-3 mb-6">
                                     <!-- Kehadiran -->
                                     <div class="col">
-                                        <div class="card card-dashed trend-summary-card p-4 border-start border-start-5 border-start-primary bg-light">
-                                            <span class="fs-8 fw-bold text-gray-600">Kehadiran</span>
-                                            <span class="fs-3 fw-boldest text-dark" id="summary_kehadiran">0</span>
+                                        <div class="card trend-summary-card p-4 active" data-criteria="kehadiran" onclick="selectTrendCriteria('kehadiran')" style="border-top: 4px solid #009ef7 !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Kehadiran</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_kehadiran" style="pointer-events: none;">0</span>
                                         </div>
                                     </div>
                                     <!-- Ketidakhadiran -->
                                     <div class="col">
-                                        <div class="card card-dashed trend-summary-card p-4 border-start border-start-5 border-start-danger bg-light">
-                                            <span class="fs-8 fw-bold text-gray-600">Ketidakhadiran</span>
-                                            <span class="fs-3 fw-boldest text-dark" id="summary_ketidakhadiran">0</span>
+                                        <div class="card trend-summary-card p-4" data-criteria="ketidakhadiran" onclick="selectTrendCriteria('ketidakhadiran')" style="border-top: 4px solid #f1416c !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; opacity: 0.55; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Ketidakhadiran</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_ketidakhadiran" style="pointer-events: none;">0</span>
                                         </div>
                                     </div>
                                     <!-- Izin -->
                                     <div class="col">
-                                        <div class="card card-dashed trend-summary-card p-4 border-start border-start-5 border-start-info bg-light">
-                                            <span class="fs-8 fw-bold text-gray-600">Izin</span>
-                                            <span class="fs-3 fw-boldest text-dark" id="summary_izin">0</span>
+                                        <div class="card trend-summary-card p-4" data-criteria="izin" onclick="selectTrendCriteria('izin')" style="border-top: 4px solid #7239ea !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; opacity: 0.55; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Izin</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_izin" style="pointer-events: none;">0</span>
                                         </div>
                                     </div>
                                     <!-- Sakit -->
                                     <div class="col">
-                                        <div class="card card-dashed trend-summary-card p-4 border-start border-start-5 border-start-warning bg-light">
-                                            <span class="fs-8 fw-bold text-gray-600">Sakit</span>
-                                            <span class="fs-3 fw-boldest text-dark" id="summary_sakit">0</span>
+                                        <div class="card trend-summary-card p-4" data-criteria="sakit" onclick="selectTrendCriteria('sakit')" style="border-top: 4px solid #f59e0b !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; opacity: 0.55; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Sakit</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_sakit" style="pointer-events: none;">0</span>
                                         </div>
                                     </div>
                                     <!-- Alpa -->
                                     <div class="col">
-                                        <div class="card card-dashed trend-summary-card p-4 border-start border-start-5 border-start-dark bg-light">
-                                            <span class="fs-8 fw-bold text-gray-600">Alpa</span>
-                                            <span class="fs-3 fw-boldest text-dark" id="summary_alpa">0</span>
+                                        <div class="card trend-summary-card p-4" data-criteria="alpa" onclick="selectTrendCriteria('alpa')" style="border-top: 4px solid #3f4254 !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; opacity: 0.55; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Alpa</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_alpa" style="pointer-events: none;">0</span>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Header Grafik & Dynamic Legend -->
+                                <div class="d-flex flex-wrap align-items-center justify-content-between my-4 pt-2">
+                                    <h4 class="fw-bolder text-dark mb-0 fs-5">Grafik setiap Kriteria</h4>
+                                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                                        <div id="chart_legend_container" class="d-flex align-items-center gap-3 flex-wrap"></div>
+                                        <span class="text-muted fw-bold fs-7" id="criteria_counter">Kriteria Dipilih 5 / 5</span>
                                     </div>
                                 </div>
 
@@ -182,15 +288,71 @@
 
                             </div>
 
-                            <!-- TAB 2: KEHADIRAN GURU (PLACEHOLDER) -->
+                            <!-- TAB 2: KEHADIRAN GURU -->
                             <div class="tab-pane fade" id="tab_guru_trend" role="tabpanel">
-                                <div class="text-center py-15">
-                                    <div class="mb-4">
-                                        {!! theme()->getSvgIcon("icons/duotune/general/gen006.svg", "svg-icon-5x text-muted") !!}
+                                
+                                <!-- Filters: Date Range -->
+                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-5 gap-3">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <label class="fs-7 fw-bold text-gray-700">Periode:</label>
+                                        <div class="d-flex align-items-center position-relative my-1">
+                                            {!! theme()->getSvgIcon("icons/duotune/general/gen014.svg", "svg-icon-2 position-absolute ms-3") !!}
+                                            <input type="text" id="filter_tanggal_guru" class="form-control form-control-solid form-control-sm w-225px w-md-275px ps-10" placeholder="Pilih Rentang Tanggal" readonly="readonly" />
+                                        </div>
                                     </div>
-                                    <h4 class="text-gray-700 fw-bolder mb-1">Kehadiran Guru</h4>
-                                    <p class="text-muted fw-bold fs-6">Data kehadiran guru belum dikonfigurasi pada semester ini.</p>
                                 </div>
+
+                                <!-- 5 Summary Parameter Cards for Guru -->
+                                <div class="row row-cols-2 row-cols-sm-5 g-3 mb-6">
+                                    <!-- Kehadiran -->
+                                    <div class="col">
+                                        <div class="card trend-summary-card-guru p-4 active" data-criteria="kehadiran" onclick="selectGuruTrendCriteria('kehadiran')" style="border-top: 4px solid #009ef7 !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Kehadiran</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_guru_kehadiran" style="pointer-events: none;">0</span>
+                                        </div>
+                                    </div>
+                                    <!-- Ketidakhadiran -->
+                                    <div class="col">
+                                        <div class="card trend-summary-card-guru p-4 active" data-criteria="ketidakhadiran" onclick="selectGuruTrendCriteria('ketidakhadiran')" style="border-top: 4px solid #f1416c !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Ketidakhadiran</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_guru_ketidakhadiran" style="pointer-events: none;">0</span>
+                                        </div>
+                                    </div>
+                                    <!-- Izin -->
+                                    <div class="col">
+                                        <div class="card trend-summary-card-guru p-4 active" data-criteria="izin" onclick="selectGuruTrendCriteria('izin')" style="border-top: 4px solid #7239ea !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Izin</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_guru_izin" style="pointer-events: none;">0</span>
+                                        </div>
+                                    </div>
+                                    <!-- Sakit -->
+                                    <div class="col">
+                                        <div class="card trend-summary-card-guru p-4 active" data-criteria="sakit" onclick="selectGuruTrendCriteria('sakit')" style="border-top: 4px solid #ffc700 !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Sakit</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_guru_sakit" style="pointer-events: none;">0</span>
+                                        </div>
+                                    </div>
+                                    <!-- Alpa -->
+                                    <div class="col">
+                                        <div class="card trend-summary-card-guru p-4 active" data-criteria="alpa" onclick="selectGuruTrendCriteria('alpa')" style="border-top: 4px solid #d9214e !important; border-left: 1px solid #eef2f5 !important; border-right: 1px solid #eef2f5 !important; border-bottom: 1px solid #eef2f5 !important; cursor: pointer; user-select: none;">
+                                            <span class="fs-8 fw-bold text-gray-600" style="pointer-events: none;">Alpa</span>
+                                            <span class="fs-3 fw-boldest text-dark" id="summary_guru_alpa" style="pointer-events: none;">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Header Grafik & Dynamic Legend Guru -->
+                                <div class="d-flex flex-wrap align-items-center justify-content-between my-4 pt-2">
+                                    <h4 class="fw-bolder text-dark mb-0 fs-5">Grafik Kehadiran Guru</h4>
+                                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                                        <div id="chart_guru_legend_container" class="d-flex align-items-center gap-3 flex-wrap"></div>
+                                        <span class="text-muted fw-bold fs-7" id="guru_criteria_counter">Kriteria Dipilih 5 / 5</span>
+                                    </div>
+                                </div>
+
+                                <!-- Chart Trend Container Guru -->
+                                <div id="chart_trend_kehadiran_guru"></div>
+
                             </div>
 
                         </div>
@@ -210,46 +372,49 @@
                     </div>
 
                     <!-- Card Body -->
-                    <div class="card-body pt-3">
+                    <div class="card-body pt-3 px-5 late-card-body">
                         <div class="scrollable-table-container">
-                            <table class="table align-middle table-row-dashed fs-7 gy-3">
+                            @php $defaultAvatar = asset(theme()->getMediaUrlPath() . 'svg/avatars/blank.svg'); @endphp
+                            <table class="table late-table align-middle table-row-dashed fs-8 gy-2">
                                 <thead>
-                                    <tr class="text-start text-muted fw-bolder fs-8 text-uppercase gs-0">
-                                        <th>Nama</th>
-                                        <th>Kelas</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Terlambat</th>
+                                    <tr class="text-start text-muted fw-bolder fs-9 text-uppercase gs-0">
+                                        <th class="col-nama">Nama</th>
+                                        <th class="col-kelas text-nowrap">Kelas</th>
+                                        <th class="col-status text-nowrap">Status</th>
+                                        <th class="col-masuk text-nowrap">Masuk</th>
+                                        <th class="col-durasi text-end text-nowrap">Terlambat</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-600 fw-bold">
                                     @forelse($terlambats as $t)
                                     <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="symbol symbol-30px symbol-circle me-3">
-                                                    @if($t['foto'])
-                                                        <img src="{{ asset('storage/' . $t['foto']) }}" alt="Siswa" />
-                                                    @else
-                                                        <div class="symbol-label fs-8 bg-light-danger text-danger fw-bolder">
-                                                            {{ substr($t['nama'], 0, 1) }}
-                                                        </div>
-                                                    @endif
+                                        <td class="col-nama">
+                                            <div class="d-flex align-items-center nama-cell">
+                                                <div class="symbol symbol-25px symbol-circle me-2">
+                                                    <img
+                                                        src="{{ $t['foto'] ?: $defaultAvatar }}"
+                                                        alt="{{ $t['nama'] }}"
+                                                        class="object-fit-cover"
+                                                        onerror="this.onerror=null;this.src='{{ $defaultAvatar }}';"
+                                                    />
                                                 </div>
-                                                <div class="d-flex flex-column">
-                                                    <span class="text-gray-800 text-hover-primary fw-bolder">{{ $t['nama'] }}</span>
-                                                    <span class="text-muted fs-9">{{ $t['waktu'] }}</span>
-                                                </div>
+                                                <span class="text-gray-800 text-hover-primary fw-bolder nama-text" title="{{ $t['nama'] }}">{{ $t['nama'] }}</span>
                                             </div>
                                         </td>
-                                        <td>{{ $t['kelas'] }}</td>
-                                        <td>
-                                            <span class="badge badge-light-danger fs-8">Terlambat</span>
+                                        <td class="col-kelas text-nowrap">{{ $t['kelas'] }}</td>
+                                        <td class="col-status">
+                                            <span class="badge badge-light-danger fs-9 px-2 py-1">Terlambat</span>
                                         </td>
-                                        <td class="text-end text-danger fw-bolder">{{ $t['menit_terlambat'] }} Menit</td>
+                                        <td class="col-masuk text-nowrap">
+                                            <span class="text-gray-600 fw-bolder fs-9">{{ \Illuminate\Support\Str::substr($t['waktu'], 0, 5) }}</span>
+                                        </td>
+                                        <td class="col-durasi text-end text-danger fw-bolder fs-9">
+                                            <span title="{{ $t['durasi_terlambat'] }}">{{ $t['durasi_terlambat_singkat'] }}</span>
+                                        </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="4" class="text-center py-8 text-muted">
+                                        <td colspan="5" class="text-center py-8 text-muted">
                                             Tidak ada keterlambatan tercatat hari ini.
                                         </td>
                                     </tr>
@@ -347,106 +512,81 @@
     @endpush
 @endif
 
-</x-base-layout>
-
 @push('scripts')
 <script src="{{ asset(theme()->getDemo() . '/plugins/custom/flatpickr/flatpickr.bundle.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-    var trendChart;
+    window.trendChartInstance = window.trendChartInstance || null;
+    window.rawTrendChartData = window.rawTrendChartData || [];
 
-    $(document).ready(function() {
-        // Use native JS to calculate startDefault and endDefault
-        var today = new Date();
-        var priorDate = new Date();
-        priorDate.setDate(today.getDate() - 6);
-        
-        var startDefault = priorDate.getFullYear() + '-' + String(priorDate.getMonth() + 1).padStart(2, '0') + '-' + String(priorDate.getDate()).padStart(2, '0');
-        var endDefault = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    window.criteriaConfig = {
+        kehadiran: { key: 'kehadiran', label: 'Kehadiran', color: '#009ef7', active: true },
+        ketidakhadiran: { key: 'ketidakhadiran', label: 'Ketidakhadiran', color: '#f1416c', active: false },
+        izin: { key: 'izin', label: 'Izin', color: '#7239ea', active: false },
+        sakit: { key: 'sakit', label: 'Sakit', color: '#f59e0b', active: false },
+        alpa: { key: 'alpa', label: 'Alpa', color: '#3f4254', active: false }
+    };
 
-        flatpickr("#filter_tanggal", {
-            mode: "range",
-            dateFormat: "Y-m-d",
-            defaultDate: [startDefault, endDefault],
-            onChange: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length === 2) {
-                    updateTrendData();
-                }
-            }
+    window.selectTrendCriteria = function(selectedKey) {
+        if (!selectedKey || !window.criteriaConfig[selectedKey]) return;
+
+        $('.trend-summary-card').removeClass('active').css('opacity', '0.55');
+        var $targetCard = $('.trend-summary-card[data-criteria="' + selectedKey + '"]');
+        $targetCard.addClass('active').css('opacity', '1');
+
+        Object.keys(window.criteriaConfig).forEach(function(k) {
+            window.criteriaConfig[k].active = (k === selectedKey);
         });
 
-        // Event listener for Class Filter Select2 change
-        $('#filter_kelas').on('change', function() {
-            updateTrendData();
-        });
+        window.renderTrendChart();
+    };
 
-        // Initialize ApexCharts with empty layout
-        var options = {
-            series: [],
-            chart: {
-                height: 350,
-                type: 'line',
-                zoom: {
-                    enabled: false
-                },
-                toolbar: {
-                    show: false
-                }
-            },
-            colors: ['#009ef7', '#f1416c', '#7239ea', '#ffc700', '#181c32'],
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                width: [3, 3, 2, 2, 2],
-                curve: 'smooth',
-                dashArray: [0, 0, 5, 5, 5]
-            },
-            legend: {
-                show: true,
-                position: 'top',
-                horizontalAlign: 'right',
-            },
-            grid: {
-                row: {
-                    colors: ['#f3f3f3', 'transparent'],
-                    opacity: 0.5
-                },
-            },
-            xaxis: {
-                categories: [],
-            },
-            yaxis: {
-                title: {
-                    text: 'Jumlah Siswa'
-                },
-                labels: {
-                    formatter: function(val) {
-                        return Math.round(val);
+    window.initChartAndFetchData = function() {
+        var chartEl = document.querySelector("#chart_trend_kehadiran_siswa");
+        if (!chartEl) return;
+
+        // Flatpickr setup
+        if ($('#filter_tanggal').length && typeof flatpickr !== 'undefined') {
+            var today = new Date();
+            var startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            var endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            
+            var startDefault = startOfMonth.getFullYear() + '-' + String(startOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(startOfMonth.getDate()).padStart(2, '0');
+            var endDefault = endOfMonth.getFullYear() + '-' + String(endOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(endOfMonth.getDate()).padStart(2, '0');
+
+            flatpickr("#filter_tanggal", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                defaultDate: [startDefault, endDefault],
+                onChange: function(selectedDates) {
+                    if (selectedDates.length === 2 || selectedDates.length === 1) {
+                        window.fetchTrendData();
                     }
+                },
+                onClose: function() {
+                    window.fetchTrendData();
                 }
-            }
-        };
+            });
+        }
 
-        trendChart = new ApexCharts(document.querySelector("#chart_trend_kehadiran_siswa"), options);
-        trendChart.render();
+        $(document).off('change select2:select select2:clear', '#filter_kelas').on('change select2:select select2:clear', '#filter_kelas', function() {
+            window.fetchTrendData();
+        });
 
-        // Initial fetch
-        updateTrendData();
-    });
+        if (window.trendChartInstance) {
+            try { window.trendChartInstance.destroy(); } catch(err) {}
+            window.trendChartInstance = null;
+        }
 
-    /**
-     * AJAX load and update Trend Kehadiran
-     */
-    function updateTrendData() {
-        var dateRangeVal = $('#filter_tanggal').val();
-        var dates = dateRangeVal.split(' to ');
-        
-        var start_date = dates[0] || '';
-        var end_date = dates[1] || start_date;
+        window.fetchTrendData();
+    };
+
+    window.fetchTrendData = function() {
+        var dateRangeVal = $('#filter_tanggal').val() || '';
+        var dates = dateRangeVal.split(/ to | hingga | - /);
+        var start_date = dates[0] ? dates[0].trim() : '';
+        var end_date = dates[1] ? dates[1].trim() : start_date;
         var kelas_id = $('#filter_kelas').val() || '';
 
-        // Show loading progress on cards
         $('.trend-summary-card span.fs-3').text('...');
 
         $.ajax({
@@ -458,66 +598,354 @@
                 kelas_id: kelas_id
             },
             success: function(res) {
-                if (res.success) {
-                    // Update parameter totals
+                if (res && res.success) {
                     $('#summary_kehadiran').text(res.totals.kehadiran);
                     $('#summary_ketidakhadiran').text(res.totals.ketidakhadiran);
                     $('#summary_izin').text(res.totals.izin);
                     $('#summary_sakit').text(res.totals.sakit);
                     $('#summary_alpa').text(res.totals.alpa);
 
-                    // Map chart arrays
-                    var categories = [];
-                    var seriesKehadiran = [];
-                    var seriesKetidakhadiran = [];
-                    var seriesIzin = [];
-                    var seriesSakit = [];
-                    var seriesAlpa = [];
-
-                    res.chart.forEach(function(item) {
-                        categories.push(item.tanggal);
-                        seriesKehadiran.push(item.kehadiran);
-                        seriesKetidakhadiran.push(item.ketidakhadiran);
-                        seriesIzin.push(item.izin);
-                        seriesSakit.push(item.sakit);
-                        seriesAlpa.push(item.alpa);
-                    });
-
-                    // Update ApexCharts series
-                    trendChart.updateOptions({
-                        xaxis: {
-                            categories: categories
-                        }
-                    });
-
-                    trendChart.updateSeries([
-                        {
-                            name: 'Kehadiran',
-                            data: seriesKehadiran
-                        },
-                        {
-                            name: 'Ketidakhadiran',
-                            data: seriesKetidakhadiran
-                        },
-                        {
-                            name: 'Izin',
-                            data: seriesIzin
-                        },
-                        {
-                            name: 'Sakit',
-                            data: seriesSakit
-                        },
-                        {
-                            name: 'Alpa',
-                            data: seriesAlpa
-                        }
-                    ]);
+                    window.rawTrendChartData = res.chart || [];
+                    window.renderTrendChart();
                 }
             },
             error: function() {
-                $('.trend-summary-card span.fs-3').text('Error');
+                $('.trend-summary-card span.fs-3').text('0');
+            }
+        });
+    };
+
+    window.renderTrendChart = function() {
+        var chartEl = document.querySelector("#chart_trend_kehadiran_siswa");
+        if (!chartEl || !window.rawTrendChartData) return;
+
+        var categories = [];
+        var activeSeries = [];
+        var activeColors = [];
+        var activeCount = 0;
+        var totalCriteria = Object.keys(window.criteriaConfig).length;
+
+        window.rawTrendChartData.forEach(function(item) {
+            categories.push(item.tanggal);
+        });
+
+        var legendHtml = '';
+
+        Object.keys(window.criteriaConfig).forEach(function(key) {
+            var cfg = window.criteriaConfig[key];
+            if (cfg.active) {
+                activeCount++;
+                activeColors.push(cfg.color);
+
+                var seriesData = window.rawTrendChartData.map(function(item) {
+                    return item[key] || 0;
+                });
+
+                activeSeries.push({
+                    name: cfg.label,
+                    data: seriesData
+                });
+
+                legendHtml += '<span class="d-flex align-items-center fs-7 fw-bold text-gray-700 me-2">' +
+                    '<span class="badge badge-circle me-2" style="background-color: ' + cfg.color + '; width: 9px; height: 9px;"></span>' +
+                    cfg.label +
+                    '</span>';
+            }
+        });
+
+        $('#chart_legend_container').html(legendHtml);
+        $('#criteria_counter').text('Kriteria Dipilih ' + activeCount + ' / ' + totalCriteria);
+
+        var options = {
+            series: activeSeries,
+            chart: {
+                height: 350,
+                type: 'line',
+                zoom: { enabled: false },
+                toolbar: { show: false }
+            },
+            colors: activeColors,
+            dataLabels: { enabled: false },
+            stroke: {
+                width: 3,
+                curve: 'smooth'
+            },
+            markers: {
+                size: 5,
+                strokeWidth: 2,
+                hover: { sizeOffset: 2 }
+            },
+            legend: { show: false },
+            grid: {
+                borderColor: '#eef2f5',
+                strokeDashArray: 4,
+                row: { colors: ['transparent'], opacity: 0.5 }
+            },
+            xaxis: {
+                categories: categories,
+                axisBorder: { show: true, color: '#e0e0e0' },
+                axisTicks: { show: true }
+            },
+            yaxis: {
+                title: {
+                    text: 'Jumlah Siswa',
+                    style: { color: '#6c757d', fontSize: '12px', fontWeight: '600' }
+                },
+                min: 0,
+                forceNiceScale: true,
+                labels: {
+                    formatter: function(val) { return Math.round(val); }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                    formatter: function(val) { return val + " siswa"; }
+                }
+            }
+        };
+
+        if (typeof ApexCharts === 'undefined') return;
+
+        try {
+            if (!window.trendChartInstance) {
+                chartEl.innerHTML = '';
+                window.trendChartInstance = new ApexCharts(chartEl, options);
+                window.trendChartInstance.render();
+            } else {
+                window.trendChartInstance.updateOptions(options, true, true);
+            }
+        } catch(e) {
+            console.error('ApexCharts render error:', e);
+            try {
+                if (window.trendChartInstance) {
+                    window.trendChartInstance.destroy();
+                }
+            } catch(err) {}
+            chartEl.innerHTML = '';
+            window.trendChartInstance = new ApexCharts(chartEl, options);
+            window.trendChartInstance.render();
+        }
+    };
+
+    // Auto run initialization
+    setTimeout(function() {
+        if (typeof window.initChartAndFetchData === 'function') {
+            window.initChartAndFetchData();
+        }
+        if (typeof window.fetchGuruTrendData === 'function') {
+            window.fetchGuruTrendData();
+        }
+    }, 100);
+
+    // -------------------------------------------------------------
+    // GURU ATTENDANCE TREND LOGIC
+    // -------------------------------------------------------------
+    window.guruCriteriaConfig = {
+        kehadiran: { label: 'Kehadiran', color: '#009ef7', active: true },
+        ketidakhadiran: { label: 'Ketidakhadiran', color: '#f1416c', active: true },
+        izin: { label: 'Izin', color: '#7239ea', active: true },
+        sakit: { label: 'Sakit', color: '#ffc700', active: true },
+        alpa: { label: 'Alpa', color: '#d9214e', active: true }
+    };
+
+    window.selectGuruTrendCriteria = function(criteriaKey) {
+        if (!window.guruCriteriaConfig[criteriaKey]) return;
+        window.guruCriteriaConfig[criteriaKey].active = !window.guruCriteriaConfig[criteriaKey].active;
+
+        var activeCount = Object.keys(window.guruCriteriaConfig).filter(function(k) { return window.guruCriteriaConfig[k].active; }).length;
+        if (activeCount === 0) {
+            window.guruCriteriaConfig[criteriaKey].active = true;
+            return;
+        }
+
+        var $card = $('.trend-summary-card-guru[data-criteria="' + criteriaKey + '"]');
+        if (window.guruCriteriaConfig[criteriaKey].active) {
+            $card.addClass('active');
+        } else {
+            $card.removeClass('active');
+        }
+
+        window.renderGuruTrendChart();
+    };
+
+    if ($('#filter_tanggal_guru').length && typeof flatpickr !== 'undefined') {
+        var today = new Date();
+        var startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        var endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        var startDefault = startOfMonth.getFullYear() + '-' + String(startOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(startOfMonth.getDate()).padStart(2, '0');
+        var endDefault = endOfMonth.getFullYear() + '-' + String(endOfMonth.getMonth() + 1).padStart(2, '0') + '-' + String(endOfMonth.getDate()).padStart(2, '0');
+
+        flatpickr("#filter_tanggal_guru", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            defaultDate: [startDefault, endDefault],
+            onChange: function(selectedDates) {
+                if (selectedDates.length === 2 || selectedDates.length === 1) {
+                    window.fetchGuruTrendData();
+                }
+            },
+            onClose: function() {
+                window.fetchGuruTrendData();
             }
         });
     }
+
+    window.fetchGuruTrendData = function() {
+        var dateRangeVal = $('#filter_tanggal_guru').val() || '';
+        var dates = dateRangeVal.split(/ to | hingga | - /);
+        var start_date = dates[0] ? dates[0].trim() : '';
+        var end_date = dates[1] ? dates[1].trim() : start_date;
+
+        $('.trend-summary-card-guru span.fs-3').text('...');
+
+        $.ajax({
+            url: '{{ route("admin.dashboard.guru-trend-data") }}',
+            method: 'GET',
+            data: {
+                start_date: start_date,
+                end_date: end_date
+            },
+            success: function(res) {
+                if (res && res.success) {
+                    $('#summary_guru_kehadiran').text(res.totals.kehadiran);
+                    $('#summary_guru_ketidakhadiran').text(res.totals.ketidakhadiran);
+                    $('#summary_guru_izin').text(res.totals.izin);
+                    $('#summary_guru_sakit').text(res.totals.sakit);
+                    $('#summary_guru_alpa').text(res.totals.alpa);
+
+                    window.rawGuruTrendChartData = res.chart || [];
+                    window.renderGuruTrendChart();
+                }
+            },
+            error: function() {
+                $('.trend-summary-card-guru span.fs-3').text('0');
+            }
+        });
+    };
+
+    window.renderGuruTrendChart = function() {
+        var chartEl = document.querySelector("#chart_trend_kehadiran_guru");
+        if (!chartEl || !window.rawGuruTrendChartData) return;
+
+        var categories = [];
+        var activeSeries = [];
+        var activeColors = [];
+        var activeCount = 0;
+        var totalCriteria = Object.keys(window.guruCriteriaConfig).length;
+
+        window.rawGuruTrendChartData.forEach(function(item) {
+            categories.push(item.tanggal);
+        });
+
+        var legendHtml = '';
+
+        Object.keys(window.guruCriteriaConfig).forEach(function(key) {
+            var cfg = window.guruCriteriaConfig[key];
+            if (cfg.active) {
+                activeCount++;
+                activeColors.push(cfg.color);
+
+                var seriesData = window.rawGuruTrendChartData.map(function(item) {
+                    return item[key] || 0;
+                });
+
+                activeSeries.push({
+                    name: cfg.label,
+                    data: seriesData
+                });
+
+                legendHtml += '<span class="d-flex align-items-center fs-7 fw-bold text-gray-700 me-2">' +
+                    '<span class="badge badge-circle me-2" style="background-color: ' + cfg.color + '; width: 9px; height: 9px;"></span>' +
+                    cfg.label +
+                    '</span>';
+            }
+        });
+
+        $('#chart_guru_legend_container').html(legendHtml);
+        $('#guru_criteria_counter').text('Kriteria Dipilih ' + activeCount + ' / ' + totalCriteria);
+
+        var options = {
+            series: activeSeries,
+            chart: {
+                height: 350,
+                type: 'line',
+                zoom: { enabled: false },
+                toolbar: { show: false }
+            },
+            colors: activeColors,
+            dataLabels: { enabled: false },
+            stroke: {
+                width: 3,
+                curve: 'smooth'
+            },
+            markers: {
+                size: 5,
+                strokeWidth: 2,
+                hover: { sizeOffset: 2 }
+            },
+            legend: { show: false },
+            grid: {
+                borderColor: '#eef2f5',
+                strokeDashArray: 4,
+                row: { colors: ['transparent'], opacity: 0.5 }
+            },
+            xaxis: {
+                categories: categories,
+                axisBorder: { show: true, color: '#e0e0e0' },
+                axisTicks: { show: true }
+            },
+            yaxis: {
+                title: {
+                    text: 'Jumlah Guru',
+                    style: { color: '#6c757d', fontSize: '12px', fontWeight: '600' }
+                },
+                min: 0,
+                forceNiceScale: true,
+                labels: {
+                    formatter: function(val) { return Math.round(val); }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                    formatter: function(val) { return val + " guru"; }
+                }
+            }
+        };
+
+        if (typeof ApexCharts === 'undefined') return;
+
+        try {
+            if (!window.guruTrendChartInstance) {
+                chartEl.innerHTML = '';
+                window.guruTrendChartInstance = new ApexCharts(chartEl, options);
+                window.guruTrendChartInstance.render();
+            } else {
+                window.guruTrendChartInstance.updateOptions(options, true, true);
+            }
+        } catch(e) {
+            console.error('ApexCharts Guru render error:', e);
+            try {
+                if (window.guruTrendChartInstance) {
+                    window.guruTrendChartInstance.destroy();
+                }
+            } catch(err) {}
+            chartEl.innerHTML = '';
+            window.guruTrendChartInstance = new ApexCharts(chartEl, options);
+            window.guruTrendChartInstance.render();
+        }
+    };
+
+    $(document).on('shown.bs.tab', 'a[href="#tab_guru_trend"]', function() {
+        if (typeof window.fetchGuruTrendData === 'function') {
+            window.fetchGuruTrendData();
+        }
+    });
 </script>
 @endpush
+
+</x-base-layout>

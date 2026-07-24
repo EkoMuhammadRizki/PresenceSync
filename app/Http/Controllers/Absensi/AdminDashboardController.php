@@ -52,7 +52,24 @@ class AdminDashboardController extends Controller
                 
                 $minutesLate = 0;
                 if ($jamMasukSiswa->greaterThan($schoolStartTime)) {
-                    $minutesLate = $jamMasukSiswa->diffInMinutes($schoolStartTime);
+                    $diffSeconds = abs($jamMasukSiswa->diffInSeconds($schoolStartTime));
+                    $minutesLate = (int) round($diffSeconds / 60);
+                }
+                
+                // Format display text: less than 1 hour -> X Menit; 1 hour or more -> Y Jam Z Menit
+                if ($minutesLate < 60) {
+                    $durasiTerlambat = $minutesLate . ' Menit';
+                    $durasiTerlambatSingkat = $minutesLate . ' mnt';
+                } else {
+                    $hours = (int) floor($minutesLate / 60);
+                    $mins = $minutesLate % 60;
+                    if ($mins > 0) {
+                        $durasiTerlambat = $hours . ' Jam ' . $mins . ' Menit';
+                        $durasiTerlambatSingkat = $hours . 'j ' . $mins . 'm';
+                    } else {
+                        $durasiTerlambat = $hours . ' Jam';
+                        $durasiTerlambatSingkat = $hours . 'j';
+                    }
                 }
                 
                 return [
@@ -62,6 +79,8 @@ class AdminDashboardController extends Controller
                     'kelas' => ($k->siswa && $k->siswa->kelas) ? $k->siswa->kelas->nama : '-',
                     'status' => 'Terlambat',
                     'menit_terlambat' => $minutesLate,
+                    'durasi_terlambat' => $durasiTerlambat,
+                    'durasi_terlambat_singkat' => $durasiTerlambatSingkat,
                     'waktu' => $k->jam_masuk,
                 ];
             })
@@ -149,6 +168,83 @@ class AdminDashboardController extends Controller
                 $totals['sakit'] += (int) $row->sakit;
                 $totals['alpa'] += (int) $row->alpa;
             }
+        }
+
+        return response()->json([
+            'success' => true,
+            'totals' => $totals,
+            'chart' => array_values($results),
+        ]);
+    }
+
+    /**
+     * Get Trend Kehadiran Guru Data for ApexCharts and summary cards.
+     */
+    public function getGuruTrendData(Request $request)
+    {
+        $startDate = Carbon::now()->startOfMonth()->toDateString();
+        $endDate = Carbon::now()->endOfMonth()->toDateString();
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+        }
+
+        $totalGuruCount = Guru::count();
+
+        $period = CarbonPeriod::create($startDate, $endDate);
+        $results = [];
+        $totals = [
+            'kehadiran' => 0,
+            'ketidakhadiran' => 0,
+            'izin' => 0,
+            'sakit' => 0,
+            'alpa' => 0,
+        ];
+
+        // Fetch teacher attendances
+        $teacherAttendances = Kehadiran::whereBetween('tanggal', [$startDate, $endDate])
+            ->whereNotNull('guru_id')
+            ->selectRaw("tanggal,
+                sum(case when status in ('hadir', 'terlambat') then 1 else 0 end) as kehadiran,
+                sum(case when status in ('sakit', 'izin', 'alpha') then 1 else 0 end) as ketidakhadiran,
+                sum(case when status = 'izin' then 1 else 0 end) as izin,
+                sum(case when status = 'sakit' then 1 else 0 end) as sakit,
+                sum(case when status = 'alpha' then 1 else 0 end) as alpa")
+            ->groupBy('tanggal')
+            ->get()
+            ->keyBy(function($item) {
+                return Carbon::parse($item->tanggal)->toDateString();
+            });
+
+        foreach ($period as $date) {
+            $dateStr = $date->toDateString();
+            $att = $teacherAttendances->get($dateStr);
+
+            $hadir = $att ? (int) $att->kehadiran : 0;
+            $ketidakhadiran = $att ? (int) $att->ketidakhadiran : 0;
+            $izin = $att ? (int) $att->izin : 0;
+            $sakit = $att ? (int) $att->sakit : 0;
+            $alpa = $att ? (int) $att->alpa : 0;
+
+            if ($date->isWeekday() && !$att && $totalGuruCount > 0) {
+                $hadir = $totalGuruCount;
+            }
+
+            $results[$dateStr] = [
+                'tanggal' => $date->translatedFormat('d M'),
+                'kehadiran' => $hadir,
+                'ketidakhadiran' => $ketidakhadiran,
+                'izin' => $izin,
+                'sakit' => $sakit,
+                'alpa' => $alpa,
+            ];
+
+            $totals['kehadiran'] += $hadir;
+            $totals['ketidakhadiran'] += $ketidakhadiran;
+            $totals['izin'] += $izin;
+            $totals['sakit'] += $sakit;
+            $totals['alpa'] += $alpa;
         }
 
         return response()->json([
