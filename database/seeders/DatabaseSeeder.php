@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             RolesSeeder::class,
             UsersSeeder::class,
             AbsensiSeeder::class,
+            DummyKehadiranSeeder::class,
         ]);
     }
 }

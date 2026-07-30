@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Absensi;
 
 use App\Http\Controllers\Controller;
+use App\Models\FingerprintDevice;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
@@ -24,45 +25,53 @@ class SiswaController extends Controller
         $siswaUserIds = Siswa::pluck('user_id')->filter()->toArray();
         $users = User::whereNotIn('id', $siswaUserIds)->orderBy('email')->get();
         
-        return view('pages.absensi.siswa', compact('siswas', 'kelas', 'users'));
+        $unpushedCount = Siswa::where('is_pushed', false)->count();
+
+        return view('pages.absensi.siswa', compact('siswas', 'kelas', 'users', 'unpushedCount'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'email'         => 'required|email|max:255|unique:users,email',
+            'nis'           => 'required|regex:/^[0-9]+$/|max:20|unique:siswas,nis',
             'password'      => 'required|string|min:6',
             'nama'          => 'required|string|max:150',
-            'nis'           => 'nullable|regex:/^[0-9]+$/|max:20|unique:siswas,nis',
             'kelas_id'      => 'nullable|exists:kelas,id',
             'jenis_kelamin' => 'required|in:L,P',
-            'tanggal_lahir' => 'nullable|date',
+            'tanggal_lahir' => 'nullable|date|before_or_equal:today',
             'alamat'        => 'nullable|string',
         ], [
-            'email.required'         => 'Email wajib diisi.',
-            'email.email'            => 'Format email tidak valid.',
-            'email.unique'           => 'Email sudah digunakan oleh user lain.',
-            'password.required'      => 'Password wajib diisi.',
-            'password.min'           => 'Password minimal harus 6 karakter.',
-            'nama.required'          => 'Nama siswa wajib diisi.',
-            'nis.regex'              => 'NIS hanya boleh berisi angka.',
-            'nis.max'                => 'NIS maksimal 20 digit.',
-            'nis.unique'             => 'NIS sudah terdaftar.',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'nis.required'                 => 'NIS wajib diisi karena digunakan untuk login.',
+            'nis.regex'                    => 'NIS hanya boleh berisi angka.',
+            'nis.max'                      => 'NIS maksimal 20 digit.',
+            'nis.unique'                   => 'NIS sudah terdaftar.',
+            'password.required'            => 'Password wajib diisi.',
+            'password.min'                 => 'Password minimal harus 6 karakter.',
+            'nama.required'                => 'Nama siswa wajib diisi.',
+            'jenis_kelamin.required'       => 'Jenis kelamin wajib dipilih.',
+            'tanggal_lahir.before_or_equal'=> 'Tanggal lahir tidak boleh melebihi hari ini.',
         ]);
 
         $nameParts = explode(' ', trim($request->nama), 2);
         $firstName = $nameParts[0];
         $lastName  = $nameParts[1] ?? $nameParts[0];
 
+        // Generate email internal dari NIS (tidak perlu diinput user)
+        $email = $request->nis . '@siswa.internal';
+        $counter = 1;
+        while (User::where('email', $email)->exists()) {
+            $email = $request->nis . $counter . '@siswa.internal';
+            $counter++;
+        }
+
         $user = User::create([
             'first_name' => $firstName,
             'last_name'  => $lastName,
-            'email'      => $request->email,
+            'email'      => $email,
             'password'   => Hash::make($request->password),
         ]);
 
-        Siswa::create([
+        $siswa = Siswa::create([
             'user_id'       => $user->id,
             'nama'          => $request->nama,
             'nis'           => $request->nis,
@@ -70,10 +79,18 @@ class SiswaController extends Controller
             'jenis_kelamin' => $request->jenis_kelamin,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat'        => $request->alamat,
+            'is_pushed'     => false,
         ]);
 
+        // Auto-assign ID Fingerprint dari ID Siswa (database auto-increment ID)
+        $siswa->update(['fingerprint_id' => (string) $siswa->id]);
+
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->performedOn($siswa)->log("Menambah data siswa baru: {$siswa->nama}");
+        }
+
         return redirect()->route('siswa.index')
-            ->with('success', 'Siswa berhasil ditambahkan.');
+            ->with('success', 'Siswa berhasil ditambahkan. Silakan klik Post ke Mesin untuk sinkronisasi ke perangkat.');
     }
 
     public function update(Request $request, Siswa $siswa)
@@ -84,18 +101,44 @@ class SiswaController extends Controller
             'nis'           => 'nullable|regex:/^[0-9]+$/|max:20|unique:siswas,nis,' . $siswa->id,
             'kelas_id'      => 'nullable|exists:kelas,id',
             'jenis_kelamin' => 'required|in:L,P',
-            'tanggal_lahir' => 'nullable|date',
+            'tanggal_lahir' => 'nullable|date|before_or_equal:today',
             'alamat'        => 'nullable|string',
+            'fingerprint_id'=> 'nullable|string|max:50',
         ], [
-            'nisn.unique'           => 'NISN sudah terdaftar.',
-            'nis.unique'            => 'NIS sudah terdaftar.',
-            'nis.regex'             => 'NIS hanya boleh berisi angka.',
-            'nis.max'               => 'NIS maksimal 20 digit.',
+            'nisn.unique'                  => 'NISN sudah terdaftar.',
+            'nis.unique'                   => 'NIS sudah terdaftar.',
+            'nis.regex'                    => 'NIS hanya boleh berisi angka.',
+            'nis.max'                      => 'NIS maksimal 20 digit.',
+            'tanggal_lahir.before_or_equal'=> 'Tanggal lahir tidak boleh melebihi hari ini.',
         ]);
+
+        $oldFingerprintId = (string) $siswa->fingerprint_id;
 
         $siswa->update($request->only(
             'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat'
         ));
+
+        $newFingerprintId = $request->filled('fingerprint_id')
+            ? (string) $request->fingerprint_id
+            : (empty($siswa->fingerprint_id) ? (string) $siswa->id : (string) $siswa->fingerprint_id);
+
+        // Jika fingerprint_id berubah, hapus PIN lama dari seluruh device aktif
+        if (!empty($oldFingerprintId) && $oldFingerprintId !== $newFingerprintId) {
+            try {
+                $service = app(\App\Services\FingerprintService::class);
+                $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
+                foreach ($activeDevices as $dev) {
+                    $service->deleteUser($dev, $oldFingerprintId);
+                    $service->refreshDB($dev);
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // Tandai is_pushed = false agar ke-flag untuk di-post ulang ke mesin
+        $siswa->update([
+            'fingerprint_id' => $newFingerprintId,
+            'is_pushed'      => false,
+        ]);
 
         // Update nama user terkait
         if ($siswa->user) {
@@ -108,18 +151,37 @@ class SiswaController extends Controller
             ]);
         }
 
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->performedOn($siswa)->log("Mengubah data siswa: {$siswa->nama}");
+        }
+
         return redirect()->route('siswa.index')
-            ->with('success', 'Data siswa berhasil diperbarui.');
+            ->with('success', 'Data siswa berhasil diperbarui (Status: Perlu Post). Silakan klik tombol Post ke Mesin saat siap dikirim.');
     }
 
     public function destroy(Siswa $siswa)
     {
-        // Hapus user terkait juga
+        $oldFingerprintId = (string) $siswa->fingerprint_id;
         $user = $siswa->user;
         $siswa->delete();
 
         if ($user) {
             $user->delete();
+        }
+
+        if (!empty($oldFingerprintId)) {
+            try {
+                $service = app(\App\Services\FingerprintService::class);
+                $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
+                foreach ($activeDevices as $dev) {
+                    $service->deleteUser($dev, $oldFingerprintId);
+                    $service->refreshDB($dev);
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->log("Menghapus data siswa: {$siswa->nama}");
         }
 
         return redirect()->route('siswa.index')
@@ -134,23 +196,19 @@ class SiswaController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Siswa');
         
-        // Headers
+        // Headers disamakan dengan urutan tabel web: NIS | NAMA | JENIS KELAMIN | KELAS | FINGERPRINT ID
         $headers = [
-            'email',
-            'password',
-            'kata_sandi',
-            'jenis_pengguna',
             'nis',
             'nama',
-            'id_fingerprint',
             'jenis_kelamin',
+            'kelas',
+            'id_fingerprint',
             'tempat_lahir',
             'tanggal_lahir',
             'alamat',
             'no_hp',
             'no_hp_orang_tua',
-            'status',
-            'kelas'
+            'status'
         ];
         
         foreach ($headers as $colIndex => $header) {
@@ -160,29 +218,25 @@ class SiswaController extends Controller
         
         // Populate existing students if requested (default / when not 'empty')
         if (!$request->has('empty')) {
-            $siswas = Siswa::with(['user', 'kelas'])->orderBy('nama')->get();
+            $siswas = Siswa::with(['kelas'])->orderBy('nama')->get();
             $rowNum = 2;
             foreach ($siswas as $siswa) {
-                $sheet->setCellValue('A' . $rowNum, $siswa->user->email ?? '');
-                $sheet->setCellValue('B' . $rowNum, 'password123');
-                $sheet->setCellValue('C' . $rowNum, 'password123');
-                $sheet->setCellValue('D' . $rowNum, 'siswa');
-                $sheet->setCellValue('E' . $rowNum, $siswa->nis ?? '');
-                $sheet->setCellValue('F' . $rowNum, $siswa->nama);
-                $sheet->setCellValue('G' . $rowNum, $siswa->fingerprint_id ?? '');
-                $sheet->setCellValue('H' . $rowNum, $siswa->jenis_kelamin);
-                $sheet->setCellValue('I' . $rowNum, $siswa->tempat_lahir ?? '');
-                $sheet->setCellValue('J' . $rowNum, $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '');
-                $sheet->setCellValue('K' . $rowNum, $siswa->alamat ?? '');
-                $sheet->setCellValue('L' . $rowNum, $siswa->no_hp ?? '');
-                $sheet->setCellValue('M' . $rowNum, $siswa->no_hp_orang_tua ?? '');
-                $sheet->setCellValue('N' . $rowNum, $siswa->status ?? 'aktif');
-                $sheet->setCellValue('O' . $rowNum, $siswa->kelas->nama ?? '');
+                $sheet->setCellValue('A' . $rowNum, $siswa->nis ?? '');
+                $sheet->setCellValue('B' . $rowNum, $siswa->nama);
+                $sheet->setCellValue('C' . $rowNum, $siswa->jenis_kelamin);
+                $sheet->setCellValue('D' . $rowNum, $siswa->kelas->nama ?? '');
+                $sheet->setCellValue('E' . $rowNum, $siswa->fingerprint_id ?? '');
+                $sheet->setCellValue('F' . $rowNum, $siswa->tempat_lahir ?? '');
+                $sheet->setCellValue('G' . $rowNum, $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '');
+                $sheet->setCellValue('H' . $rowNum, $siswa->alamat ?? '');
+                $sheet->setCellValue('I' . $rowNum, $siswa->no_hp ?? '');
+                $sheet->setCellValue('J' . $rowNum, $siswa->no_hp_orang_tua ?? '');
+                $sheet->setCellValue('K' . $rowNum, $siswa->status ?? 'aktif');
                 $rowNum++;
             }
         }
         
-        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
         
         // Sheet 2: Daftar Kelas (untuk referensi)
         $kelasSheet = $spreadsheet->createSheet();
@@ -246,11 +300,11 @@ class SiswaController extends Controller
         $header = array_shift($rows);
 
         // Validasi format template agar guru tidak diimport ke siswa
-        $column5 = isset($header[4]) ? strtolower(trim($header[4])) : '';
-        if ($column5 === 'nip' || $worksheet->getTitle() === 'Template Guru') {
+        $column1 = isset($header[0]) ? strtolower(trim($header[0])) : '';
+        if ($column1 === 'nip' || $worksheet->getTitle() === 'Template Guru') {
             return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Guru. Silakan unggah file template Siswa yang benar.']);
         }
-        if ($column5 !== 'nis') {
+        if ($column1 !== 'nis') {
             return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Pastikan Anda menggunakan file template Siswa yang diunduh dari sistem.']);
         }
 
@@ -258,24 +312,29 @@ class SiswaController extends Controller
         $skipCount = 0;
 
         foreach ($rows as $row) {
-            // Skip baris jika nama (kolom F / index 5) kosong
-            if (empty($row[5])) {
+            // Struktur kolom baru (sesuai urutan tabel web): nis(0) | nama(1) | jenis_kelamin(2) | kelas(3) | id_fingerprint(4) | tempat_lahir(5) | tanggal_lahir(6) | alamat(7) | no_hp(8) | no_hp_orang_tua(9) | status(10)
+            // Skip baris jika nama (kolom B / index 1) kosong
+            if (empty($row[1])) {
                 continue;
             }
 
-            $inputEmail = !empty($row[0]) ? trim($row[0]) : null;
-            $inputPassword = !empty($row[1]) ? trim($row[1]) : (!empty($row[2]) ? trim($row[2]) : null);
-            $jenisPengguna = !empty($row[3]) ? trim($row[3]) : 'siswa';
-            $nis = !empty($row[4]) ? trim($row[4]) : null;
-            $nama = trim($row[5]);
-            $jk = !empty($row[7]) ? strtoupper(trim($row[7])) : 'L';
-            $tempatLahir = !empty($row[8]) ? trim($row[8]) : null;
-            $tanggalLahirRaw = !empty($row[9]) ? trim($row[9]) : null;
-            $alamat = !empty($row[10]) ? trim($row[10]) : null;
-            $noHp = !empty($row[11]) ? trim($row[11]) : null;
-            $noHpOrangTua = !empty($row[12]) ? trim($row[12]) : null;
-            $status = !empty($row[13]) ? trim($row[13]) : 'aktif';
-            $kelasName = !empty($row[14]) ? trim($row[14]) : null;
+            $nis           = !empty($row[0]) ? trim($row[0]) : null;
+            $nama          = trim($row[1]);
+            $jk            = !empty($row[2]) ? strtoupper(trim($row[2])) : 'L';
+            $kelasName     = !empty($row[3]) ? trim($row[3]) : null;
+            $fingerprintId = !empty($row[4]) ? trim($row[4]) : null;
+            $tempatLahir   = !empty($row[5]) ? trim($row[5]) : null;
+            $tanggalLahirRaw = !empty($row[6]) ? trim($row[6]) : null;
+            $alamat        = !empty($row[7]) ? trim($row[7]) : null;
+            $noHp          = !empty($row[8]) ? trim($row[8]) : null;
+            $noHpOrangTua  = !empty($row[9]) ? trim($row[9]) : null;
+            $status        = !empty($row[10]) ? trim($row[10]) : 'aktif';
+
+            // NIS wajib ada
+            if (empty($nis)) {
+                $skipCount++;
+                continue;
+            }
 
             // Normalisasi jenis kelamin
             if ($jk !== 'P') {
@@ -291,30 +350,18 @@ class SiswaController extends Controller
                 }
             }
 
-            // Parse email
-            $email = $inputEmail;
-            if (empty($email)) {
-                $baseEmail = Str::slug($nama, '.') . '@siswa.presencesync.sch.id';
-                $email = $baseEmail;
-                $counter = 1;
-                while (User::where('email', $email)->exists()) {
-                    $email = Str::slug($nama, '.') . $counter . '@siswa.presencesync.sch.id';
-                    $counter++;
-                }
-            }
-
-            // Pengecekan apakah siswa sudah ada di database (berdasarkan email atau NIS)
-            $exists = false;
-            if ($nis) {
-                $exists = Siswa::where('nis', $nis)->exists();
-            }
-            if (!$exists && $email) {
-                $exists = User::where('email', $email)->exists();
-            }
-
-            if ($exists) {
+            // Pengecekan duplikat berdasarkan NIS saja
+            if (Siswa::where('nis', $nis)->exists()) {
                 $skipCount++;
                 continue;
+            }
+
+            // Generate email internal dari NIS
+            $email = $nis . '@siswa.internal';
+            $counter = 1;
+            while (User::where('email', $email)->exists()) {
+                $email = $nis . $counter . '@siswa.internal';
+                $counter++;
             }
 
             // Parse tanggal lahir
@@ -335,7 +382,7 @@ class SiswaController extends Controller
                 }
             }
 
-            $password = $inputPassword ?? $nis ?? 'password123';
+            $password = $nis; // Default password disamakan dengan NIS
 
             $nameParts = explode(' ', trim($nama), 2);
             $firstName = $nameParts[0];
@@ -348,7 +395,7 @@ class SiswaController extends Controller
                 'password'   => Hash::make($password),
             ]);
 
-            Siswa::create([
+            $siswa = Siswa::create([
                 'user_id'         => $user->id,
                 'kelas_id'        => $kelasId,
                 'nama'            => $nama,
@@ -362,7 +409,14 @@ class SiswaController extends Controller
                 'status'          => $status,
             ]);
 
+            // Auto-assign ID Fingerprint dari ID Siswa
+            $siswa->update(['fingerprint_id' => (string) $siswa->id]);
+
             $successCount++;
+        }
+
+        if (auth()->check() && $successCount > 0) {
+            activity()->causedBy(auth()->user())->log("Import data siswa dari Excel ({$successCount} disimpen)");
         }
 
         return redirect()->route('siswa.index')
@@ -370,5 +424,98 @@ class SiswaController extends Controller
                 'success_count' => $successCount,
                 'skip_count' => $skipCount,
             ]);
+    }
+
+    /**
+     * Post/Push data siswa (seluruhnya atau terpilih) ke semua perangkat mesin fingerprint yang aktif
+     */
+    public function pushToDevices(Request $request)
+    {
+        $devices = FingerprintDevice::where('is_aktif', true)->get();
+
+        if ($devices->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada perangkat mesin fingerprint yang aktif saat ini.');
+        }
+
+        $selectedIds = $request->input('selected_ids');
+        if (is_string($selectedIds) && !empty($selectedIds)) {
+            $selectedIds = json_decode($selectedIds, true) ?? explode(',', $selectedIds);
+        }
+
+        $query = Siswa::whereNotNull('fingerprint_id')
+            ->where('fingerprint_id', '!=', '');
+
+        if (!empty($selectedIds) && is_array($selectedIds)) {
+            $query->whereIn('id', $selectedIds);
+        }
+
+        $siswas = $query->get();
+
+        if ($siswas->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data siswa terpilih yang memiliki ID Fingerprint untuk dikirim ke mesin.');
+        }
+
+        $service = app(\App\Services\FingerprintService::class);
+        $totalPushed = 0;
+        $deviceMsg = [];
+        $pushedSiswaIds = [];
+
+        foreach ($devices as $device) {
+            $count = 0;
+            foreach ($siswas as $siswa) {
+                $res = $service->uploadUserName($device, (string) $siswa->fingerprint_id, $siswa->nama);
+                if ($res['success']) {
+                    $count++;
+                    $totalPushed++;
+                    $pushedSiswaIds[] = $siswa->id;
+                }
+            }
+            // Kirim RefreshDB agar hardware me-reload data terbaru (nama diubah/diupdate)
+            $service->refreshDB($device);
+            $deviceMsg[] = "{$device->nama}: {$count} siswa";
+        }
+
+        if (!empty($pushedSiswaIds)) {
+            Siswa::whereIn('id', array_unique($pushedSiswaIds))->update(['is_pushed' => true]);
+        }
+
+        $summary = implode(', ', $deviceMsg);
+        $siswaCountText = count($siswas) . " siswa";
+
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->log("POST & Sinkronisasi {$siswaCountText} ke mesin fingerprint");
+        }
+
+        return redirect()->back()->with('success', "Berhasil POST & Sinkronisasi {$siswaCountText} ke mesin fingerprint! ({$summary})");
+    }
+
+    /**
+     * Otomatis kirim nama dan fingerprint ID siswa ke seluruh perangkat fingerprint aktif
+     */
+    protected function autoPushFingerprintToDevices(Siswa $siswa)
+    {
+        if (empty($siswa->fingerprint_id)) {
+            return;
+        }
+
+        try {
+            $service = app(\App\Services\FingerprintService::class);
+            $devices = FingerprintDevice::where('is_aktif', true)->get();
+            $successAny = false;
+
+            foreach ($devices as $device) {
+                $res = $service->uploadUserName($device, (string) $siswa->fingerprint_id, $siswa->nama);
+                if ($res['success']) {
+                    $service->refreshDB($device);
+                    $successAny = true;
+                }
+            }
+
+            if ($successAny) {
+                $siswa->update(['is_pushed' => true]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Auto push fingerprint error: " . $e->getMessage());
+        }
     }
 }

@@ -43,9 +43,9 @@
                             <span class="text-muted fw-bold d-block fs-7">NIP (Nomor Induk Pegawai)</span>
                             <span class="text-gray-800 fw-bolder fs-6">{{ $guru->nip ?? '-' }}</span>
                         @else
-                            <span class="text-muted fw-bold d-block fs-7">NIS / NISN</span>
+                            <span class="text-muted fw-bold d-block fs-7">NIS</span>
                             <span class="text-gray-800 fw-bolder fs-6">
-                                {{ $siswa->nis ?? '-' }} {{ $siswa->nisn ? '/ ' . $siswa->nisn : '' }}
+                                {{ $siswa->nis ?? '-' }}
                             </span>
                         @endif
                     </div>
@@ -62,15 +62,15 @@
                         </div>
                     </div>
 
-                    <!-- Tempat/Tanggal Lahir -->
+                    <!-- Tanggal Lahir -->
                     <div class="d-flex align-items-center mb-7">
                         <div class="flex-grow-1">
-                            <span class="text-muted fw-bold d-block fs-7">Tempat / Tanggal Lahir</span>
+                            <span class="text-muted fw-bold d-block fs-7">Tanggal Lahir</span>
                             <span class="text-gray-800 fw-bolder fs-6">
                                 @if($siswa)
-                                    {{ $siswa->tempat_lahir ?? '-' }}, {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('d F Y') : '-' }}
+                                    {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('d F Y') : '-' }}
                                 @else
-                                    {{ $guru->tempat_lahir ?? '-' }}, {{ $guru->tanggal_lahir ? \Carbon\Carbon::parse($guru->tanggal_lahir)->format('d F Y') : '-' }}
+                                    {{ $guru->tanggal_lahir ? \Carbon\Carbon::parse($guru->tanggal_lahir)->format('d F Y') : '-' }}
                                 @endif
                             </span>
                         </div>
@@ -96,7 +96,7 @@
                         <span class="text-muted mt-1 fw-bold fs-7">Daftar kelas tempat Anda menjadi Wali Kelas</span>
                     </h3>
                 </div>
-                <div class="card-body pt-3">
+                <div class="card-body pt-3 pb-5">
                     @forelse($kelasDiwali as $kelasItem)
                         <div class="d-flex align-items-center {{ !$loop->last ? 'mb-7' : '' }}">
                             <div class="symbol symbol-50px me-5">
@@ -113,7 +113,7 @@
                             <a href="{{ url('absensi/master/kelas/pembagian/' . $kelasItem->id) }}" class="btn btn-sm btn-light-primary">Lihat Detail Kelas</a>
                         </div>
                     @empty
-                        <div class="text-center text-muted py-5">
+                        <div class="text-center text-muted py-4">
                             Guru ini tidak/belum menjadi Wali Kelas di kelas manapun.
                         </div>
                     @endforelse
@@ -133,14 +133,8 @@
                     <span class="text-muted mt-1 fw-bold fs-7">Detail kontak untuk komunikasi</span>
                 </h3>
             </div>
-            <div class="card-body pt-3">
-                <!-- Email -->
-                <div class="d-flex align-items-center mb-7">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-bold d-block fs-7">Alamat Email</span>
-                        <span class="text-gray-800 fw-bolder fs-6">{{ $guru->email ?? ($siswa->user->email ?? $user->email) }}</span>
-                    </div>
-                </div>
+            <div class="card-body pt-3 pb-5">
+
 
                 <!-- Nomor HP -->
                 <div class="d-flex align-items-center">
@@ -166,14 +160,14 @@
         <!--end::Contact Info-->
 
         <!--begin::Account Info-->
-        <div class="card card-xl-stretch mb-5 mb-xxl-8">
+        <div class="card mb-5 mb-xxl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
                     <span class="card-label fw-bolder fs-3 text-dark">Informasi Akun</span>
                     <span class="text-muted mt-1 fw-bold fs-7">Status keanggotaan dan log aktivitas</span>
                 </h3>
             </div>
-            <div class="card-body pt-3">
+            <div class="card-body pt-3 pb-5">
                 <!-- Status -->
                 <div class="d-flex align-items-center mb-7">
                     <div class="flex-grow-1">

@@ -30,20 +30,26 @@ class Siswa extends Model
         'orang_tua_user_id',
         'status',
         'fingerprint_id',
+        'is_enrolled',
+        'is_pushed',
     ];
 
     protected static function booted()
     {
         static::saving(function ($siswa) {
-            if ($siswa->user_id) {
+            if ($siswa->user_id && empty($siswa->id)) {
                 $siswa->id = $siswa->user_id;
-                $siswa->fingerprint_id = (string) $siswa->user_id;
+            }
+            if (empty($siswa->fingerprint_id) && $siswa->id) {
+                $siswa->fingerprint_id = (string) $siswa->id;
             }
         });
     }
 
     protected $casts = [
         'tanggal_lahir' => 'date',
+        'is_enrolled'   => 'boolean',
+        'is_pushed'     => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -59,6 +65,11 @@ class Siswa extends Model
     public function kehadirans(): HasMany
     {
         return $this->hasMany(Kehadiran::class);
+    }
+
+    public function syncLogs(): HasMany
+    {
+        return $this->hasMany(FingerprintSyncLog::class, 'fingerprint_uid', 'fingerprint_id');
     }
 
     public function orangTua(): BelongsTo

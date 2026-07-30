@@ -67,15 +67,16 @@ class ProfilController extends Controller
                 'nis'            => 'nullable|string|max:20|unique:siswas,nis,' . $siswa->id,
                 'jenis_kelamin'  => 'required|in:L,P',
                 'tempat_lahir'   => 'nullable|string|max:100',
-                'tanggal_lahir'  => 'nullable|date',
+                'tanggal_lahir'  => 'nullable|date|before_or_equal:today',
                 'status'         => 'nullable|string|max:20',
             ]);
 
             $messages = array_merge($messages, [
-                'nama.required'          => 'Nama siswa wajib diisi.',
-                'nisn.unique'            => 'NISN sudah terdaftar.',
-                'nis.unique'             => 'NIS sudah terdaftar.',
-                'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+                'nama.required'                 => 'Nama siswa wajib diisi.',
+                'nisn.unique'                   => 'NISN sudah terdaftar.',
+                'nis.unique'                    => 'NIS sudah terdaftar.',
+                'jenis_kelamin.required'        => 'Jenis kelamin wajib dipilih.',
+                'tanggal_lahir.before_or_equal' => 'Tanggal lahir tidak boleh melebihi hari ini.',
             ]);
         }
 

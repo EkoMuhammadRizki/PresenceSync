@@ -11,6 +11,7 @@ class Kehadiran extends Model
 
     protected $fillable = [
         'siswa_id',
+        'guru_id',
         'semester_id',
         'aturan_jam_id',
         'tanggal',
@@ -20,6 +21,8 @@ class Kehadiran extends Model
         'keterangan',
         'foto',
         'koordinat',
+        'source',
+        'fingerprint_log_id',
     ];
 
     protected $casts = [
@@ -29,6 +32,11 @@ class Kehadiran extends Model
     public function siswa(): BelongsTo
     {
         return $this->belongsTo(Siswa::class);
+    }
+
+    public function guru(): BelongsTo
+    {
+        return $this->belongsTo(Guru::class);
     }
 
     public function semester(): BelongsTo

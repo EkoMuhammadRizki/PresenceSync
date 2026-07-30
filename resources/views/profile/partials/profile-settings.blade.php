@@ -124,13 +124,7 @@
                     </div>
                 </div>
 
-                <!-- Email (readonly untuk own profile) -->
-                <div class="row mb-6">
-                    <label class="col-lg-4 col-form-label fw-bold fs-6">Alamat Email</label>
-                    <div class="col-lg-8 fv-row">
-                        <input type="email" name="email" class="form-control form-control-lg form-control-solid" placeholder="Email" value="{{ old('email', $guru->email) }}" {{ $isOwnGuruProfile ? 'readonly' : '' }} />
-                    </div>
-                </div>
+
 
                 <!-- No HP -->
                 <div class="row mb-6">
@@ -159,18 +153,10 @@
                 </div>
 
                 <div class="row mb-6">
-                    <label class="col-lg-4 col-form-label fw-bold fs-6">NIS & NISN</label>
-                    <div class="col-lg-8">
-                        <div class="row">
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="nis" class="form-control form-control-lg form-control-solid" placeholder="NIS" value="{{ old('nis', $siswa->nis) }}" 
-                                    {{ $isStudentUser ? 'readonly' : '' }} />
-                            </div>
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="nisn" class="form-control form-control-lg form-control-solid" placeholder="NISN" value="{{ old('nisn', $siswa->nisn) }}" 
-                                    {{ $isStudentUser ? 'readonly' : '' }} />
-                            </div>
-                        </div>
+                    <label class="col-lg-4 col-form-label fw-bold fs-6">NIS</label>
+                    <div class="col-lg-8 fv-row">
+                        <input type="text" name="nis" class="form-control form-control-lg form-control-solid" placeholder="NIS" value="{{ old('nis', $siswa->nis) }}" 
+                            {{ $isStudentUser ? 'readonly' : '' }} />
                     </div>
                 </div>
 
@@ -207,20 +193,12 @@
                     </div>
                 </div>
 
-                <!-- Tempat & Tanggal Lahir (Siswa) -->
+                <!-- Tanggal Lahir (Siswa) -->
                 <div class="row mb-6">
-                    <label class="col-lg-4 col-form-label fw-bold fs-6">Tempat & Tanggal Lahir</label>
-                    <div class="col-lg-8">
-                        <div class="row">
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="tempat_lahir" class="form-control form-control-lg form-control-solid" placeholder="Tempat Lahir" value="{{ old('tempat_lahir', $siswa->tempat_lahir) }}" 
-                                    {{ $isStudentUser ? 'readonly' : '' }} />
-                            </div>
-                            <div class="col-lg-6 fv-row">
-                                <input type="date" name="tanggal_lahir" class="form-control form-control-lg form-control-solid" value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '') }}" 
-                                    {{ $isStudentUser ? 'readonly' : '' }} />
-                            </div>
-                        </div>
+                    <label class="col-lg-4 col-form-label fw-bold fs-6">Tanggal Lahir</label>
+                    <div class="col-lg-8 fv-row">
+                        <input type="date" name="tanggal_lahir" class="form-control form-control-lg form-control-solid" value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '') }}" max="{{ date('Y-m-d') }}" 
+                            {{ $isStudentUser ? 'readonly' : '' }} />
                     </div>
                 </div>
 

@@ -154,7 +154,7 @@
         <thead>
             <tr>
                 <th class="text-center" style="width: 30px;">No</th>
-                <th style="width: 100px;">NISN</th>
+                <th style="width: 100px;">NIS</th>
                 <th>Nama Lengkap</th>
                 <th class="text-center" style="width: 100px;">Jenis Kelamin</th>
                 <th class="text-center" style="width: 80px;">Kehadiran</th>
@@ -168,7 +168,7 @@
             @endphp
             <tr>
                 <td class="text-center">{{ $i + 1 }}</td>
-                <td>{{ $siswa->nisn ?? '-' }}</td>
+                <td>{{ $siswa->nis ?? '-' }}</td>
                 <td><strong>{{ $siswa->nama }}</strong></td>
                 <td class="text-center">{{ $siswa->jenis_kelamin == 'L' ? 'Laki-laki' : ($siswa->jenis_kelamin == 'P' ? 'Perempuan' : '-') }}</td>
                 <td class="text-center">

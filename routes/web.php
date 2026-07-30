@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::post('absensi/master/kelas/pembagian/{kelas}/set-sekretaris/{siswa}', [\App\Http\Controllers\Absensi\PembagianKelasController::class, 'setSekretaris'])->name('pembagian-kelas.set-sekretaris');
     Route::get('absensi/master/siswa/download-template', [\App\Http\Controllers\Absensi\SiswaController::class, 'downloadTemplate'])->name('siswa.download-template');
     Route::post('absensi/master/siswa/import', [\App\Http\Controllers\Absensi\SiswaController::class, 'import'])->name('siswa.import');
+    Route::post('absensi/master/siswa/push-to-devices', [\App\Http\Controllers\Absensi\SiswaController::class, 'pushToDevices'])->name('siswa.push-to-devices');
     Route::post('absensi/bulk-delete', [\App\Http\Controllers\Absensi\BulkDeleteController::class, 'destroy'])->name('bulk-delete');
     Route::resource('absensi/master/siswa', \App\Http\Controllers\Absensi\SiswaController::class)->names('siswa');
     Route::resource('absensi/master/mata-pelajaran', \App\Http\Controllers\Absensi\MataPelajaranController::class)->names('mata-pelajaran');
@@ -94,6 +95,25 @@ Route::middleware('auth')->group(function () {
     Route::resource('absensi/master/aturan-jam', \App\Http\Controllers\Absensi\AturanJamController::class)->names('aturan-jam');
     Route::get('absensi/kehadiran/export', [\App\Http\Controllers\Absensi\KehadiranController::class, 'export'])->name('kehadiran.export');
     Route::resource('absensi/kehadiran', \App\Http\Controllers\Absensi\KehadiranController::class)->names('kehadiran');
+
+    // Laporan Routes
+    Route::prefix('absensi/laporan')->name('laporan.')->group(function () {
+        Route::get('siswa', [\App\Http\Controllers\Absensi\LaporanController::class, 'siswa'])->name('siswa');
+        Route::get('siswa/export-pdf', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportSiswaPdf'])->name('siswa.export-pdf');
+        Route::get('siswa/export-excel', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportSiswaExcel'])->name('siswa.export-excel');
+
+        Route::get('guru', [\App\Http\Controllers\Absensi\LaporanController::class, 'guru'])->name('guru');
+        Route::get('guru/export-pdf', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportGuruPdf'])->name('guru.export-pdf');
+        Route::get('guru/export-excel', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportGuruExcel'])->name('guru.export-excel');
+
+        Route::get('kehadiran', [\App\Http\Controllers\Absensi\LaporanController::class, 'kehadiran'])->name('kehadiran');
+        Route::get('kehadiran/export-pdf', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportKehadiranPdf'])->name('kehadiran.export-pdf');
+        Route::get('kehadiran/export-excel', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportKehadiranExcel'])->name('kehadiran.export-excel');
+
+        Route::get('pengaduan', [\App\Http\Controllers\Absensi\LaporanController::class, 'pengaduan'])->name('pengaduan');
+        Route::get('pengaduan/export-pdf', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportPengaduanPdf'])->name('pengaduan.export-pdf');
+        Route::get('pengaduan/export-excel', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportPengaduanExcel'])->name('pengaduan.export-excel');
+    });
 
     Route::get('absensi/profil-siswa', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'show'])->name('profil-siswa.show');
     Route::put('absensi/profil-siswa/{siswa}', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'update'])->name('profil-siswa.update');
@@ -154,11 +174,33 @@ Route::middleware('auth')->group(function () {
     Route::get('absensi/dashboard/guru-trend-data', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'getGuruTrendData'])->name('admin.dashboard.guru-trend-data');
     Route::get('absensi/kesiswaan/dashboard', [\App\Http\Controllers\Absensi\AdminDashboardController::class, 'index'])->name('kesiswaan.dashboard');
 
-    // Orang Tua Dashboard Routes
-    Route::get('absensi/orangtua/dashboard', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'index'])->name('orangtua.dashboard');
-    Route::get('absensi/orangtua/pengaduan', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'pengaduan'])->name('orangtua.pengaduan');
-    Route::get('absensi/orangtua/profil', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'profil'])->name('orangtua.profil');
-    Route::post('absensi/orangtua/profil', [\App\Http\Controllers\Absensi\OrangTuaDashboardController::class, 'updateProfil'])->name('orangtua.profil.update');
+    // Fingerprint Device Management Routes
+    Route::prefix('absensi/fingerprint')->name('fingerprint.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Absensi\FingerprintController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Absensi\FingerprintController::class, 'store'])->name('store');
+        
+        // Static & Log endpoints (Must be above /{device})
+        Route::get('/log-data', [\App\Http\Controllers\Absensi\FingerprintController::class, 'logData'])->name('log-data');
+        Route::get('/logs-view', [\App\Http\Controllers\Absensi\FingerprintController::class, 'logsView'])->name('logs-view');
+        Route::post('/auto-sync', [\App\Http\Controllers\Absensi\FingerprintController::class, 'autoSync'])->name('auto-sync');
+        Route::delete('/logs-clear', [\App\Http\Controllers\Absensi\FingerprintController::class, 'clearLogs'])->name('logs.clear');
+        Route::delete('/logs/{log}', [\App\Http\Controllers\Absensi\FingerprintController::class, 'destroyLog'])->name('logs.destroy');
+
+        Route::post('/sync-all-templates', [\App\Http\Controllers\Absensi\FingerprintController::class, 'syncAllTemplatesToDevices'])->name('sync-all-templates');
+        Route::post('/siswa/{siswa}/toggle-enrollment', [\App\Http\Controllers\Absensi\FingerprintController::class, 'toggleEnrollment'])->name('toggle-enrollment');
+
+        // Wildcard Device Endpoints
+        Route::put('/{device}', [\App\Http\Controllers\Absensi\FingerprintController::class, 'update'])->name('update');
+        Route::delete('/{device}', [\App\Http\Controllers\Absensi\FingerprintController::class, 'destroy'])->name('destroy');
+        Route::post('/{device}/test-connection', [\App\Http\Controllers\Absensi\FingerprintController::class, 'testConnection'])->name('test-connection');
+        Route::post('/{device}/sync', [\App\Http\Controllers\Absensi\FingerprintController::class, 'triggerSync'])->name('sync');
+        Route::post('/{device}/sync-time', [\App\Http\Controllers\Absensi\FingerprintController::class, 'syncTime'])->name('sync-time');
+        Route::post('/{device}/upload-names', [\App\Http\Controllers\Absensi\FingerprintController::class, 'uploadNames'])->name('upload-names');
+        Route::post('/{device}/toggle-status', [\App\Http\Controllers\Absensi\FingerprintController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // Siswa Dashboard Routes
+    Route::post('absensi/siswa/profil', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'updateProfil'])->name('siswa.profil.update');
 });
 
 

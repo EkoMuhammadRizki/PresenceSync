@@ -63,6 +63,18 @@
         </div>
         <div class="card-toolbar my-0">
             <div class="d-flex flex-wrap gap-2">
+                <form id="form_post_ke_mesin" action="{{ route('siswa.push-to-devices') }}" method="POST" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="selected_ids" id="post_selected_ids" value="" />
+                    <button type="button" onclick="confirmPostKeMesin()" class="btn btn-light-info btn-sm btn-md-md position-relative" title="POST & Sinkronisasi data nama & ID siswa ke mesin Solution X100-C">
+                        {!! theme()->getSvgIcon("icons/duotune/arrows/arr078.svg", "svg-icon-2") !!}
+                        <span class="d-none d-sm-inline" id="btn_post_text">Post ke Mesin</span>
+                        <span class="d-inline d-sm-none">Post</span>
+                        @if(isset($unpushedCount) && $unpushedCount > 0)
+                            <span class="badge badge-circle badge-warning ms-1" id="badge_unpushed" title="{{ $unpushedCount }} siswa belum/perlu di-post ke mesin">{{ $unpushedCount }}</span>
+                        @endif
+                    </button>
+                </form>
                 <a href="{{ route('siswa.download-template', ['empty' => 1]) }}" class="btn btn-light-warning btn-sm btn-md-md">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
                     <span class="d-none d-sm-inline">Download Template</span>
@@ -95,12 +107,11 @@
                                 <input class="form-check-input select-all-checkbox" type="checkbox" />
                             </div>
                         </th>
-                        <th class="min-w-80px">NIS / NISN</th>
+                        <th class="min-w-80px">NIS</th>
                         <th class="min-w-150px">Nama</th>
                         <th class="min-w-90px">Jenis Kelamin</th>
                         <th class="min-w-100px">Kelas</th>
                         <th class="min-w-100px">Fingerprint ID</th>
-                        <th class="min-w-150px">Akun Email</th>
                         <th class="text-end min-w-70px">Aksi</th>
                     </tr>
                 </thead>
@@ -114,7 +125,6 @@
                         </td>
                         <td>
                             <span class="text-gray-800">{{ $item->nis ?? '-' }}</span>
-                            <div class="fs-7 text-muted">NISN: {{ $item->nisn ?? '-' }}</div>
                         </td>
                         <td class="d-flex align-items-center">
                             <div class="symbol symbol-circle symbol-40px overflow-hidden me-3">
@@ -130,13 +140,17 @@
                         </td>
                         <td>
                             @if($item->fingerprint_id)
-                                <span class="badge badge-light-success fw-bolder">{{ $item->fingerprint_id }}</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge badge-light-primary fw-boldest fs-7">ID: {{ $item->fingerprint_id }}</span>
+                                    @if($item->is_pushed)
+                                        <span class="badge badge-light-success fw-bold fs-8" title="Nama & ID sudah ter-sync ke mesin">Ter-sync</span>
+                                    @else
+                                        <span class="badge badge-light-warning fw-bold fs-8" title="Data baru/diubah, perlu di-POST ulang ke mesin">Perlu Post</span>
+                                    @endif
+                                </div>
                             @else
-                                <span class="badge badge-light-warning fw-bolder">Belum Registrasi</span>
+                                <span class="badge badge-light-secondary text-gray-500 fw-bold">Belum Registrasi</span>
                             @endif
-                        </td>
-                        <td>
-                            <span class="text-gray-600 fs-7">{{ $item->user->email ?? '-' }}</span>
                         </td>
                         <td class="text-end">
                             <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
@@ -146,6 +160,11 @@
                                 <div class="menu-item px-3">
                                     <a href="{{ theme()->getPageUrl('absensi/profil-siswa') }}?id={{ $item->id }}" class="menu-link px-3">
                                         Detail
+                                    </a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3 text-info fw-bold" onclick="confirmPostSingleSiswa('{{ $item->id }}', '{{ addslashes($item->nama) }}')">
+                                        Post ke Mesin
                                     </a>
                                 </div>
                                 <div class="menu-item px-3">
@@ -200,14 +219,15 @@
                     </div>
                 </div>
 
-                <form class="form" action="{{ route('siswa.store') }}" method="POST">
+                <form class="form" id="form_tambah_siswa" action="{{ route('siswa.store') }}" method="POST" novalidate>
                     @csrf
                     
                     <!-- Step 1: User Account -->
                     <div id="tambah_siswa_step_1">
                         <div class="fv-row mb-7">
-                            <label class="required fw-bold fs-6 mb-2">Email (Gmail)</label>
-                            <input type="email" name="email" class="form-control form-control-solid" placeholder="Contoh: ahmad@gmail.com" required />
+                            <label class="required fw-bold fs-6 mb-2">NIS (Nomor Induk Siswa)</label>
+                            <input type="text" name="nis" class="form-control form-control-solid" placeholder="Nomor Induk Siswa (digunakan untuk login)" maxlength="20" required />
+                            <div class="form-text text-muted">NIS digunakan sebagai identitas login siswa. Wajib diisi.</div>
                         </div>
                         <div class="fv-row mb-7">
                             <label class="required fw-bold fs-6 mb-2">Password</label>
@@ -225,12 +245,6 @@
                         <div class="fv-row mb-7">
                             <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
                             <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Siswa" required />
-                        </div>
-                        <div class="row g-9 mb-7">
-                            <div class="col-md-12 fv-row">
-                                <label class="fw-bold fs-6 mb-2">NIS (Nomor Induk Siswa)</label>
-                                <input type="text" name="nis" class="form-control form-control-solid" placeholder="Nomor Induk Siswa" maxlength="20" />
-                            </div>
                         </div>
                         <div class="row g-9 mb-7">
                             <div class="col-md-6 fv-row">
@@ -252,7 +266,7 @@
                         </div>
                         <div class="fv-row mb-7">
                             <label class="fw-bold fs-6 mb-2">Tanggal Lahir</label>
-                            <input type="date" name="tanggal_lahir" class="form-control form-control-solid" />
+                            <input type="date" name="tanggal_lahir" class="form-control form-control-solid" max="{{ date('Y-m-d') }}" />
                         </div>
                         <div class="fv-row mb-7">
                             <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
@@ -263,8 +277,8 @@
                     <!-- Footer Buttons -->
                     <div class="text-center pt-10 border-top mt-5">
                         <button type="button" class="btn btn-light me-3" data-bs-dismiss="modal" id="tambah_siswa_btn_cancel">Batal</button>
-                        <button type="button" class="btn btn-light-primary me-3 d-none" id="tambah_siswa_btn_prev">Sebelumnya</button>
-                        <button type="button" class="btn btn-primary" id="tambah_siswa_btn_next">Berikutnya</button>
+                        <button type="button" class="btn btn-light-primary me-3 d-none" id="tambah_siswa_btn_prev" onclick="goToStep1()">Sebelumnya</button>
+                        <button type="button" class="btn btn-primary" id="tambah_siswa_btn_next" onclick="goToStep2()">Berikutnya</button>
                         <button type="submit" class="btn btn-success d-none" id="tambah_siswa_btn_submit">Simpan</button>
                     </div>
                 </form>
@@ -294,8 +308,9 @@
                                 <div class="fs-6 text-gray-700">
                                     <ul class="ps-4 mb-0">
                                         <li>Gunakan template Excel Kosong yang telah disediakan. <a href="{{ route('siswa.download-template', ['empty' => 1]) }}" class="fw-bolder text-primary text-decoration-underline">Download Template Excel</a></li>
-                                        <li>Kolom utama: <strong>Nama, NIS, Email, Kelas, Jenis Kelamin, Alamat</strong>.</li>
-                                        <li>Siswa dengan NIS atau Email yang sudah ada akan dilewati (tidak digandakan).</li>
+                                        <li>Kolom utama: <strong>NIS (wajib), Nama, Jenis Kelamin, Kelas</strong>.</li>
+                                        <li>NIS digunakan sebagai identitas & password login default. Siswa tanpa NIS tidak akan diimport.</li>
+                                        <li>Siswa dengan NIS yang sudah ada akan dilewati (tidak digandakan).</li>
                                         <li>Format file: <strong>.xlsx</strong> atau <strong>.xls</strong>.</li>
                                     </ul>
                                 </div>
@@ -335,11 +350,7 @@
                         <input type="text" name="nama" class="form-control form-control-solid" required />
                     </div>
                     <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">NISN</label>
-                            <input type="text" name="nisn" class="form-control form-control-solid" />
-                        </div>
-                        <div class="col-md-6 fv-row">
+                        <div class="col-md-12 fv-row">
                             <label class="fw-bold fs-6 mb-2">NIS</label>
                             <input type="text" name="nis" class="form-control form-control-solid" maxlength="20" />
                         </div>
@@ -365,11 +376,12 @@
                     <div class="row g-9 mb-7">
                         <div class="col-md-6 fv-row">
                             <label class="fw-bold fs-6 mb-2">Tanggal Lahir</label>
-                            <input type="date" name="tanggal_lahir" class="form-control form-control-solid" />
+                            <input type="date" name="tanggal_lahir" class="form-control form-control-solid" max="{{ date('Y-m-d') }}" />
                         </div>
                         <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">ID Fingerprint (Sama dengan ID User)</label>
-                            <input type="text" name="fingerprint_id" class="form-control form-control-solid" readonly />
+                            <label class="fw-bold fs-6 mb-2">ID Fingerprint</label>
+                            <input type="text" name="fingerprint_id" class="form-control form-control-solid" placeholder="Contoh: 1" />
+                            <div class="form-text text-muted">ID PIN pada mesin fingerprint.</div>
                         </div>
                     </div>
                     <div class="fv-row mb-7">
@@ -405,7 +417,7 @@ $(document).ready(function() {
         order:[], 
         pageLength:5, 
         lengthChange:true, 
-        columnDefs:[{orderable:false,targets:[0,7]}] 
+        columnDefs:[{orderable:false,targets:[0,6]}] 
     });
 
     // Make entire table row clickable (excluding checkbox and actions)
@@ -414,7 +426,7 @@ $(document).ready(function() {
         if (targetTd.length === 0) return;
         var idx = targetTd.index();
         // Skip first column (checkbox) and last column (actions dropdown)
-        if (idx === 0 || idx === 7 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+        if (idx === 0 || idx === 6 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
             return;
         }
         var link = $(this).find('td:nth-child(3) a');
@@ -437,43 +449,42 @@ $(document).ready(function() {
     // Stepper navigation in modal_tambah_siswa
     var currentStep = 1;
 
-    function showStep(step) {
+    window.showStep = function(step) {
         if (step === 1) {
-            $('#tambah_siswa_step_1').removeClass('d-none');
-            $('#tambah_siswa_step_2').addClass('d-none');
+            $('#tambah_siswa_step_1').removeClass('d-none').css('display', 'block');
+            $('#tambah_siswa_step_2').addClass('d-none').css('display', 'none');
             
-            $('#tambah_siswa_btn_cancel').removeClass('d-none');
-            $('#tambah_siswa_btn_prev').addClass('d-none');
-            $('#tambah_siswa_btn_next').removeClass('d-none');
-            $('#tambah_siswa_btn_submit').addClass('d-none');
+            $('#tambah_siswa_btn_cancel').removeClass('d-none').css('display', 'inline-block');
+            $('#tambah_siswa_btn_prev').addClass('d-none').css('display', 'none');
+            $('#tambah_siswa_btn_next').removeClass('d-none').css('display', 'inline-block');
+            $('#tambah_siswa_btn_submit').addClass('d-none').css('display', 'none');
             
             // Stepper nav colors
             $('#tambah_siswa_stepper [data-step="1"] .stepper-number').removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
             $('#tambah_siswa_stepper [data-step="2"] .stepper-number').removeClass('bg-primary text-white').addClass('bg-light-primary text-primary');
         } else if (step === 2) {
-            $('#tambah_siswa_step_1').addClass('d-none');
-            $('#tambah_siswa_step_2').removeClass('d-none');
+            $('#tambah_siswa_step_1').addClass('d-none').css('display', 'none');
+            $('#tambah_siswa_step_2').removeClass('d-none').css('display', 'block');
             
-            $('#tambah_siswa_btn_cancel').addClass('d-none');
-            $('#tambah_siswa_btn_prev').removeClass('d-none');
-            $('#tambah_siswa_btn_next').addClass('d-none');
-            $('#tambah_siswa_btn_submit').removeClass('d-none');
+            $('#tambah_siswa_btn_cancel').addClass('d-none').css('display', 'none');
+            $('#tambah_siswa_btn_prev').removeClass('d-none').css('display', 'inline-block');
+            $('#tambah_siswa_btn_next').addClass('d-none').css('display', 'none');
+            $('#tambah_siswa_btn_submit').removeClass('d-none').css('display', 'inline-block');
 
             // Stepper nav colors
             $('#tambah_siswa_stepper [data-step="1"] .stepper-number').removeClass('bg-primary text-white').addClass('bg-light-primary text-primary');
             $('#tambah_siswa_stepper [data-step="2"] .stepper-number').removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
         }
         currentStep = step;
-    }
+    };
 
-    $('#tambah_siswa_btn_next').on('click', function() {
-        // Validate step 1 fields
-        var email = $('#modal_tambah_siswa input[name="email"]').val();
-        var password = $('#modal_tambah_siswa input[name="password"]').val();
+    window.goToStep2 = function() {
+        var nis = $('#modal_tambah_siswa input[name="nis"]').val() ? $('#modal_tambah_siswa input[name="nis"]').val().trim() : '';
+        var password = $('#modal_tambah_siswa input[name="password"]').val() ? $('#modal_tambah_siswa input[name="password"]').val().trim() : '';
 
-        if (!email || !password) {
+        if (!nis || !password) {
             Swal.fire({
-                text: 'Silakan isi email dan password terlebih dahulu.',
+                text: 'Silakan isi NIS dan password terlebih dahulu.',
                 icon: 'error',
                 buttonsStyling: false,
                 confirmButtonText: 'Oke, mengerti!',
@@ -481,21 +492,7 @@ $(document).ready(function() {
                     confirmButton: 'btn btn-primary'
                 }
             });
-            return;
-        }
-
-        // Basic email format validation
-        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            Swal.fire({
-                text: 'Format email tidak valid.',
-                icon: 'error',
-                buttonsStyling: false,
-                confirmButtonText: 'Oke, mengerti!',
-                customClass: {
-                    confirmButton: 'btn btn-primary'
-                }
-            });
-            return;
+            return false;
         }
 
         if (password.length < 6) {
@@ -508,14 +505,45 @@ $(document).ready(function() {
                     confirmButton: 'btn btn-primary'
                 }
             });
-            return;
+            return false;
         }
 
-        showStep(2);
+        window.showStep(2);
+        return false;
+    };
+
+    window.goToStep1 = function() {
+        window.showStep(1);
+        return false;
+    };
+
+    $(document).on('click', '#tambah_siswa_btn_next', function(e) {
+        e.preventDefault();
+        window.goToStep2();
     });
 
-    $('#tambah_siswa_btn_prev').on('click', function() {
-        showStep(1);
+    $(document).on('click', '#tambah_siswa_btn_prev', function(e) {
+        e.preventDefault();
+        window.goToStep1();
+    });
+
+    $(document).on('submit', '#form_tambah_siswa', function(e) {
+        var nama = $('#modal_tambah_siswa input[name="nama"]').val() ? $('#modal_tambah_siswa input[name="nama"]').val().trim() : '';
+        var kelas = $('#modal_tambah_siswa select[name="kelas_id"]').val();
+
+        if (!nama || !kelas) {
+            e.preventDefault();
+            Swal.fire({
+                text: 'Silakan isi nama lengkap dan pilih kelas terlebih dahulu.',
+                icon: 'error',
+                buttonsStyling: false,
+                confirmButtonText: 'Oke, mengerti!',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
+            });
+            return false;
+        }
     });
 
     // When modal is shown
@@ -577,6 +605,67 @@ $(document).ready(function() {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 });
+
+function confirmPostKeMesin() {
+    var checkedBoxes = $('#kt_table_siswa tbody input[type="checkbox"].select-item-checkbox:checked');
+    var selectedIds = [];
+    checkedBoxes.each(function() {
+        selectedIds.push($(this).val());
+    });
+
+    if (selectedIds.length > 0) {
+        $('#post_selected_ids').val(JSON.stringify(selectedIds));
+        var titleText = 'Post ' + selectedIds.length + ' Siswa Terpilih ke Mesin?';
+        var htmlText = 'Hanya <b>' + selectedIds.length + ' siswa terpilih</b> yang akan di-upload dan disinkronkan ke seluruh mesin fingerprint yang aktif.';
+        var btnText = '<i class="bi bi-send me-1"></i> Ya, Post ' + selectedIds.length + ' Siswa';
+    } else {
+        $('#post_selected_ids').val('');
+        var titleText = 'Post Seluruh Data Siswa ke Mesin?';
+        var htmlText = 'Seluruh nama & ID siswa akan di-upload dan disinkronkan ke seluruh mesin fingerprint yang aktif.';
+        var btnText = '<i class="bi bi-send me-1"></i> Ya, Post Semua Siswa';
+    }
+
+    Swal.fire({
+        title: titleText,
+        html: htmlText,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: btnText,
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: 'btn btn-info fw-bold px-6',
+            cancelButton: 'btn btn-light fw-bold px-6 me-3'
+        },
+        buttonsStyling: false,
+        reverseButtons: true
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            document.getElementById('form_post_ke_mesin').submit();
+        }
+    });
+}
+
+function confirmPostSingleSiswa(siswaId, siswaNama) {
+    $('#post_selected_ids').val(JSON.stringify([siswaId]));
+    Swal.fire({
+        title: 'Post Siswa ke Mesin?',
+        html: 'Data siswa <b>' + siswaNama + '</b> akan di-upload & disinkronkan ke seluruh mesin fingerprint yang aktif.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-send me-1"></i> Ya, Post ke Mesin',
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: 'btn btn-info fw-bold px-6',
+            cancelButton: 'btn btn-light fw-bold px-6 me-3'
+        },
+        buttonsStyling: false,
+        reverseButtons: true
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            document.getElementById('form_post_ke_mesin').submit();
+        }
+    });
+}
 </script>
 @endsection
 </x-base-layout>

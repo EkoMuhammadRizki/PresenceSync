@@ -75,9 +75,13 @@ class Menu extends \App\Core\Menu
                 continue;
             }
 
-            // Allowed paths definition per role
             if ($isSiswa) {
-                $allowedSiswaPaths = ['absensi/siswa/dashboard', 'logout'];
+                $allowedSiswaPaths = [
+                    'absensi/siswa/dashboard',
+                    'absensi/siswa/kehadiran',
+                    'absensi/siswa/profil',
+                    'logout'
+                ];
                 $siswaModel = \App\Models\Siswa::where('user_id', $user->id)->first();
                 if ($siswaModel && $siswaModel->is_sekretaris) {
                     $allowedSiswaPaths[] = 'absensi/siswa/kehadiran-mp';
@@ -150,7 +154,12 @@ class Menu extends \App\Core\Menu
                     continue;
                 }
             } elseif ($isGuru) {
-                $allowedPaths = ['absensi/dashboard', 'absensi/kehadiran', 'absensi/guru/kelas-wali', 'absensi/guru/pengaduan', 'logout'];
+                $allowedPaths = [
+                    'absensi/guru/dashboard',
+                    'absensi/guru/kelas-wali',
+                    'absensi/guru/pengaduan',
+                    'logout'
+                ];
                 if (isset($value['path'])) {
                     if (!in_array($value['path'], $allowedPaths)) {
                         unset($array[$key]);
@@ -188,7 +197,7 @@ class Menu extends \App\Core\Menu
                 continue;
             }
 
-            if ($checkRole && isset($value['role']) && !$user->hasAnyRole((array) $value['role'])) {
+            if (!$isSiswa && !$isGuru && $checkRole && isset($value['role']) && !$user->hasAnyRole((array) $value['role'])) {
                 unset($array[$key]);
                 continue;
             }

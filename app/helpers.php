@@ -164,19 +164,19 @@ if (!function_exists('assetCustom')) {
     {
         // Include rtl css file
         if (isRTL()) {
-            return asset(theme()->getDemo().'/'.dirname($path).'/'.basename($path, '.css').'.rtl.css');
+            return '/' . theme()->getDemo() . '/' . dirname($path) . '/' . basename($path, '.css') . '.rtl.css';
         }
 
         // Include dark style css file
         if (theme()->isDarkModeEnabled() && theme()->getCurrentMode() !== 'light') {
-            $darkPath = str_replace('.bundle', '.'.theme()->getCurrentMode().'.bundle', $path);
-            if (file_exists(public_path(theme()->getDemo().'/'.$darkPath))) {
-                return asset(theme()->getDemo().'/'.$darkPath);
+            $darkPath = str_replace('.bundle', '.' . theme()->getCurrentMode() . '.bundle', $path);
+            if (file_exists(public_path(theme()->getDemo() . '/' . $darkPath))) {
+                return '/' . theme()->getDemo() . '/' . $darkPath;
             }
         }
 
         // Include default css file
-        return asset(theme()->getDemo().'/'.$path);
+        return '/' . theme()->getDemo() . '/' . $path;
     }
 }
 

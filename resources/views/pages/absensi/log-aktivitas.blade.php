@@ -33,36 +33,69 @@
                 </tr>
             </thead>
             <tbody class="text-gray-600 fw-bold">
-                <tr class="row-clickable" data-username="admin.sekolah" data-nama="Administrator" data-aktivitas="Login ke sistem" data-metode="POST" data-waktu="15 Mei 2026, 08:30">
-                    <td>1</td><td>admin.sekolah</td><td>Administrator</td>
-                    <td>Login ke sistem</td>
-                    <td><span class="badge badge-light-success fw-bolder">POST</span></td>
-                    <td>15 Mei 2026, 08:30</td>
-                </tr>
-                <tr class="row-clickable" data-username="guru.budi" data-nama="Budi Santoso" data-aktivitas="Melihat data kehadiran kelas X-1" data-metode="GET" data-waktu="15 Mei 2026, 09:15">
-                    <td>2</td><td>guru.budi</td><td>Budi Santoso</td>
-                    <td>Melihat data kehadiran kelas X-1</td>
-                    <td><span class="badge badge-light-primary fw-bolder">GET</span></td>
-                    <td>15 Mei 2026, 09:15</td>
-                </tr>
-                <tr class="row-clickable" data-username="admin.sekolah" data-nama="Administrator" data-aktivitas="Menambah data siswa baru" data-metode="POST" data-waktu="15 Mei 2026, 10:00">
-                    <td>3</td><td>admin.sekolah</td><td>Administrator</td>
-                    <td>Menambah data siswa baru</td>
-                    <td><span class="badge badge-light-success fw-bolder">POST</span></td>
-                    <td>15 Mei 2026, 10:00</td>
-                </tr>
-                <tr class="row-clickable" data-username="guru.siti" data-nama="Siti Rahayu" data-aktivitas="Mengubah jadwal pelajaran Matematika" data-metode="PUT" data-waktu="15 Mei 2026, 11:30">
-                    <td>4</td><td>guru.siti</td><td>Siti Rahayu</td>
-                    <td>Mengubah jadwal pelajaran Matematika</td>
-                    <td><span class="badge badge-light-warning fw-bolder">PUT</span></td>
-                    <td>15 Mei 2026, 11:30</td>
-                </tr>
-                <tr class="row-clickable" data-username="siswa.ahmad" data-nama="Ahmad Subarjo" data-aktivitas="Melakukan presensi masuk (fingerprint)" data-metode="POST" data-waktu="15 Mei 2026, 06:45">
-                    <td>5</td><td>siswa.ahmad</td><td>Ahmad Subarjo</td>
-                    <td>Melakukan presensi masuk (fingerprint)</td>
-                    <td><span class="badge badge-light-success fw-bolder">POST</span></td>
-                    <td>15 Mei 2026, 06:45</td>
-                </tr>
+                @php
+                    $logsList = isset($activities) && $activities->count() > 0 ? $activities : [];
+                @endphp
+                @if(count($logsList) > 0)
+                    @foreach($logsList as $index => $log)
+                    @php
+                        $causer = $log->causer;
+                        $username = $causer ? ($causer->email ? explode('@', $causer->email)[0] : $causer->first_name) : 'system';
+                        $nama = $causer ? (trim($causer->first_name . ' ' . $causer->last_name) ?: 'System User') : 'System Administrator';
+                        
+                        $desc = $log->description;
+                        $subject = $log->subject_type ? class_basename($log->subject_type) : '';
+                        
+                        if ($desc === 'created') {
+                            $aktivitasText = 'Menambah data ' . strtolower($subject) . ' baru';
+                            $metode = 'POST';
+                            $badgeClass = 'success';
+                        } elseif ($desc === 'updated') {
+                            $aktivitasText = 'Mengubah data ' . strtolower($subject);
+                            $metode = 'PUT';
+                            $badgeClass = 'warning';
+                        } elseif ($desc === 'deleted') {
+                            $aktivitasText = 'Menghapus data ' . strtolower($subject);
+                            $metode = 'DELETE';
+                            $badgeClass = 'danger';
+                        } else {
+                            $aktivitasText = $desc;
+                            if (str_contains(strtolower($desc), 'ubah') || str_contains(strtolower($desc), 'update')) {
+                                $metode = 'PUT';
+                                $badgeClass = 'warning';
+                            } elseif (str_contains(strtolower($desc), 'hapus') || str_contains(strtolower($desc), 'delete')) {
+                                $metode = 'DELETE';
+                                $badgeClass = 'danger';
+                            } elseif (str_contains(strtolower($desc), 'lihat') || str_contains(strtolower($desc), 'view')) {
+                                $metode = 'GET';
+                                $badgeClass = 'primary';
+                            } else {
+                                $metode = 'POST';
+                                $badgeClass = 'success';
+                            }
+                        }
+                        
+                        $waktuFormatted = $log->created_at ? $log->created_at->translatedFormat('d M Y, H:i') : '-';
+                    @endphp
+                    <tr class="row-clickable" 
+                        data-username="{{ $username }}" 
+                        data-nama="{{ $nama }}" 
+                        data-aktivitas="{{ $aktivitasText }}" 
+                        data-metode="{{ $metode }}" 
+                        data-waktu="{{ $waktuFormatted }}">
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $username }}</td>
+                        <td>{{ $nama }}</td>
+                        <td>{{ $aktivitasText }}</td>
+                        <td><span class="badge badge-light-{{ $badgeClass }} fw-bolder">{{ $metode }}</span></td>
+                        <td>{{ $waktuFormatted }}</td>
+                    </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">Belum ada data log aktivitas terrekam.</td>
+                    </tr>
+                @endif
             </tbody>
         </table>
     </div>

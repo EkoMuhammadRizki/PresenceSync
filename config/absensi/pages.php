@@ -114,7 +114,12 @@ return array(
 
         'siswa' => array(
             'dashboard' => array(
-                'title'  => 'Kehadiran',
+                'title'  => 'Dashboard Siswa',
+                'view'   => 'absensi/siswa-dashboard',
+                'assets' => $dtAssets,
+            ),
+            'kehadiran' => array(
+                'title'  => 'Tabel Kehadiran Siswa',
                 'view'   => 'absensi/siswa-dashboard',
                 'assets' => $dtAssets,
             ),
@@ -127,9 +132,18 @@ return array(
                 'title'  => 'Pengaduan',
                 'view'   => 'absensi/pengaduan',
             ),
+            'profil' => array(
+                'title'  => 'Edit Profil Orang Tua',
+                'view'   => 'absensi/siswa-profil',
+            ),
         ),
 
         'guru' => array(
+            'dashboard' => array(
+                'title'  => 'Dashboard Guru',
+                'view'   => 'absensi/guru-dashboard',
+                'assets' => $dtAssets,
+            ),
             'kelas-wali' => array(
                 'title'  => 'Data Kelas Wali',
                 'view'   => 'absensi/guru-kelas-wali',
@@ -143,8 +157,22 @@ return array(
         ),
 
         'laporan' => array(
-            'title' => 'Laporan',
-            'view'  => 'absensi/placeholder',
+            'siswa' => array(
+                'title' => 'Laporan Siswa',
+                'view'  => 'absensi/laporan-siswa',
+            ),
+            'guru' => array(
+                'title' => 'Laporan Guru',
+                'view'  => 'absensi/laporan-guru',
+            ),
+            'kehadiran' => array(
+                'title' => 'Laporan Kehadiran',
+                'view'  => 'absensi/laporan-kehadiran',
+            ),
+            'pengaduan' => array(
+                'title' => 'Laporan Pengaduan',
+                'view'  => 'absensi/laporan-pengaduan',
+            ),
         ),
 
         'pengaturan-restriksi' => array(

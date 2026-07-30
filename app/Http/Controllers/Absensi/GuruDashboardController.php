@@ -80,8 +80,15 @@ class GuruDashboardController extends Controller
             ];
         }
 
+        $recentActivities = Kehadiran::with('siswa')
+            ->whereIn('siswa_id', $siswaIds)
+            ->whereDate('tanggal', $today)
+            ->orderBy('updated_at', 'desc')
+            ->take(6)
+            ->get();
+
         return view('pages.absensi.guru-dashboard', compact(
-            'guru', 'totalSiswa', 'hadirHariIni', 'izinSakitHariIni', 'alphaHariIni', 'kelasDetail'
+            'guru', 'totalSiswa', 'hadirHariIni', 'izinSakitHariIni', 'alphaHariIni', 'kelasDetail', 'recentActivities'
         ));
     }
 

@@ -135,7 +135,7 @@
                     <th class="min-w-125px">Nama Siswa</th>
                     <th class="min-w-125px">Kelas</th>
                     <th class="min-w-125px">Tanggal</th>
-                    <th class="min-w-150px">Jam Masuk / Pulang</th>
+                    <th class="min-w-120px">Jam Masuk</th>
                     <th class="min-w-100px">Status</th>
                     <th class="text-end min-w-100px">Aksi</th>
                 </tr>
@@ -159,15 +159,19 @@
                         @endphp
                         <!--begin:: Avatar -->
                         <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                            <a href="{{ route('profil-siswa.show', ['id' => $kh->siswa->id, 'back' => 'kehadiran']) }}">
+                            <a href="{{ $kh->siswa ? route('profil-siswa.show', ['id' => $kh->siswa->id, 'back' => 'kehadiran']) : '#' }}">
                                 <div class="symbol-label fs-3 bg-light-{{ $bgColor }} text-{{ $bgColor }}">{{ $initial }}</div>
                             </a>
                         </div>
                         <!--end::Avatar-->
                         <!--begin::User details-->
                         <div class="d-flex flex-column">
-                            <a href="{{ route('profil-siswa.show', ['id' => $kh->siswa->id, 'back' => 'kehadiran']) }}" class="text-gray-800 text-hover-primary mb-1">{{ $kh->siswa->nama ?? '-' }}</a>
-                            <span>{{ $kh->siswa->user->email ?? ($kh->siswa->nisn ?? '-') }}</span>
+                            @if($kh->siswa)
+                                <a href="{{ route('profil-siswa.show', ['id' => $kh->siswa->id, 'back' => 'kehadiran']) }}" class="text-gray-800 text-hover-primary mb-1">{{ $kh->siswa->nama }}</a>
+                            @else
+                                <span class="text-gray-800 mb-1">-</span>
+                            @endif
+                            <span>NIS: {{ $kh->siswa->nis ?? '-' }}</span>
                         </div>
                         <!--end::User details-->
                     </td>
@@ -176,12 +180,6 @@
                     <td>
                         @if ($kh->jam_masuk)
                             <span class="badge badge-light-primary fw-bolder">{{ \Carbon\Carbon::parse($kh->jam_masuk)->format('H:i') }}</span>
-                        @else
-                            <span class="badge badge-light-secondary fw-bold">-</span>
-                        @endif
-                        /
-                        @if ($kh->jam_pulang)
-                            <span class="badge badge-light-success fw-bolder">{{ \Carbon\Carbon::parse($kh->jam_pulang)->format('H:i') }}</span>
                         @else
                             <span class="badge badge-light-secondary fw-bold">-</span>
                         @endif
@@ -288,15 +286,9 @@
                         </select>
                     </div>
 
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">Jam Masuk (Opsional)</label>
-                            <input type="time" name="jam_masuk" class="form-control form-control-solid" />
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">Jam Pulang (Opsional)</label>
-                            <input type="time" name="jam_pulang" class="form-control form-control-solid" />
-                        </div>
+                    <div class="fv-row mb-7">
+                        <label class="fw-bold fs-6 mb-2">Jam Masuk (Opsional)</label>
+                        <input type="time" name="jam_masuk" class="form-control form-control-solid" />
                     </div>
 
                     <div class="fv-row mb-7">
@@ -343,15 +335,9 @@
                         </select>
                     </div>
 
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">Jam Masuk (Opsional)</label>
-                            <input type="time" name="jam_masuk" class="form-control form-control-solid" />
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">Jam Pulang (Opsional)</label>
-                            <input type="time" name="jam_pulang" class="form-control form-control-solid" />
-                        </div>
+                    <div class="fv-row mb-7">
+                        <label class="fw-bold fs-6 mb-2">Jam Masuk (Opsional)</label>
+                        <input type="time" name="jam_masuk" class="form-control form-control-solid" />
                     </div>
 
                     <div class="fv-row mb-7">

@@ -1,57 +1,55 @@
-<x-auth-layout>
+@extends('auth.layout')
 
+@section('content')
     <!--begin::Signin Form-->
     <form method="POST" action="{{ theme()->getPageUrl('login') }}" class="form w-100" novalidate="novalidate" id="kt_sign_in_form">
     @csrf
 
-    @php
-        $emailVal = request()->cookie('logged_in_email', 'demo@demo.com');
-        $passwordVal = request()->cookie('logged_in_password', 'demo');
-    @endphp
-
-    <!--begin::Heading-->
-        <div class="text-center mb-10">
+        <!--begin::Heading-->
+        <div class="text-center mb-8">
             <!--begin::Title-->
-            <h1 class="text-dark mb-3">
-                {{ __('Sign In PressenceSync') }}
+            <h1 class="text-dark mb-3 fw-bolder fs-2">
+                {{ __('Masuk ke PresenceSync') }}
             </h1>
             <!--end::Title-->
         </div>
         <!--begin::Heading-->
 
-        <!--begin::Input group-->
+        <!--begin::Notice Box-->
+        <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-4 mb-8">
+            <div class="d-flex flex-stack flex-grow-1">
+                <div class="fw-bold text-gray-700 fs-7 text-center w-100">
+                    Gunakan <span class="fw-bolder text-primary">NIS</span> (Siswa) atau <span class="fw-bolder text-primary">NIP</span> (Guru) dan password <span class="fw-bolder text-primary">demo</span> untuk masuk.
+                </div>
+            </div>
+        </div>
+        <!--end::Notice Box-->
+
+        <!--begin::Input group - Identifier-->
         <div class="fv-row mb-10">
             <!--begin::Label-->
-            <label class="form-label fs-6 fw-bolder text-dark">{{ __('Email') }}</label>
+            <label class="form-label fs-6 fw-bolder text-dark">{{ __('NIS / NIP') }}</label>
             <!--end::Label-->
 
             <!--begin::Input-->
-            <input class="form-control form-control-lg form-control-solid" type="email" name="email" autocomplete="off" value="{{ old('email', $emailVal) }}" required autofocus/>
+            <input class="form-control form-control-lg form-control-solid" type="text" name="identifier" autocomplete="username" placeholder="Masukkan NIS atau NIP" value="{{ old('identifier', $lastIdentifier ?? request()->cookie('last_login_identifier', '')) }}" required autofocus/>
             <!--end::Input-->
         </div>
         <!--end::Input group-->
 
-        <!--begin::Input group-->
+        <!--begin::Input group - Password-->
         <div class="fv-row mb-10">
             <!--begin::Wrapper-->
             <div class="d-flex flex-stack mb-2">
                 <!--begin::Label-->
                 <label class="form-label fw-bolder text-dark fs-6 mb-0">{{ __('Password') }}</label>
                 <!--end::Label-->
-
-                <!--begin::Link-->
-                @if (Route::has('password.request'))
-                    <a href="{{ theme()->getPageUrl('password.request') }}" class="link-primary fs-6 fw-bolder">
-                        {{ __('Forgot Password ?') }}
-                    </a>
-            @endif
-            <!--end::Link-->
             </div>
             <!--end::Wrapper-->
 
             <!--begin::Input wrapper-->
             <div class="position-relative mb-3" data-kt-password-meter="true">
-                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="off" value="{{ $passwordVal }}" required/>
+                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="current-password" value="{{ old('password', $lastPassword ?? request()->cookie('last_login_password', 'demo')) }}" required/>
                 <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
                     <i class="bi bi-eye-slash fs-2"></i>
                     <i class="bi bi-eye fs-2 d-none"></i>
@@ -61,12 +59,11 @@
         </div>
         <!--end::Input group-->
 
-        <!--begin::Input group-->
+        <!--begin::Input group - Remember-->
         <div class="fv-row mb-10">
             <label class="form-check form-check-custom form-check-solid">
                 <input class="form-check-input" type="checkbox" name="remember"/>
-                <span class="form-check-label fw-bold text-gray-700 fs-6">{{ __('Remember me') }}
-            </span>
+                <span class="form-check-label fw-bold text-gray-700 fs-6">{{ __('Ingat saya') }}</span>
             </label>
         </div>
         <!--end::Input group-->
@@ -75,76 +72,67 @@
         <div class="text-center">
             <!--begin::Submit button-->
             <button type="submit" id="kt_sign_in_submit" class="btn btn-lg btn-primary w-100 mb-5">
-                @include('partials.general._button-indicator', ['label' => __('Continue')])
+                @include('partials.general._button-indicator', ['label' => __('Masuk')])
             </button>
             <!--end::Submit button-->
         </div>
         <!--end::Actions-->
     </form>
     <!--end::Signin Form-->
+@endsection
 
-    {{-- Named slot: scripts → diteruskan ke @section('scripts') di auth/layout.blade.php --}}
-    <x-slot:scripts>
+@section('scripts')
     <script>
     (function () {
-        // Tunggu sampai jQuery & Swal siap
         function initLoginHandler() {
             if (typeof $ === 'undefined' || typeof Swal === 'undefined') {
                 return setTimeout(initLoginHandler, 50);
             }
-
-            // Keenthemes CSS sudah otomatis menyembunyikan .indicator-progress
 
             $('#kt_sign_in_form').off('submit').on('submit', function (e) {
                 e.preventDefault();
 
                 var $form  = $(this);
                 var $btn   = $('#kt_sign_in_submit');
-                var $label = $btn.find('.indicator-label');
-                var $spin  = $btn.find('.indicator-progress');
 
                 // Tampilkan loading spinner
                 $btn.prop('disabled', true);
                 $btn.attr('data-kt-indicator', 'on');
 
-                // Kirim via AJAX dengan header JSON agar Laravel return 422 JSON saat error
+                // Kirim via AJAX
                 axios.post($form.attr('action'), {
-                    email    : $form.find('[name=email]').val(),
-                    password : $form.find('[name=password]').val(),
-                    remember : $form.find('[name=remember]').is(':checked') ? 'on' : '',
-                    _token   : $form.find('[name=_token]').val(),
+                    identifier : $form.find('[name=identifier]').val(),
+                    password   : $form.find('[name=password]').val(),
+                    remember   : $form.find('[name=remember]').is(':checked') ? 'on' : '',
+                    _token     : $form.find('[name=_token]').val(),
                 }, {
                     headers: {
-                        'Accept'           : 'application/json',
-                        'X-Requested-With' : 'XMLHttpRequest',
-                    },
-                    maxRedirects: 5,
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || $form.find('[name=_token]').val(),
+                        'Accept': 'application/json'
+                    }
                 })
                 .then(function (response) {
-                    var redirectUrl = '/absensi/dashboard';
-                    if (response && response.data && response.data.redirect) {
-                        redirectUrl = response.data.redirect;
+                    var data = response.data;
+
+                    if (data.redirectUrl) {
+                        Swal.fire({
+                            icon             : 'success',
+                            title            : 'Berhasil Masuk!',
+                            text             : data.message || 'Mengalihkan ke dashboard...',
+                            timer            : 1200,
+                            showConfirmButton: false
+                        }).then(function () {
+                            window.location.href = data.redirectUrl;
+                        });
+                    } else {
+                        window.location.reload();
                     }
-                    // Login berhasil → tampil SwalSuccess lalu redirect
-                    Swal.fire({
-                        icon             : 'success',
-                        title            : 'Login Berhasil!',
-                        text             : 'Selamat datang kembali di PresenceSync',
-                        timer            : 1800,
-                        timerProgressBar : true,
-                        showConfirmButton : false,
-                        allowOutsideClick : false,
-                    }).then(function () {
-                        window.location.href = redirectUrl;
-                    });
                 })
                 .catch(function (error) {
-                    // Reset tombol
                     $btn.prop('disabled', false);
                     $btn.removeAttr('data-kt-indicator');
 
-                    var errorMsg = 'Terjadi kesalahan. Silakan coba lagi.';
-
+                    var errorMsg = 'NIS / NIP atau password salah.';
                     if (error.response) {
                         if (error.response.status === 422) {
                             var data = error.response.data;
@@ -174,6 +162,4 @@
         initLoginHandler();
     })();
     </script>
-    </x-slot:scripts>
-
-</x-auth-layout>
+@endsection

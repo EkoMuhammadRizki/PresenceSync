@@ -45,11 +45,7 @@ License: {{ theme()->getOption('product', 'license') }}
     @if (theme()->hasOption('assets', 'css'))
         {{-- begin::Global Stylesheets Bundle(used by all pages) --}}
         @foreach (array_unique(theme()->getOption('assets', 'css')) as $file)
-            @if (strpos($file, 'plugins') !== false)
-                {!! preloadCss(assetCustom($file)) !!}
-            @else
-                <link href="{{ assetCustom($file) }}" rel="stylesheet" type="text/css"/>
-            @endif
+            <link href="{{ assetCustom($file) }}" rel="stylesheet" type="text/css"/>
         @endforeach
         {{-- end::Global Stylesheets Bundle --}}
     @endif
@@ -884,7 +880,7 @@ License: {{ theme()->getOption('product', 'license') }}
 
     function showFlashMessages() {
         @if(session('success'))
-        SwalSuccess.fire({ title: 'Berhasil!', text: '{{ addslashes(session('success')) }}' });
+        SwalSuccess.fire({ title: 'Berhasil!', html: '{!! addslashes(session('success')) !!}' });
         @endif
         @if(session('error'))
         SwalError.fire({ title: 'Gagal!', html: '{!! addslashes(session('error')) !!}' });

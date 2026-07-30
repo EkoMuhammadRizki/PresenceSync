@@ -87,30 +87,167 @@ class AdminDashboardController extends Controller
             ->sortByDesc('waktu') // Latest first
             ->values();
 
+        // 4. Data Row 3: Persentase Kehadiran per Kelas Hari Ini
+        $kehadiranPerKelas = Kelas::where('status', 'aktif')
+            ->withCount(['siswas as total_siswa' => function($q) {
+                $q->where('status', 'aktif');
+            }])
+            ->get()
+            ->map(function ($k) use ($today) {
+                $siswaIds = Siswa::where('kelas_id', $k->id)->where('status', 'aktif')->pluck('id');
+                $totalSiswaKelas = count($siswaIds);
+                
+                $kehadiranKelas = Kehadiran::whereIn('siswa_id', $siswaIds)
+                    ->whereDate('tanggal', $today)
+                    ->get();
+
+                $hadir = $kehadiranKelas->whereIn('status', ['hadir', 'terlambat'])->count();
+                $terlambat = $kehadiranKelas->where('status', 'terlambat')->count();
+                $sakitIzin = $kehadiranKelas->whereIn('status', ['sakit', 'izin'])->count();
+                $alpha = $kehadiranKelas->where('status', 'alpha')->count();
+
+                $persentase = $totalSiswaKelas > 0 ? round(($hadir / $totalSiswaKelas) * 100) : 0;
+
+                return [
+                    'id' => $k->id,
+                    'nama' => $k->nama,
+                    'tingkat' => $k->tingkat,
+                    'total_siswa' => $totalSiswaKelas,
+                    'hadir' => $hadir,
+                    'terlambat' => $terlambat,
+                    'sakit_izin' => $sakitIzin,
+                    'alpha' => $alpha,
+                    'persentase' => $persentase,
+                ];
+            })
+            ->sortByDesc('persentase')
+            ->values();
+
+        // 5. Data Row 3: Aktivitas Absensi & Log Terbaru (Terakhir 6 Record Check-in)
+        $aktivitasTerbaru = Kehadiran::with(['siswa.user', 'siswa.kelas', 'guru.user'])
+            ->orderBy('created_at', 'desc')
+            ->take(6)
+            ->get()
+            ->map(function ($act) {
+                $isGuru = !empty($act->guru_id);
+                $nama = $isGuru ? ($act->guru->nama ?? 'Guru') : ($act->siswa->nama ?? 'Siswa');
+                $role = $isGuru ? 'Guru' : ($act->siswa->kelas->nama ?? 'Siswa');
+                $foto = $isGuru 
+                    ? ($act->guru->user->avatar_url ?? null)
+                    : ($act->siswa->user->avatar_url ?? null);
+
+                return [
+                    'nama' => $nama,
+                    'role' => $role,
+                    'foto' => $foto,
+                    'status' => $act->status,
+                    'waktu' => $act->jam_masuk ? \Illuminate\Support\Carbon::parse($act->jam_masuk)->format('H:i') : '-',
+                    'tanggal' => $act->tanggal,
+                    'created_at_human' => \Illuminate\Support\Carbon::parse($act->created_at)->diffForHumans(),
+                ];
+            });
+
         $showPanduan = !session()->get('panduan_singkat_shown', false) && !request()->is('absensi/kesiswaan/dashboard');
 
         return view('pages.absensi.dashboard', compact(
-            'totalSiswa', 'totalGuru', 'totalKelas', 'totalHadir', 'totalTerlambat', 'kelas', 'terlambats', 'showPanduan'
+            'totalSiswa', 'totalGuru', 'totalKelas', 'totalHadir', 'totalTerlambat', 'kelas', 'terlambats', 'showPanduan',
+            'kehadiranPerKelas', 'aktivitasTerbaru'
         ));
     }
 
     /**
      * Get Trend Kehadiran Data for ApexCharts and summary cards.
+     * Supports two modes:
+     * - 'hourly': when start_date === end_date (today). Returns per-slot data (06:00-07:30).
+     * - 'daily': when a date range is selected. Returns per-date data.
      */
     public function getTrendData(Request $request)
     {
-        // Default range: last 7 days
-        $startDate = Carbon::now()->subDays(6)->toDateString();
-        $endDate = Carbon::now()->toDateString();
+        // Default: today only
+        $today = Carbon::now()->toDateString();
+        $startDate = $today;
+        $endDate = $today;
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
+        if ($request->filled('start_date')) {
             $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
+            $endDate = $request->filled('end_date') ? $request->input('end_date') : $startDate;
         }
 
         $classId = $request->input('kelas_id');
+        $isToday = ($startDate === $endDate);
 
-        // Query status counts grouped by date
+        $totals = ['kehadiran' => 0, 'ketidakhadiran' => 0, 'izin' => 0, 'sakit' => 0, 'alpa' => 0];
+
+        if ($isToday) {
+            // --- HOURLY MODE ---
+            // Slot check-in windows: 06:00-07:30 in 15-minute intervals
+            $slots = [
+                '06:00', '06:15', '06:30', '06:45',
+                '07:00', '07:15', '07:30',
+            ];
+
+            $query = Kehadiran::whereDate('kehadirans.tanggal', $startDate)
+                ->join('siswas', 'kehadirans.siswa_id', '=', 'siswas.id')
+                ->select('kehadirans.jam_masuk', 'kehadirans.status');
+
+            if ($classId) {
+                $query->where('siswas.kelas_id', $classId);
+            }
+
+            $rows = $query->get();
+
+            // Count totals for summary cards
+            foreach ($rows as $row) {
+                $status = $row->status;
+                if (in_array($status, ['hadir', 'terlambat'])) $totals['kehadiran']++;
+                if (in_array($status, ['sakit', 'izin', 'alpha'])) $totals['ketidakhadiran']++;
+                if ($status === 'izin') $totals['izin']++;
+                if ($status === 'sakit') $totals['sakit']++;
+                if ($status === 'alpha') $totals['alpa']++;
+            }
+
+            // Build per-slot buckets
+            $slotData = [];
+            foreach ($slots as $slot) {
+                $slotData[$slot] = ['kehadiran' => 0, 'ketidakhadiran' => 0, 'izin' => 0, 'sakit' => 0, 'alpa' => 0];
+            }
+
+            foreach ($rows as $row) {
+                if (!$row->jam_masuk) continue;
+                $jamMasuk = Carbon::parse($row->jam_masuk);
+                // Find which 15-min bucket this falls into
+                $slotMinutes = $jamMasuk->hour * 60 + (int)floor($jamMasuk->minute / 15) * 15;
+                $slotTime = sprintf('%02d:%02d', intdiv($slotMinutes, 60), $slotMinutes % 60);
+                if (!isset($slotData[$slotTime])) {
+                    // Clamp to nearest existing slot
+                    $slotTime = $slots[0];
+                    foreach ($slots as $s) {
+                        [$sh, $sm] = explode(':', $s);
+                        if ($slotMinutes >= (int)$sh * 60 + (int)$sm) $slotTime = $s;
+                    }
+                }
+                $status = $row->status;
+                if (in_array($status, ['hadir', 'terlambat'])) $slotData[$slotTime]['kehadiran']++;
+                if (in_array($status, ['sakit', 'izin', 'alpha'])) $slotData[$slotTime]['ketidakhadiran']++;
+                if ($status === 'izin') $slotData[$slotTime]['izin']++;
+                if ($status === 'sakit') $slotData[$slotTime]['sakit']++;
+                if ($status === 'alpha') $slotData[$slotTime]['alpa']++;
+            }
+
+            $results = [];
+            foreach ($slots as $slot) {
+                $results[] = array_merge(['tanggal' => $slot], $slotData[$slot]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'mode' => 'hourly',
+                'totals' => $totals,
+                'chart' => $results,
+            ]);
+        }
+
+        // --- DAILY MODE ---
         $query = Kehadiran::whereBetween('kehadirans.tanggal', [$startDate, $endDate])
             ->join('siswas', 'kehadirans.siswa_id', '=', 'siswas.id')
             ->selectRaw("kehadirans.tanggal,
@@ -124,35 +261,20 @@ class AdminDashboardController extends Controller
             $query->where('siswas.kelas_id', $classId);
         }
 
-        $data = $query->groupBy('kehadirans.tanggal')
-            ->orderBy('kehadirans.tanggal')
-            ->get();
+        $data = $query->groupBy('kehadirans.tanggal')->orderBy('kehadirans.tanggal')->get();
 
-        // Fill missing dates
         $period = CarbonPeriod::create($startDate, $endDate);
         $results = [];
-        $totals = [
-            'kehadiran' => 0,
-            'ketidakhadiran' => 0,
-            'izin' => 0,
-            'sakit' => 0,
-            'alpa' => 0,
-        ];
 
         foreach ($period as $date) {
             $dateStr = $date->toDateString();
             $results[$dateStr] = [
                 'tanggal' => $date->translatedFormat('d M'),
-                'kehadiran' => 0,
-                'ketidakhadiran' => 0,
-                'izin' => 0,
-                'sakit' => 0,
-                'alpa' => 0,
+                'kehadiran' => 0, 'ketidakhadiran' => 0, 'izin' => 0, 'sakit' => 0, 'alpa' => 0,
             ];
         }
 
         foreach ($data as $row) {
-            // Group raw date string
             $dateStr = Carbon::parse($row->tanggal)->toDateString();
             if (isset($results[$dateStr])) {
                 $results[$dateStr]['kehadiran'] = (int) $row->kehadiran;
@@ -160,8 +282,6 @@ class AdminDashboardController extends Controller
                 $results[$dateStr]['izin'] = (int) $row->izin;
                 $results[$dateStr]['sakit'] = (int) $row->sakit;
                 $results[$dateStr]['alpa'] = (int) $row->alpa;
-
-                // Accumulate totals
                 $totals['kehadiran'] += (int) $row->kehadiran;
                 $totals['ketidakhadiran'] += (int) $row->ketidakhadiran;
                 $totals['izin'] += (int) $row->izin;
@@ -172,6 +292,7 @@ class AdminDashboardController extends Controller
 
         return response()->json([
             'success' => true,
+            'mode' => 'daily',
             'totals' => $totals,
             'chart' => array_values($results),
         ]);
@@ -179,30 +300,89 @@ class AdminDashboardController extends Controller
 
     /**
      * Get Trend Kehadiran Guru Data for ApexCharts and summary cards.
+     * Supports two modes:
+     * - 'hourly': when start_date === end_date (today). Returns per-slot data (06:00-07:30).
+     * - 'daily': when a date range is selected. Returns per-date data.
      */
     public function getGuruTrendData(Request $request)
     {
-        $startDate = Carbon::now()->startOfMonth()->toDateString();
-        $endDate = Carbon::now()->endOfMonth()->toDateString();
+        // Default: today only
+        $today = Carbon::now()->toDateString();
+        $startDate = $today;
+        $endDate = $today;
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
+        if ($request->filled('start_date')) {
             $startDate = $request->input('start_date');
-            $endDate = $request->input('end_date');
+            $endDate = $request->filled('end_date') ? $request->input('end_date') : $startDate;
         }
 
         $totalGuruCount = Guru::count();
+        $isToday = ($startDate === $endDate);
+        $totals = ['kehadiran' => 0, 'ketidakhadiran' => 0, 'izin' => 0, 'sakit' => 0, 'alpa' => 0];
 
+        if ($isToday) {
+            // --- HOURLY MODE ---
+            $slots = [
+                '06:00', '06:15', '06:30', '06:45',
+                '07:00', '07:15', '07:30',
+            ];
+
+            $rows = Kehadiran::whereDate('tanggal', $startDate)
+                ->whereNotNull('guru_id')
+                ->select('jam_masuk', 'status')
+                ->get();
+
+            foreach ($rows as $row) {
+                $status = $row->status;
+                if (in_array($status, ['hadir', 'terlambat'])) $totals['kehadiran']++;
+                if (in_array($status, ['sakit', 'izin', 'alpha'])) $totals['ketidakhadiran']++;
+                if ($status === 'izin') $totals['izin']++;
+                if ($status === 'sakit') $totals['sakit']++;
+                if ($status === 'alpha') $totals['alpa']++;
+            }
+
+            $slotData = [];
+            foreach ($slots as $slot) {
+                $slotData[$slot] = ['kehadiran' => 0, 'ketidakhadiran' => 0, 'izin' => 0, 'sakit' => 0, 'alpa' => 0];
+            }
+
+            foreach ($rows as $row) {
+                if (!$row->jam_masuk) continue;
+                $jamMasuk = Carbon::parse($row->jam_masuk);
+                $slotMinutes = $jamMasuk->hour * 60 + (int)floor($jamMasuk->minute / 15) * 15;
+                $slotTime = sprintf('%02d:%02d', intdiv($slotMinutes, 60), $slotMinutes % 60);
+                if (!isset($slotData[$slotTime])) {
+                    $slotTime = $slots[0];
+                    foreach ($slots as $s) {
+                        [$sh, $sm] = explode(':', $s);
+                        if ($slotMinutes >= (int)$sh * 60 + (int)$sm) $slotTime = $s;
+                    }
+                }
+                $status = $row->status;
+                if (in_array($status, ['hadir', 'terlambat'])) $slotData[$slotTime]['kehadiran']++;
+                if (in_array($status, ['sakit', 'izin', 'alpha'])) $slotData[$slotTime]['ketidakhadiran']++;
+                if ($status === 'izin') $slotData[$slotTime]['izin']++;
+                if ($status === 'sakit') $slotData[$slotTime]['sakit']++;
+                if ($status === 'alpha') $slotData[$slotTime]['alpa']++;
+            }
+
+            $results = [];
+            foreach ($slots as $slot) {
+                $results[] = array_merge(['tanggal' => $slot], $slotData[$slot]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'mode' => 'hourly',
+                'totals' => $totals,
+                'chart' => $results,
+            ]);
+        }
+
+        // --- DAILY MODE ---
         $period = CarbonPeriod::create($startDate, $endDate);
         $results = [];
-        $totals = [
-            'kehadiran' => 0,
-            'ketidakhadiran' => 0,
-            'izin' => 0,
-            'sakit' => 0,
-            'alpa' => 0,
-        ];
 
-        // Fetch teacher attendances
         $teacherAttendances = Kehadiran::whereBetween('tanggal', [$startDate, $endDate])
             ->whereNotNull('guru_id')
             ->selectRaw("tanggal,
@@ -249,6 +429,7 @@ class AdminDashboardController extends Controller
 
         return response()->json([
             'success' => true,
+            'mode' => 'daily',
             'totals' => $totals,
             'chart' => array_values($results),
         ]);

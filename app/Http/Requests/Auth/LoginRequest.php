@@ -13,60 +13,70 @@ class LoginRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'email' => 'required|string',
-            'password' => 'required|string',
+            'identifier' => 'required|string',
+            'password'   => 'required|string',
         ];
     }
 
     /**
      * Attempt to authenticate the request's credentials.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * Priority: NIS (Siswa) → NIP (Guru) → Email (Admin/Kesiswaan fallback)
      */
-    public function authenticate()
+    public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
+        $identifier = trim($this->input('identifier'));
         $user = null;
 
-        // Try lookup by child's NIS (for parent login)
-        $siswa = \App\Models\Siswa::where('nis', $this->email)->first();
-        if ($siswa && $siswa->orang_tua_user_id) {
-            $user = \App\Models\User::find($siswa->orang_tua_user_id);
+        // 1. Cari berdasarkan NIS siswa
+        $siswa = \App\Models\Siswa::where('nis', $identifier)->first();
+        if ($siswa && $siswa->user_id) {
+            $user = \App\Models\User::find($siswa->user_id);
         }
 
-        // If not found, try lookup by email (normal login)
+        // 2. Cari berdasarkan NIP guru
         if (!$user) {
-            $user = \App\Models\User::where('email', $this->email)->first();
+            $guru = \App\Models\Guru::where('nip', $identifier)->first();
+            if ($guru && $guru->user_id) {
+                $user = \App\Models\User::find($guru->user_id);
+            }
+        }
+
+        // 3. Fallback: cari berdasarkan email (untuk Admin, Kesiswaan, dll.)
+        if (!$user) {
+            $user = \App\Models\User::where('email', $identifier)->first();
         }
 
         if (!$user) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => ['Kredensial tidak terdaftar.'],
+                'identifier' => ['NIS, NIP, atau Email yang Anda masukkan tidak terdaftar.'],
             ]);
         }
 
-        if (! \Illuminate\Support\Facades\Hash::check($this->password, $user->password)) {
+        if ($user->hasRole('orang_tua')) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'identifier' => ['Akun tidak terdaftar atau tidak memiliki akses ke sistem.'],
+            ]);
+        }
+
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -81,14 +91,10 @@ class LoginRequest extends FormRequest
 
     /**
      * Ensure the login request is not rate limited.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
      */
-    public function ensureIsNotRateLimited()
+    public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -97,7 +103,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'identifier' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -106,11 +112,10 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the rate limiting throttle key for the request.
-     *
-     * @return string
      */
-    public function throttleKey()
+    public function throttleKey(): string
     {
-        return Str::lower($this->input('email')).'|'.$this->ip();
+        return Str::lower($this->input('identifier')) . '|' . $this->ip();
     }
 }
+

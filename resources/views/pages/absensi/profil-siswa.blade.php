@@ -33,7 +33,7 @@
                     <span class="fs-3 text-gray-800 text-hover-primary fw-bolder mb-1">{{ $siswa ? $siswa->nama : 'Belum Ada Data' }}</span>
                     <div class="fs-5 fw-bold text-muted mb-6">
                         @if($siswa)
-                            {{ $siswa->nisn ? 'NISN: '.$siswa->nisn : ($siswa->nis ? 'NIS: '.$siswa->nis : '-') }}
+                            {{ $siswa->nis ? 'NIS: '.$siswa->nis : '-' }}
                         @else
                             -
                         @endif
@@ -187,14 +187,8 @@
                                     <input type="text" name="nama" class="form-control form-control-solid" value="{{ old('nama', $siswa->nama) }}" 
                                         {{ $userRole === 'siswa' ? 'readonly' : '' }} required />
                                 </div>
-                                <!-- NISN -->
-                                <div class="col-md-3 fv-row">
-                                    <label class="fs-6 fw-bold mb-2">NISN</label>
-                                    <input type="text" name="nisn" class="form-control form-control-solid" value="{{ old('nisn', $siswa->nisn) }}" 
-                                        {{ $userRole === 'siswa' ? 'readonly' : '' }} />
-                                </div>
                                 <!-- NIS -->
-                                <div class="col-md-3 fv-row">
+                                <div class="col-md-6 fv-row">
                                     <label class="fs-6 fw-bold mb-2">NIS</label>
                                     <input type="text" name="nis" class="form-control form-control-solid" value="{{ old('nis', $siswa->nis) }}" 
                                         {{ $userRole === 'siswa' ? 'readonly' : '' }} />
@@ -229,16 +223,10 @@
                             </div>
 
                             <div class="row g-9 mb-8">
-                                <!-- Tempat Lahir -->
-                                <div class="col-md-6 fv-row">
-                                    <label class="fs-6 fw-bold mb-2">Tempat Lahir</label>
-                                    <input type="text" name="tempat_lahir" class="form-control form-control-solid" value="{{ old('tempat_lahir', $siswa->tempat_lahir) }}" 
-                                        {{ $userRole === 'siswa' ? 'readonly' : '' }} />
-                                </div>
                                 <!-- Tanggal Lahir -->
-                                <div class="col-md-6 fv-row">
+                                <div class="col-md-12 fv-row">
                                     <label class="fs-6 fw-bold mb-2">Tanggal Lahir</label>
-                                    <input type="date" name="tanggal_lahir" class="form-control form-control-solid" value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '') }}" 
+                                    <input type="date" name="tanggal_lahir" class="form-control form-control-solid" value="{{ old('tanggal_lahir', $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->format('Y-m-d') : '') }}" max="{{ date('Y-m-d') }}" 
                                         {{ $userRole === 'siswa' ? 'readonly' : '' }} />
                                 </div>
                             </div>

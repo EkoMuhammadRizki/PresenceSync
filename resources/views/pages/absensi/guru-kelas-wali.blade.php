@@ -168,7 +168,7 @@
                     <thead>
                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                             <th class="w-30px">No</th>
-                            <th class="min-w-100px">NISN</th>
+                            <th class="min-w-100px">NIS</th>
                             <th class="min-w-150px">Nama</th>
                             <th class="min-w-90px">Jenis Kelamin</th>
                             <th class="min-w-100px">Kehadiran</th>
@@ -185,7 +185,7 @@
                         @endphp
                         <tr>
                             <td>{{ $i + 1 }}</td>
-                            <td>{{ $siswa->nisn ?? '-' }}</td>
+                            <td>{{ $siswa->nis ?? '-' }}</td>
                             <td class="d-flex align-items-center">
                                 <div class="symbol symbol-circle symbol-35px overflow-hidden me-3">
                                     <div class="symbol-label fs-6 bg-light-{{ $bgColor }} text-{{ $bgColor }} fw-bolder">{{ $initial }}</div>
@@ -282,7 +282,7 @@
                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                             <th class="w-30px">No</th>
                             <th class="min-w-150px">Nama Siswa</th>
-                            <th class="min-w-100px">NISN</th>
+                            <th class="min-w-100px">NIS</th>
                             <th class="min-w-80px">Total Hadir</th>
                             <th class="min-w-80px">Total Data</th>
                             <th class="min-w-100px">Persentase</th>
@@ -297,7 +297,7 @@
                         <tr>
                             <td>{{ $i + 1 }}</td>
                             <td>{{ $siswa->nama }}</td>
-                            <td>{{ $siswa->nisn ?? '-' }}</td>
+                            <td>{{ $siswa->nis ?? '-' }}</td>
                             <td><span class="badge badge-light-primary fw-bolder">{{ $r['hadir'] }}</span></td>
                             <td><span class="badge badge-light-secondary fw-bolder">{{ $r['total'] }}</span></td>
                             <td><span class="badge {{ $badgeClass }} fw-bolder">{{ $r['persentase'] }}%</span></td>

@@ -45,8 +45,6 @@
                         <div class="text-gray-600"><span class="badge badge-light-success fw-bolder">{{ $guru && $guru->nip ? 'PNS' : 'Honorer' }}</span></div>
                         <div class="fw-bolder mt-5">No HP</div>
                         <div class="text-gray-600">{{ $guru && $guru->no_hp ? $guru->no_hp : '-' }}</div>
-                        <div class="fw-bolder mt-5">Email</div>
-                        <div class="text-gray-600">{{ $guru && $guru->email ? $guru->email : '-' }}</div>
                         <div class="fw-bolder mt-5">Alamat</div>
                         <div class="text-gray-600">{{ $guru && $guru->alamat ? $guru->alamat : '-' }}</div>
                         <div class="fw-bolder mt-5">Status Akun</div>
@@ -191,13 +189,8 @@
                             </div>
 
                             <div class="row g-9 mb-8">
-                                <!-- Email -->
-                                <div class="col-md-6 fv-row">
-                                    <label class="fs-6 fw-bold mb-2">Email</label>
-                                    <input type="email" name="email" class="form-control form-control-solid" value="{{ old('email', $guru->email) }}" />
-                                </div>
                                 <!-- No HP -->
-                                <div class="col-md-6 fv-row">
+                                <div class="col-md-12 fv-row">
                                     <label class="fs-6 fw-bold mb-2">No. HP / Telepon</label>
                                     <input type="text" name="no_hp" class="form-control form-control-solid" value="{{ old('no_hp', $guru->no_hp) }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
                                 </div>

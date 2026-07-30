@@ -19,9 +19,16 @@ class AuthenticatedSessionController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function create()
+    /**
+     * Display the login view.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function create(Request $request)
     {
-        return view('auth.login');
+        $lastIdentifier = $request->cookie('last_login_identifier', session('last_login_identifier', ''));
+        $lastPassword   = $request->cookie('last_login_password', session('last_login_password', 'demo'));
+        return view('auth.login', compact('lastIdentifier', 'lastPassword'));
     }
 
     /**
@@ -41,30 +48,34 @@ class AuthenticatedSessionController extends Controller
         $request->session()->forget('panduan_singkat_shown');
 
         $user = auth()->user();
+        $identifier = $request->input('identifier');
+        $password   = $request->input('password', 'demo');
 
-        // Save email and password in cookies for login form population on logout
-        cookie()->queue('logged_in_email', $request->email, 60 * 24 * 30);
-        cookie()->queue('logged_in_password', $request->password, 60 * 24 * 30);
+        // Clear any previous intended URL to prevent wrong dashboard redirects
+        $request->session()->forget('url.intended');
 
         // Tentukan target redirect berdasarkan role
         $redirectUrl = RouteServiceProvider::HOME;
         if (\App\Models\Siswa::where('user_id', $user->id)->exists()) {
             $redirectUrl = '/absensi/siswa/dashboard';
-        } elseif ($user->hasRole('orang_tua')) {
-            $redirectUrl = '/absensi/orangtua/dashboard';
         } elseif ($user->hasRole('kesiswaan')) {
             $redirectUrl = '/absensi/kesiswaan/dashboard';
         } elseif (\App\Models\Guru::where('user_id', $user->id)->exists()) {
             $redirectUrl = '/absensi/guru/dashboard';
         }
 
+        $cookieId   = cookie('last_login_identifier', $identifier, 60 * 24 * 30);
+        $cookiePass = cookie('last_login_password', $password, 60 * 24 * 30);
+
         if ($request->wantsJson()) {
             return response()->json([
-                'redirect' => redirect()->intended($redirectUrl)->getTargetUrl()
-            ]);
+                'redirectUrl' => $redirectUrl,
+                'redirect'    => $redirectUrl,
+                'message'     => 'Berhasil Masuk!'
+            ])->withCookie($cookieId)->withCookie($cookiePass);
         }
 
-        return redirect()->intended($redirectUrl);
+        return redirect($redirectUrl)->withCookie($cookieId)->withCookie($cookiePass);
     }
 
     /**
@@ -76,13 +87,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function apiStore(LoginRequest $request)
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect']
-            ]);
-        }
-
-        $user = User::where('email', $request->email)->first();
+        $request->authenticate();
+        $user = auth()->user();
         return response($user);
     }
 
@@ -118,12 +124,35 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
+        $user = auth()->user();
+        $lastIdentifier = '';
+
+        if ($user) {
+            $siswa = \App\Models\Siswa::where('user_id', $user->id)->first();
+            $guru  = \App\Models\Guru::where('user_id', $user->id)->first();
+
+            if ($siswa) {
+                $lastIdentifier = $siswa->nis;
+            } elseif ($guru) {
+                $lastIdentifier = $guru->nip;
+            } else {
+                $lastIdentifier = $user->email;
+            }
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        $cookieId   = cookie('last_login_identifier', $lastIdentifier, 60 * 24 * 30);
+        $cookiePass = cookie('last_login_password', 'demo', 60 * 24 * 30);
+
+        return redirect('/login')
+            ->withCookie($cookieId)
+            ->withCookie($cookiePass)
+            ->with('last_login_identifier', $lastIdentifier)
+            ->with('last_login_password', 'demo');
     }
 }

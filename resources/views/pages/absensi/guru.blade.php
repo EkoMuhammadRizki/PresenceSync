@@ -97,7 +97,6 @@
                         </th>
                         <th class="min-w-150px">NIP</th>
                         <th class="min-w-200px">Nama</th>
-                        <th class="min-w-150px">Email</th>
                         <th class="min-w-120px">No HP</th>
                         <th class="min-w-150px">Wali Kelas</th>
                         <th class="min-w-120px">Mata Pelajaran</th>
@@ -121,7 +120,6 @@
                             </div>
                             <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="text-gray-800 text-hover-primary">{{ $item->nama }}</a>
                         </td>
-                        <td>{{ $item->email ?? '-' }}</td>
                         <td>{{ $item->no_hp ?? '-' }}</td>
                         <td>
                             @if($item->kelas_count > 0)
@@ -198,8 +196,9 @@
                     <!-- Step 1: User Account -->
                     <div id="tambah_guru_step_1">
                         <div class="fv-row mb-7">
-                            <label class="required fw-bold fs-6 mb-2">Email (Gmail / Email Resmi)</label>
-                            <input type="email" name="email" class="form-control form-control-solid" placeholder="Contoh: budi.santoso@sekolah.sch.id" required />
+                            <label class="required fw-bold fs-6 mb-2">NIP (Nomor Induk Pegawai)</label>
+                            <input type="text" name="nip" class="form-control form-control-solid" placeholder="NIP Resmi Guru (digunakan untuk login)" required />
+                            <div class="form-text text-muted">NIP digunakan sebagai identitas login guru. Wajib diisi.</div>
                         </div>
                         <div class="fv-row mb-7">
                             <label class="required fw-bold fs-6 mb-2">Password</label>
@@ -218,10 +217,7 @@
                             <label class="required fw-bold fs-6 mb-2">Nama Lengkap</label>
                             <input type="text" name="nama" class="form-control form-control-solid" placeholder="Nama Lengkap Beserta Gelar" required />
                         </div>
-                        <div class="fv-row mb-7">
-                            <label class="fw-bold fs-6 mb-2">NIP</label>
-                            <input type="text" name="nip" class="form-control form-control-solid" placeholder="NIP Resmi Guru" />
-                        </div>
+
                         <div class="fv-row mb-7">
                             <label class="fw-bold fs-6 mb-2">No. HP (WhatsApp)</label>
                             <input type="text" name="no_hp" class="form-control form-control-solid" placeholder="Contoh: 081234567890" />
@@ -264,8 +260,9 @@
                             <div class="fs-6 text-gray-700">
                                 <ul class="ps-4 mb-0">
                                     <li>Gunakan template Excel Kosong yang telah disediakan. <a href="{{ route('guru.download-template', ['empty' => 1]) }}" class="fw-bolder text-primary text-decoration-underline">Download Template Excel</a></li>
-                                    <li>Kolom utama: <strong>Nama, NIP, Email, No HP, Alamat</strong>.</li>
-                                    <li>Guru dengan NIP atau Email yang sudah ada akan dilewati (tidak digandakan).</li>
+                                    <li>Kolom utama: <strong>NIP (wajib), Nama, No HP, Alamat</strong>.</li>
+                                    <li>NIP digunakan sebagai identitas & password login default. Guru tanpa NIP tidak akan diimport.</li>
+                                    <li>Guru dengan NIP yang sudah ada akan dilewati (tidak digandakan).</li>
                                     <li>Format file: <strong>.xlsx</strong> atau <strong>.xls</strong>.</li>
                                 </ul>
                             </div>
@@ -311,13 +308,9 @@
                         <input type="text" name="nama" class="form-control form-control-solid" required />
                     </div>
                     <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
+                        <div class="col-md-12 fv-row">
                             <label class="fw-bold fs-6 mb-2">NIP</label>
                             <input type="text" name="nip" class="form-control form-control-solid" />
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="fw-bold fs-6 mb-2">Email</label>
-                            <input type="email" name="email" class="form-control form-control-solid" />
                         </div>
                     </div>
                     <div class="fv-row mb-7">
@@ -357,7 +350,7 @@ $(document).ready(function() {
         order:[], 
         pageLength:5, 
         lengthChange:true, 
-        columnDefs:[{orderable:false,targets:[0,7]}] 
+        columnDefs:[{orderable:false,targets:[0,6]}] 
     });
 
     // Make entire table row clickable (excluding checkbox and actions)
@@ -366,7 +359,7 @@ $(document).ready(function() {
         if (targetTd.length === 0) return;
         var idx = targetTd.index();
         // Skip first column (checkbox) and last column (actions dropdown)
-        if (idx === 0 || idx === 7 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+        if (idx === 0 || idx === 6 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
             return;
         }
         var link = $(this).find('td:nth-child(3) a');
@@ -420,26 +413,12 @@ $(document).ready(function() {
 
     $('#tambah_guru_btn_next').on('click', function() {
         // Validate step 1 fields
-        var email = $('#modal_tambah_guru input[name="email"]').val();
+        var nip = $('#modal_tambah_guru input[name="nip"]').val();
         var password = $('#modal_tambah_guru input[name="password"]').val();
 
-        if (!email || !password) {
+        if (!nip || !password) {
             Swal.fire({
-                text: 'Silakan isi email dan password terlebih dahulu.',
-                icon: 'error',
-                buttonsStyling: false,
-                confirmButtonText: 'Oke, mengerti!',
-                customClass: {
-                    confirmButton: 'btn btn-primary'
-                }
-            });
-            return;
-        }
-
-        // Basic email format validation
-        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            Swal.fire({
-                text: 'Format email tidak valid.',
+                text: 'Silakan isi NIP dan password terlebih dahulu.',
                 icon: 'error',
                 buttonsStyling: false,
                 confirmButtonText: 'Oke, mengerti!',

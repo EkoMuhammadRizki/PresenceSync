@@ -110,6 +110,7 @@
                     </div>
                     <!--end::Wrapper-->
 
+                    @if($profileRole !== 'siswa')
                     <!--begin::Progress-->
                     <div class="d-flex align-items-center w-200px w-sm-300px flex-column mt-3">
                         <div class="d-flex justify-content-between w-100 mt-auto mb-2">
@@ -122,6 +123,7 @@
                         </div>
                     </div>
                     <!--end::Progress-->
+                    @endif
                 </div>
                 <!--end::Stats-->
             </div>

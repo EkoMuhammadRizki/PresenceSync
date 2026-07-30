@@ -23,30 +23,41 @@ class GuruController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email|max:150|unique:users,email|unique:gurus,email',
+            'nip'      => 'required|string|max:30|unique:gurus,nip',
             'password' => 'required|string|min:6',
             'nama'     => 'required|string|max:150',
-            'nip'      => 'nullable|string|max:30|unique:gurus,nip',
+            'email'    => 'nullable|email|max:150|unique:users,email|unique:gurus,email',
             'no_hp'    => 'nullable|string|max:20',
             'alamat'   => 'nullable|string',
         ], [
-            'email.required' => 'Email wajib diisi.',
-            'email.email'    => 'Format email tidak valid.',
-            'email.unique'   => 'Email sudah terdaftar.',
+            'nip.required'      => 'NIP wajib diisi karena digunakan untuk login.',
+            'nip.unique'        => 'NIP sudah terdaftar.',
             'password.required' => 'Password wajib diisi.',
-            'password.min'   => 'Password minimal harus 6 karakter.',
-            'nama.required'  => 'Nama guru wajib diisi.',
-            'nip.unique'     => 'NIP sudah terdaftar.',
+            'password.min'      => 'Password minimal harus 6 karakter.',
+            'nama.required'     => 'Nama guru wajib diisi.',
+            'email.unique'      => 'Email sudah terdaftar.',
+            'email.email'       => 'Format email tidak valid.',
         ]);
 
         $nameParts = explode(' ', trim($request->nama), 2);
         $firstName = $nameParts[0];
         $lastName  = $nameParts[1] ?? $nameParts[0];
 
+        // Generate email internal dari NIP jika tidak diinput
+        $email = $request->email;
+        if (empty($email)) {
+            $email = $request->nip . '@guru.internal';
+            $counter = 1;
+            while (User::where('email', $email)->exists()) {
+                $email = $request->nip . $counter . '@guru.internal';
+                $counter++;
+            }
+        }
+
         $user = User::create([
             'first_name' => $firstName,
             'last_name'  => $lastName,
-            'email'      => $request->email,
+            'email'      => $email,
             'password'   => Hash::make($request->password),
         ]);
 
@@ -58,6 +69,10 @@ class GuruController extends Controller
             'no_hp'   => $request->no_hp,
             'alamat'  => $request->alamat,
         ]);
+
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->log("Menambah data guru baru: {$request->nama}");
+        }
 
         return redirect()->route('guru.index')
             ->with('success', 'Data guru berhasil ditambahkan.');
@@ -97,6 +112,10 @@ class GuruController extends Controller
             $guru->user->update($userData);
         }
 
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->log("Mengubah data guru: {$guru->nama}");
+        }
+
         return redirect()->route('guru.index')
             ->with('success', 'Data guru berhasil diperbarui.');
     }
@@ -110,6 +129,10 @@ class GuruController extends Controller
             $user->delete();
         }
 
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->log("Menghapus data guru: {$guru->nama}");
+        }
+
         return redirect()->route('guru.index')
             ->with('success', 'Data guru berhasil dihapus.');
     }
@@ -121,22 +144,13 @@ class GuruController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Guru');
 
+        // Headers (NIP sebagai kolom pertama, tanpa kolom email & password)
         $headers = [
-            'email',
-            'password',
-            'kata_sandi',
-            'jenis_pengguna',
             'nip',
             'nama',
-            'id_fingerprint',
-            'jenis_kelamin',
-            'tempat_lahir',
-            'tanggal_lahir',
-            'alamat',
             'no_hp',
-            'no_hp_orang_tua',
+            'alamat',
             'status',
-            'kelas'
         ];
 
         foreach ($headers as $colIndex => $header) {
@@ -146,29 +160,22 @@ class GuruController extends Controller
 
         // Populate existing teachers if requested (default / when not 'empty')
         if (!$request->has('empty')) {
-            $gurus = Guru::with('user')->orderBy('nama')->get();
+            $gurus = Guru::orderBy('nama')->get();
             $rowNum = 2;
             foreach ($gurus as $guru) {
-                $sheet->setCellValue('A' . $rowNum, $guru->user->email ?? $guru->email ?? '');
-                $sheet->setCellValue('B' . $rowNum, 'password123');
-                $sheet->setCellValue('C' . $rowNum, 'password123');
-                $sheet->setCellValue('D' . $rowNum, 'guru');
-                $sheet->setCellValue('E' . $rowNum, $guru->nip ?? '');
-                $sheet->setCellValue('F' . $rowNum, $guru->nama);
-                $sheet->setCellValue('G' . $rowNum, '');
-                $sheet->setCellValue('H' . $rowNum, 'L');
-                $sheet->setCellValue('I' . $rowNum, '');
-                $sheet->setCellValue('J' . $rowNum, '');
-                $sheet->setCellValue('K' . $rowNum, $guru->alamat ?? '');
-                $sheet->setCellValue('L' . $rowNum, $guru->no_hp ?? '');
-                $sheet->setCellValue('M' . $rowNum, '');
-                $sheet->setCellValue('N' . $rowNum, 'aktif');
-                $sheet->setCellValue('O' . $rowNum, '');
+                $sheet->setCellValue('A' . $rowNum, $guru->nip ?? '');
+                $sheet->setCellValue('B' . $rowNum, $guru->nama);
+                $sheet->setCellValue('C' . $rowNum, $guru->no_hp ?? '');
+                $sheet->setCellValue('D' . $rowNum, $guru->alamat ?? '');
+                $sheet->setCellValue('E' . $rowNum, 'aktif');
                 $rowNum++;
             }
         }
 
-        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+
+        // Note: NIP adalah kolom wajib
+        $sheet->getComment('A1')->getText()->createTextRun('Wajib diisi. Digunakan untuk login guru.');
 
         // Autofit columns
         foreach ($sheet->getColumnIterator() as $column) {
@@ -213,11 +220,11 @@ class GuruController extends Controller
         $header = array_shift($rows); // Buang header
 
         // Validasi format template agar siswa tidak diimport ke guru
-        $column5 = isset($header[4]) ? strtolower(trim($header[4])) : '';
-        if ($column5 === 'nis' || $worksheet->getTitle() === 'Template Siswa') {
+        $column1 = isset($header[0]) ? strtolower(trim($header[0])) : '';
+        if ($column1 === 'nis' || $worksheet->getTitle() === 'Template Siswa') {
             return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Siswa. Silakan unggah file template Guru yang benar.']);
         }
-        if ($column5 !== 'nip') {
+        if ($column1 !== 'nip') {
             return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Pastikan Anda menggunakan file template Guru yang diunduh dari sistem.']);
         }
 
@@ -225,46 +232,38 @@ class GuruController extends Controller
         $skipCount    = 0;
 
         foreach ($rows as $row) {
-            // Skip baris jika nama (kolom F / index 5) kosong
-            if (empty($row[5])) {
+            // Struktur kolom baru: nip(0) | nama(1) | no_hp(2) | alamat(3) | status(4)
+            // Skip baris jika nama (kolom B / index 1) kosong
+            if (empty($row[1])) {
                 continue;
             }
 
-            $inputEmail = !empty($row[0]) ? trim($row[0]) : null;
-            $inputPassword = !empty($row[1]) ? trim($row[1]) : (!empty($row[2]) ? trim($row[2]) : null);
-            $jenisPengguna = !empty($row[3]) ? trim($row[3]) : 'guru';
-            $nip   = !empty($row[4]) ? trim($row[4]) : null;
-            $nama  = trim($row[5]);
-            $alamat = !empty($row[10]) ? trim($row[10]) : null;
-            $noHp  = !empty($row[11]) ? trim($row[11]) : null;
+            $nip    = !empty($row[0]) ? trim($row[0]) : null;
+            $nama   = trim($row[1]);
+            $noHp   = !empty($row[2]) ? trim($row[2]) : null;
+            $alamat = !empty($row[3]) ? trim($row[3]) : null;
 
-            // Parse email
-            $email = $inputEmail;
-            if (empty($email)) {
-                $baseEmail = Str::slug($nama, '.') . '@sekolah.sch.id';
-                $email = $baseEmail;
-                $counter = 1;
-                while (User::where('email', $email)->exists()) {
-                    $email = Str::slug($nama, '.') . $counter . '@sekolah.sch.id';
-                    $counter++;
-                }
-            }
-
-            // Pengecekan duplikat berdasarkan NIP atau email
-            $exists = false;
-            if ($nip) {
-                $exists = Guru::where('nip', $nip)->exists();
-            }
-            if (!$exists && $email) {
-                $exists = User::where('email', $email)->exists();
-            }
-
-            if ($exists) {
+            // NIP wajib ada
+            if (empty($nip)) {
                 $skipCount++;
                 continue;
             }
 
-            $password = $inputPassword ?? $nip ?? 'password123';
+            // Pengecekan duplikat berdasarkan NIP saja
+            if (Guru::where('nip', $nip)->exists()) {
+                $skipCount++;
+                continue;
+            }
+
+            // Generate email internal dari NIP
+            $email = $nip . '@guru.internal';
+            $counter = 1;
+            while (User::where('email', $email)->exists()) {
+                $email = $nip . $counter . '@guru.internal';
+                $counter++;
+            }
+
+            $password = $nip; // Default password disamakan dengan NIP
 
             $nameParts = explode(' ', trim($nama), 2);
             $firstName = $nameParts[0];
@@ -287,6 +286,10 @@ class GuruController extends Controller
             ]);
 
             $successCount++;
+        }
+
+        if (auth()->check() && $successCount > 0) {
+            activity()->causedBy(auth()->user())->log("Import data guru dari Excel ({$successCount} disimpen)");
         }
 
         return redirect()->route('guru.index')

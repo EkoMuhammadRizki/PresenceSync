@@ -35,30 +35,25 @@ class SiswaProfileController extends Controller
         $user = $siswa->user;
         $info = $user ? $user->info : null;
 
-        // Statistics
-        $totalMapel = JadwalPelajaran::where('kelas_id', $siswa->kelas_id)
-            ->distinct('mata_pelajaran_id')
-            ->count('mata_pelajaran_id');
-
+        // Statistics (Real data from Kehadiran & Pengaduan)
         $totalEntries = $siswa->kehadirans()->count();
-        $totalPresent = $siswa->kehadirans()->whereIn('status', ['hadir', 'terlambat'])->count();
+        $totalHadir = $siswa->kehadirans()->whereIn('status', ['hadir', 'terlambat'])->count();
         
         $attendanceRate = $totalEntries > 0 
-            ? round(($totalPresent / $totalEntries) * 100) 
-            : 100;
+            ? round(($totalHadir / $totalEntries) * 100) 
+            : 0;
 
-        $tidakHadir = $siswa->kehadirans()->whereIn('status', ['sakit', 'izin', 'alpha'])->count();
-        $terlambat = $siswa->kehadirans()->where('status', 'terlambat')->count();
-
-        // Calculate a consistent mock average grade based on student name to look realistic
-        $nilaiRataRata = 80 + (crc32($siswa->nama) % 15) + (crc32($siswa->nama) % 10) / 10;
+        $totalIzin = $siswa->kehadirans()->where('status', 'izin')->count();
+        $totalSakit = $siswa->kehadirans()->where('status', 'sakit')->count();
+        $totalAlpa = $siswa->kehadirans()->where('status', 'alpha')->count();
+        $totalPengaduan = \App\Models\Pengaduan::where('siswa_id', $siswa->id)->count();
 
         $stats = [
-            'total_mapel'     => $totalMapel,
             'attendance_rate' => $attendanceRate . '%',
-            'tidak_hadir'     => $tidakHadir,
-            'terlambat'       => $terlambat,
-            'nilai_rata'      => $nilaiRataRata,
+            'izin'            => $totalIzin,
+            'sakit'           => $totalSakit,
+            'alpa'            => $totalAlpa,
+            'total_pengaduan' => $totalPengaduan,
         ];
 
         // Active Classes list
@@ -156,15 +151,16 @@ class SiswaProfileController extends Controller
                 'nis'            => 'nullable|string|max:20|unique:siswas,nis,' . $siswa->id,
                 'jenis_kelamin'  => 'required|in:L,P',
                 'tempat_lahir'   => 'nullable|string|max:100',
-                'tanggal_lahir'  => 'nullable|date',
+                'tanggal_lahir'  => 'nullable|date|before_or_equal:today',
                 'status'         => 'nullable|string|max:20',
             ]);
 
             $messages = array_merge($messages, [
-                'nama.required'          => 'Nama siswa wajib diisi.',
-                'nisn.unique'            => 'NISN sudah terdaftar.',
-                'nis.unique'             => 'NIS sudah terdaftar.',
-                'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+                'nama.required'                 => 'Nama siswa wajib diisi.',
+                'nisn.unique'                   => 'NISN sudah terdaftar.',
+                'nis.unique'                    => 'NIS sudah terdaftar.',
+                'jenis_kelamin.required'        => 'Jenis kelamin wajib dipilih.',
+                'tanggal_lahir.before_or_equal' => 'Tanggal lahir tidak boleh melebihi hari ini.',
             ]);
         }
 

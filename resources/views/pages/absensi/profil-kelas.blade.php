@@ -63,7 +63,7 @@
                     <thead>
                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                             <th class="w-30px">No</th>
-                            <th class="min-w-100px">NISN</th>
+                            <th class="min-w-100px">NIS</th>
                             <th class="min-w-150px">Nama</th>
                             <th class="min-w-90px">Jenis Kelamin</th>
                             <th class="min-w-100px">Kehadiran</th>

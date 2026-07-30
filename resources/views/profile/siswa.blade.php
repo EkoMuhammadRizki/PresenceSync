@@ -55,12 +55,12 @@
                                 </div>
                             </div>
 
-                            <!-- NIS / NISN -->
+                            <!-- NIS -->
                             <div class="d-flex align-items-center mb-7">
                                 <div class="flex-grow-1">
-                                    <span class="text-muted fw-bold d-block fs-7">NIS / NISN</span>
+                                    <span class="text-muted fw-bold d-block fs-7">NIS</span>
                                     <span class="text-gray-800 fw-bolder fs-6">
-                                        {{ $siswa->nis ?? '-' }} {{ $siswa->nisn ? '/ ' . $siswa->nisn : '' }}
+                                        {{ $siswa->nis ?? '-' }}
                                     </span>
                                 </div>
                             </div>
@@ -75,12 +75,12 @@
                                 </div>
                             </div>
 
-                            <!-- Tempat / Tanggal Lahir -->
+                            <!-- Tanggal Lahir -->
                             <div class="d-flex align-items-center mb-7">
                                 <div class="flex-grow-1">
-                                    <span class="text-muted fw-bold d-block fs-7">Tempat / Tanggal Lahir</span>
+                                    <span class="text-muted fw-bold d-block fs-7">Tanggal Lahir</span>
                                     <span class="text-gray-800 fw-bolder fs-6">
-                                        {{ $siswa->tempat_lahir ?? '-' }}, {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('d F Y') : '-' }}
+                                        {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('d F Y') : '-' }}
                                     </span>
                                 </div>
                             </div>
@@ -148,13 +148,7 @@
                             </h3>
                         </div>
                         <div class="card-body pt-3">
-                            <!-- Email -->
-                            <div class="d-flex align-items-center mb-7">
-                                <div class="flex-grow-1">
-                                    <span class="text-muted fw-bold d-block fs-7">Alamat Email</span>
-                                    <span class="text-gray-800 fw-bolder fs-6">{{ $siswa->user->email ?? $user->email }}</span>
-                                </div>
-                            </div>
+
 
                             <!-- Nomor HP -->
                             <div class="d-flex align-items-center">

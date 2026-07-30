@@ -61,6 +61,25 @@ class SiswaDashboardController extends Controller
         $semesters = Semester::with('tahunAjaran')->latest()->get();
         $aturanJams = AturanJam::aktif()->get();
 
+        if ($request->is('absensi/siswa/kehadiran')) {
+            return view('pages.absensi.siswa-kehadiran', compact(
+                'siswa',
+                'kehadirans',
+                'hasCheckedInToday',
+                'kehadiranHariIni',
+                'periode',
+                'attendanceRows',
+                'daysInMonth',
+                'activeSemester',
+                'semesters',
+                'aturanJams'
+            ));
+        }
+
+        if ($request->is('absensi/siswa/profil')) {
+            return $this->profil();
+        }
+
         return view('pages.absensi.siswa-dashboard', compact(
             'siswa',
             'kehadirans',
@@ -73,6 +92,63 @@ class SiswaDashboardController extends Controller
             'semesters',
             'aturanJams'
         ));
+    }
+
+    /**
+     * Tampilkan Form Edit Profil Orang Tua (untuk Siswa).
+     */
+    public function profil()
+    {
+        $user = auth()->user();
+        $siswa = Siswa::where('user_id', $user->id)->first();
+
+        if (!$siswa) {
+            abort(403, 'Anda tidak terdaftar sebagai siswa.');
+        }
+
+        $parentId = $siswa->orang_tua_user_id ?? $user->id;
+        $profile = \App\Models\ParentProfile::firstOrNew(['parent_user_id' => $parentId]);
+
+        return view('pages.absensi.siswa-profil', compact('user', 'siswa', 'profile'));
+    }
+
+    /**
+     * Update Profil Orang Tua (dari Siswa).
+     */
+    public function updateProfil(Request $request)
+    {
+        $user = auth()->user();
+        $siswa = Siswa::where('user_id', $user->id)->first();
+
+        if (!$siswa) {
+            abort(403, 'Anda tidak terdaftar sebagai siswa.');
+        }
+
+        $request->validate([
+            'nik_ayah'       => 'nullable|string|max:20',
+            'nama_ayah'      => 'nullable|string|max:255',
+            'pekerjaan_ayah' => 'nullable|string|max:100',
+            'pendidikan_ayah'=> 'nullable|string|max:50',
+            'no_hp_ayah'     => 'nullable|string|max:20',
+
+            'nik_ibu'        => 'nullable|string|max:20',
+            'nama_ibu'       => 'nullable|string|max:255',
+            'pekerjaan_ibu'  => 'nullable|string|max:100',
+            'pendidikan_ibu' => 'nullable|string|max:50',
+            'no_hp_ibu'      => 'nullable|string|max:20',
+        ]);
+
+        $parentId = $siswa->orang_tua_user_id ?? $user->id;
+        $profile = \App\Models\ParentProfile::firstOrNew(['parent_user_id' => $parentId]);
+        $profile->fill($request->only([
+            'nik_ayah', 'nama_ayah', 'pekerjaan_ayah', 'ket_pekerjaan_ayah',
+            'pendidikan_ayah', 'alamat_ayah', 'no_hp_ayah', 'penghasilan_ayah',
+            'nik_ibu', 'nama_ibu', 'pekerjaan_ibu', 'ket_pekerjaan_ibu',
+            'pendidikan_ibu', 'alamat_ibu', 'no_hp_ibu', 'penghasilan_ibu',
+        ]));
+        $profile->save();
+
+        return redirect()->back()->with('success', 'Profil Orang Tua berhasil diperbarui.');
     }
 
     /**

@@ -3,13 +3,30 @@
 return array(
     // Main menu
     'main' => array(
-        // Dashboard
+        // Dashboard Admin & Kesiswaan
         array(
             'title' => 'Dashboard',
             'path'  => 'absensi/dashboard',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
+            'role'  => ['admin', 'kesiswaan'],
         ),
- 
+
+        // Dashboard Guru
+        array(
+            'title' => 'Dashboard',
+            'path'  => 'absensi/guru/dashboard',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
+            'role'  => ['guru'],
+        ),
+
+        // Dashboard Siswa
+        array(
+            'title' => 'Dashboard',
+            'path'  => 'absensi/siswa/dashboard',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
+            'role'  => ['siswa'],
+        ),
+
         // Data Siswa (Single Level, Kesiswaan Only)
         array(
             'title' => 'Data Siswa',
@@ -17,7 +34,7 @@ return array(
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com006.svg", "svg-icon-2"),
             'role'  => ['kesiswaan'],
         ),
- 
+
         // Kelas (Multi Level, Kesiswaan Only)
         array(
             'title'      => 'Kelas',
@@ -58,35 +75,19 @@ return array(
             'role'  => ['guru'],
         ),
 
-        // Rekapitulasi Kehadiran Anak (Only visible for Orang Tua)
-        array(
-            'title' => 'Kehadiran Anak',
-            'path'  => 'absensi/orangtua/dashboard',
-            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
-            'role'  => ['orang_tua'],
-        ),
-
-        // Pengaduan Orang Tua (Only visible for Orang Tua)
-        array(
-            'title' => 'Pengaduan',
-            'path'  => 'absensi/orangtua/pengaduan',
-            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen044.svg", "svg-icon-2"),
-            'role'  => ['orang_tua'],
-        ),
-
-        // Edit Profil Orang Tua (Only visible for Orang Tua)
-        array(
-            'title' => 'Edit Profil',
-            'path'  => 'absensi/orangtua/profil',
-            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com006.svg", "svg-icon-2"),
-            'role'  => ['orang_tua'],
-        ),
-
         // Kehadiran Siswa (Only visible for Siswa)
         array(
+            'title' => 'Edit Profil',
+            'path'  => 'absensi/siswa/profil',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com006.svg", "svg-icon-2"),
+            'role'  => ['siswa'],
+        ),
+
+        array(
             'title' => 'Kehadiran',
-            'path'  => 'absensi/siswa/dashboard',
+            'path'  => 'absensi/siswa/kehadiran',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
+            'role'  => ['siswa'],
         ),
 
         // Kehadiran Mata Pelajaran (Only visible for Siswa Sekretaris)
@@ -94,13 +95,15 @@ return array(
             'title' => 'Kehadiran Mata Pelajaran',
             'path'  => 'absensi/siswa/kehadiran-mp',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
+            'role'  => ['siswa'],
         ),
 
-        // Pengaduan (Only visible for Siswa Sekretaris)
+        // Pengaduan (Only visible for Siswa)
         array(
             'title' => 'Pengaduan',
             'path'  => 'absensi/siswa/pengaduan',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen044.svg", "svg-icon-2"),
+            'role'  => ['siswa'],
         ),
 
         // Manajemen Pengguna & Peran
@@ -201,12 +204,12 @@ return array(
                             'items' => array(
                                 array(
                                     'title'  => 'Data Perangkat',
-                                    'path'   => 'absensi/master/fingerprint/data',
+                                    'path'   => 'absensi/fingerprint',
                                     'bullet' => '<span class="bullet bullet-dot"></span>',
                                 ),
                                 array(
                                     'title'  => 'Log Scan Fingerprint',
-                                    'path'   => 'absensi/master/fingerprint/log',
+                                    'path'   => 'absensi/fingerprint/logs-view',
                                     'bullet' => '<span class="bullet bullet-dot"></span>',
                                 ),
                             ),
@@ -223,11 +226,37 @@ return array(
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),
         ),
 
-        // Laporan
+        // Laporan (Multi Level)
         array(
-            'title' => 'Laporan',
-            'path'  => 'absensi/laporan',
-            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen005.svg", "svg-icon-2"),
+            'title'      => 'Laporan',
+            'icon'       => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen005.svg", "svg-icon-2"),
+            'classes'    => array('item' => 'menu-accordion'),
+            'attributes' => array('data-kt-menu-trigger' => 'click'),
+            'sub'        => array(
+                'class' => 'menu-sub-accordion menu-active-bg',
+                'items' => array(
+                    array(
+                        'title'  => 'Siswa',
+                        'path'   => 'absensi/laporan/siswa',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                    array(
+                        'title'  => 'Guru',
+                        'path'   => 'absensi/laporan/guru',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                    array(
+                        'title'  => 'Kehadiran',
+                        'path'   => 'absensi/laporan/kehadiran',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                    array(
+                        'title'  => 'Pengaduan',
+                        'path'   => 'absensi/laporan/pengaduan',
+                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                    ),
+                ),
+            ),
         ),
 
         // Pengaturan Restriksi

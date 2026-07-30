@@ -14,7 +14,7 @@ class KehadiranController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kehadiran::with(['siswa.user', 'siswa.kelas', 'semester']);
+        $query = Kehadiran::has('siswa')->with(['siswa.user', 'siswa.kelas', 'semester']);
 
         if ($request->filled('kelas_id')) {
             $query->whereHas('siswa', function ($q) use ($request) {

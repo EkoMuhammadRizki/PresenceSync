@@ -68,7 +68,7 @@
                         </div>
                     </td>
                     <th class="min-w-100px">Username</th>
-                    <th class="min-w-150px">Email</th>
+                    <th class="min-w-150px">NIS / NIP / Email</th>
                     <th class="min-w-100px">Peran</th>
                     <th class="min-w-120px">Terakhir Login</th>
                     <th class="min-w-100px">Status Akun</th>
@@ -114,7 +114,17 @@
                             {{ $user->username }}
                         @endif
                     </td>
-                    <td>{{ $user->email }}</td>
+                    <td>
+                        @if ($user->siswa && $user->siswa->nis)
+                            {{ $user->siswa->nis }}
+                        @elseif ($user->guru && $user->guru->nip)
+                            {{ $user->guru->nip }}
+                        @elseif (str_contains($user->email, '@siswa.internal') || str_contains($user->email, '@guru.internal'))
+                            {{ explode('@', $user->email)[0] }}
+                        @else
+                            {{ $user->email }}
+                        @endif
+                    </td>
                     <td><span class="badge {{ $roleClass }} fw-bolder">{{ $user->role }}</span></td>
                     <td>{{ $user->created_at ? $user->created_at->format('d M Y, H:i') : '-' }}</td>
                     <td><span class="badge {{ $statusClass }} fw-bolder">{{ ucfirst($status) }}</span></td>

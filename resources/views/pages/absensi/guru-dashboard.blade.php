@@ -3,159 +3,198 @@
     'toolbarActions' => ''
 ])
 
-<!--begin::Welcome Card-->
-<div class="card mb-8">
-    <div class="card-body p-9">
-        <div class="d-flex align-items-center">
-            <div class="symbol symbol-60px symbol-circle me-5">
-                <div class="symbol-label fs-1 bg-light-info text-info fw-bolder">
-                    {{ substr($guru->nama, 0, 1) }}
+<!--begin::Row 1: 5 Metric Cards Guru (SAMA PERSIS GAYA UI DASHBOARD ADMIN)-->
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-5 mb-8">
+    <!-- Card 1: Profil Guru -->
+    <div class="col">
+        <div class="card flex-center h-100 min-w-100px p-6 bg-light-primary border border-primary text-center">
+            <span class="svg-icon svg-icon-3x svg-icon-primary mb-2">
+                {!! theme()->getSvgIcon("icons/duotune/communication/com006.svg", "svg-icon-3x svg-icon-primary") !!}
+            </span>
+            <span class="fs-6 fw-bold text-gray-700 pb-1">Profil Guru</span>
+            <span class="fs-3 fw-bolder text-primary text-truncate w-100" title="{{ $guru->nama }}">{{ $guru->nama }}</span>
+            <span class="fs-8 fw-bold text-gray-500">NIP: {{ $guru->nip }}</span>
+            <span class="fs-8 fw-bold text-gray-500">Wali Kelas {{ count($kelasDetail) > 0 ? $kelasDetail[0]['kelas']->tingkat . ' ' . $kelasDetail[0]['kelas']->nama : '-' }}</span>
+        </div>
+    </div>
+
+    <!-- Card 2: Total Siswa Wali -->
+    <div class="col">
+        <div class="card flex-center h-100 min-w-100px p-6 bg-light-info border border-info text-center">
+            <span class="svg-icon svg-icon-3x svg-icon-info mb-2">
+                {!! theme()->getSvgIcon("icons/duotune/communication/com013.svg", "svg-icon-3x svg-icon-info") !!}
+            </span>
+            <span class="fs-6 fw-bold text-gray-700 pb-1">Total Siswa Wali</span>
+            <span class="fs-2hx fw-bolder text-info">{{ $totalSiswa }}</span>
+            <span class="fs-8 fw-bold text-gray-500">Siswa di Kelas Binaan</span>
+        </div>
+    </div>
+
+    <!-- Card 3: Hadir Hari Ini -->
+    <div class="col">
+        <div class="card flex-center h-100 min-w-100px p-6 bg-light-success border border-success text-center">
+            <span class="svg-icon svg-icon-3x svg-icon-success mb-2">
+                {!! theme()->getSvgIcon("icons/duotune/general/gen014.svg", "svg-icon-3x svg-icon-success") !!}
+            </span>
+            <span class="fs-6 fw-bold text-gray-700 pb-1">Hadir Hari Ini</span>
+            <span class="fs-2hx fw-bolder text-success">{{ $hadirHariIni }}</span>
+            <span class="fs-8 fw-bold text-gray-500">Termasuk Terlambat</span>
+        </div>
+    </div>
+
+    <!-- Card 4: Izin / Sakit -->
+    <div class="col">
+        <div class="card flex-center h-100 min-w-100px p-6 bg-light-warning border border-warning text-center">
+            <span class="svg-icon svg-icon-3x svg-icon-warning mb-2">
+                {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg", "svg-icon-3x svg-icon-warning") !!}
+            </span>
+            <span class="fs-6 fw-bold text-gray-700 pb-1">Izin / Sakit</span>
+            <span class="fs-2hx fw-bolder text-warning">{{ $izinSakitHariIni }}</span>
+            <span class="fs-8 fw-bold text-gray-500">Permohonan Izin</span>
+        </div>
+    </div>
+
+    <!-- Card 5: Belum Absen -->
+    <div class="col">
+        <div class="card flex-center h-100 min-w-100px p-6 bg-light-danger border border-danger text-center">
+            <span class="svg-icon svg-icon-3x svg-icon-danger mb-2">
+                {!! theme()->getSvgIcon("icons/duotune/general/gen050.svg", "svg-icon-3x svg-icon-danger") !!}
+            </span>
+            <span class="fs-6 fw-bold text-gray-700 pb-1">Belum Absen</span>
+            <span class="fs-2hx fw-bolder text-danger">{{ $alphaHariIni }}</span>
+            <span class="fs-8 fw-bold text-gray-500">Hari Ini</span>
+        </div>
+    </div>
+</div>
+<!--end::Row 1-->
+
+<!--begin::Row 2: Detail Kehadiran Kelas Wali & Feed Aktivitas-->
+<div class="row g-5 g-xl-8 mb-8">
+    <!-- Kolom Kiri: Detail Kelas Binaan -->
+    <div class="col-xl-7">
+        @forelse ($kelasDetail as $kd)
+            <div class="card card-flush shadow-sm mb-6">
+                <div class="card-header pt-6">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-boldest text-gray-800 fs-4">Kelas {{ $kd['kelas']->tingkat }} {{ $kd['kelas']->nama }}</span>
+                        <span class="text-gray-400 mt-1 fw-bold fs-7">{{ \Carbon\Carbon::now()->translatedFormat('l, d M Y') }}</span>
+                    </h3>
+                    <div class="card-toolbar">
+                        <span class="badge badge-light-success p-3 fw-bold fs-7">
+                            {{ $kd['hadir'] }} / {{ $kd['total'] }} Siswa Hadir
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="table-responsive">
+                        <table class="table table-row-bordered table-row-gray-300 align-middle gs-0 gy-3">
+                            <thead>
+                                <tr class="fw-bolder text-muted bg-light">
+                                    <th class="ps-4 min-w-40px">NO</th>
+                                    <th class="min-w-150px">NAMA SISWA</th>
+                                    <th class="min-w-100px">NIS</th>
+                                    <th class="min-w-100px text-center">JAM MASUK</th>
+                                    <th class="min-w-120px text-center">STATUS</th>
+                                    <th class="pe-4 min-w-120px">KETERANGAN</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($kd['siswa'] as $idx => $item)
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-gray-600">{{ $idx + 1 }}</td>
+                                        <td class="fw-boldest text-gray-800">{{ $item['siswa']->nama }}</td>
+                                        <td class="fw-bold text-gray-600">{{ $item['siswa']->nis }}</td>
+                                        <td class="text-center">
+                                            @if($item['jam_masuk'])
+                                                <span class="badge badge-light-success fs-7 fw-bold">{{ $item['jam_masuk'] }}</span>
+                                            @else
+                                                <span class="text-muted fs-7">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            @if ($item['status'] === 'hadir')
+                                                <span class="badge badge-light-success fw-bold">Hadir</span>
+                                            @elseif ($item['status'] === 'terlambat')
+                                                <span class="badge badge-light-warning fw-bold">Terlambat</span>
+                                            @elseif ($item['status'] === 'sakit')
+                                                <span class="badge badge-light-primary fw-bold">Sakit</span>
+                                            @elseif ($item['status'] === 'izin')
+                                                <span class="badge badge-light-info fw-bold">Izin</span>
+                                            @elseif ($item['status'] === 'alpha')
+                                                <span class="badge badge-light-danger fw-bold">Alpha</span>
+                                            @else
+                                                <span class="badge badge-light shadow-xs text-gray-600 fw-bold">Belum Absen</span>
+                                            @endif
+                                        </td>
+                                        <td class="pe-4 fs-7 text-gray-600">
+                                            {{ $item['keterangan'] ?? '-' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div class="flex-grow-1">
-                <h1 class="text-gray-800 fw-boldest mb-1">{{ $guru->nama }}</h1>
-                <div class="text-muted fw-bold fs-6">NIP: {{ $guru->nip }} &bull; Wali Kelas</div>
+        @empty
+            <div class="card card-flush shadow-sm p-8 text-center text-muted">
+                <i class="bi bi-info-circle fs-2x mb-3 text-gray-400"></i>
+                <div>Anda belum ditugaskan sebagai Wali Kelas pada kelas aktif manapun.</div>
             </div>
-            <div class="d-flex align-items-center">
-                <span class="badge badge-light-info fs-7 fw-bold px-4 py-3">
-                    {!! theme()->getSvgIcon("icons/duotune/general/gen049.svg", "svg-icon-4 me-1") !!}
-                    Guru
-                </span>
+        @endforelse
+    </div>
+
+    <!-- Kolom Kanan: Feed Aktivitas Presensi Siswa Realtime -->
+    <div class="col-xl-5">
+        <div class="card card-flush h-xl-100 shadow-sm">
+            <div class="card-header pt-7 mb-3">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-boldest text-gray-800 fs-4">Aktivitas Presensi Terkini</span>
+                    <span class="text-gray-400 mt-1 fw-bold fs-7">Presensi siswa kelas wali hari ini</span>
+                </h3>
+            </div>
+            <div class="card-body pt-0">
+                <div class="timeline-label">
+                    @forelse($recentActivities as $act)
+                        <div class="timeline-item">
+                            <div class="timeline-label fw-boldest text-gray-800 fs-7" style="width: 70px;">
+                                {{ $act->jam_masuk ?? \Carbon\Carbon::parse($act->updated_at)->format('H:i') }}
+                            </div>
+                            <div class="timeline-badge">
+                                @if($act->status === 'hadir')
+                                    <i class="fa fa-genderless text-success fs-1"></i>
+                                @elseif($act->status === 'terlambat')
+                                    <i class="fa fa-genderless text-warning fs-1"></i>
+                                @elseif($act->status === 'sakit')
+                                    <i class="fa fa-genderless text-primary fs-1"></i>
+                                @elseif($act->status === 'izin')
+                                    <i class="fa fa-genderless text-info fs-1"></i>
+                                @else
+                                    <i class="fa fa-genderless text-danger fs-1"></i>
+                                @endif
+                            </div>
+                            <div class="timeline-content fw-bold text-gray-800 ps-3">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="fs-7 fw-boldest">{{ $act->siswa ? $act->siswa->nama : 'Siswa' }}</span>
+                                    <span class="badge badge-light-{{ $act->status === 'hadir' ? 'success' : ($act->status === 'terlambat' ? 'warning' : ($act->status === 'sakit' ? 'primary' : 'info')) }} fs-8">
+                                        {{ ucfirst($act->status) }}
+                                    </span>
+                                </div>
+                                <div class="text-gray-500 fs-8 fw-normal mt-1">
+                                    {{ $act->keterangan ?? 'Melakukan presensi masuk' }}
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-8 fs-7">
+                            Belum ada aktivitas presensi siswa tercatat hari ini.
+                        </div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>
 </div>
-<!--end::Welcome Card-->
+<!--end::Row 2-->
 
-<!--begin::Info Cards-->
-<div class="row g-6 g-xl-9 mb-8">
-    <div class="col-md-3">
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-            <span class="fs-4 fw-bold text-info pb-1px">Total Siswa</span>
-            <span class="fs-2hx fw-bolder text-dark">{{ $totalSiswa }}</span>
-            <span class="fs-7 fw-bold text-gray-400">Di Kelas Anda</span>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-            <span class="fs-4 fw-bold text-success pb-1px">Hadir Hari Ini</span>
-            <span class="fs-2hx fw-bolder text-success">{{ $hadirHariIni }}</span>
-            <span class="fs-7 fw-bold text-gray-400">Termasuk Terlambat</span>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-            <span class="fs-4 fw-bold text-warning pb-1px">Izin / Sakit</span>
-            <span class="fs-2hx fw-bolder text-warning">{{ $izinSakitHariIni }}</span>
-            <span class="fs-7 fw-bold text-gray-400">Hari Ini</span>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card card-dashed flex-center min-w-175px my-3 p-6">
-            <span class="fs-4 fw-bold text-danger pb-1px">Belum Absen</span>
-            <span class="fs-2hx fw-bolder text-danger">{{ $alphaHariIni }}</span>
-            <span class="fs-7 fw-bold text-gray-400">Hari Ini</span>
-        </div>
-    </div>
-</div>
-<!--end::Info Cards-->
-
-<!--begin::Kelas Detail-->
-@foreach ($kelasDetail as $detail)
-<div class="card mb-8">
-    <div class="card-header border-0 pt-6">
-        <div class="card-title">
-            <h3 class="fw-bolder">Kelas {{ $detail['kelas']->tingkat }} {{ $detail['kelas']->nama }}</h3>
-        </div>
-        <div class="card-toolbar">
-            <span class="badge badge-light-success fs-7 fw-bold px-4 py-2">
-                {{ $detail['hadir'] }} / {{ $detail['total'] }} Hadir
-            </span>
-        </div>
-    </div>
-
-    <div class="card-body py-4">
-        @php
-            $daysIndo = [
-                'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
-                'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
-            ];
-            $todayDay = $daysIndo[now()->format('l')] ?? 'Senin';
-            $todayDate = now()->translatedFormat('d F Y');
-        @endphp
-
-        <div class="text-muted fw-bold fs-7 mb-4">
-            {{ $todayDay }}, {{ $todayDate }}
-        </div>
-
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_guru_kelas_{{ $detail['kelas']->id }}">
-            <thead>
-                <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                    <th class="w-50px">No</th>
-                    <th class="min-w-150px">Nama Siswa</th>
-                    <th class="min-w-100px">NIS</th>
-                    <th class="min-w-100px">Jam Masuk</th>
-                    <th class="min-w-120px">Status</th>
-                    <th class="min-w-150px">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-600 fw-bold">
-                @foreach ($detail['siswa'] as $index => $data)
-                    <tr>
-                        <td class="text-gray-800">{{ $index + 1 }}</td>
-                        <td>{{ $data['siswa']->nama }}</td>
-                        <td>{{ $data['siswa']->nis ?? '-' }}</td>
-                        <td>{{ $data['jam_masuk'] ?? '-' }}</td>
-                        <td>
-                            @if ($data['status'] === 'hadir')
-                                <span class="badge badge-light-success fw-bolder">Hadir</span>
-                            @elseif ($data['status'] === 'terlambat')
-                                <span class="badge badge-light-warning fw-bolder">Terlambat</span>
-                            @elseif ($data['status'] === 'sakit')
-                                <span class="badge badge-light-primary fw-bolder">Sakit</span>
-                            @elseif ($data['status'] === 'izin')
-                                <span class="badge badge-light-info fw-bolder">Izin</span>
-                            @elseif ($data['status'] === 'alpha')
-                                <span class="badge badge-light-danger fw-bolder">Alpha</span>
-                            @else
-                                <span class="badge badge-light fw-bolder">Belum Absen</span>
-                            @endif
-                        </td>
-                        <td>{{ $data['keterangan'] ?? '-' }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</div>
-@endforeach
-<!--end::Kelas Detail-->
-
-@if (empty($kelasDetail))
-<div class="card">
-    <div class="card-body p-10 text-center">
-        <div class="text-gray-600 fs-5">
-            {!! theme()->getSvgIcon("icons/duotune/general/gen046.svg", "svg-icon-3x text-gray-300 mb-4") !!}
-            <div class="fw-bold mt-3">Anda belum menjadi wali kelas manapun.</div>
-            <div class="text-muted fs-7 mt-1">Hubungi administrator untuk pengaturan kelas.</div>
-        </div>
-    </div>
-</div>
-@endif
-
-@section('scripts')
-<script>
-$(document).ready(function() {
-    @foreach ($kelasDetail as $detail)
-    $('#kt_table_guru_kelas_{{ $detail['kelas']->id }}').DataTable({
-        dom:"<'table-responsive'tr><'row'<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'li><'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>>",
-        info: true,
-        order: [],
-        pageLength: 10,
-        lengthChange: true
-    });
-    @endforeach
-});
-</script>
-@endsection
 </x-base-layout>
