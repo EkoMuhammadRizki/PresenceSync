@@ -204,6 +204,27 @@ License: {{ theme()->getOption('product', 'license') }}
                 transition: left 0.3s ease;
             }
         }
+
+        /* ─── DataTables Length & Info Spacing & Vertical Alignment ───────────── */
+        .dataTables_wrapper .dataTables_length,
+        div.dataTables_length {
+            margin-right: 0.85rem !important; /* memberi jarak rapi antara dropdown [10 v] dan teks info */
+            margin-bottom: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        .dataTables_wrapper .dataTables_info,
+        div.dataTables_info {
+            padding-top: 0 !important; /* menghapus padding-top bawaan agar sejajar vertikal */
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            color: #5e6278 !important;
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            line-height: 1.5 !important;
+        }
     </style>
 
     {{-- SweetAlert2 CSS --}}
