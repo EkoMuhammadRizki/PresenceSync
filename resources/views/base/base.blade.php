@@ -14,12 +14,12 @@ License: {{ theme()->getOption('product', 'license') }}
 {{-- begin::Head --}}
 <head>
     <meta charset="utf-8"/>
-    <title>{{ ucfirst(theme()->getOption('meta', 'title')) }} | Keenthemes</title>
+    <title>SIAP - Sistem Informasi Absensi Presensi</title>
     <meta name="description" content="{{ ucfirst(theme()->getOption('meta', 'description')) }}"/>
     <meta name="keywords" content="{{ theme()->getOption('meta', 'keywords') }}"/>
     <link rel="canonical" href="{{ ucfirst(theme()->getOption('meta', 'canonical')) }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link rel="shortcut icon" href="{{ asset(theme()->getDemo() . '/' .theme()->getOption('assets', 'favicon')) }}"/>
+    <link rel="shortcut icon" type="image/png" href="{{ asset('demo1/media/logos/Siap_Logo.png') }}"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- begin::Fonts --}}

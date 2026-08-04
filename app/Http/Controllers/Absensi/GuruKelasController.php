@@ -233,21 +233,6 @@ class GuruKelasController extends Controller
             ];
         }
  
-        $html = view('pages.absensi.guru-kelas-wali-pdf', compact('guru', 'kelas', 'siswas', 'rekap'))->render();
- 
-        $options = new Options();
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true);
- 
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
- 
-        $filename = 'Laporan_Data_Siswa_Kelas_Wali_' . str_replace(' ', '_', $kelas->tingkat . '_' . $kelas->nama) . '.pdf';
- 
-        return response($dompdf->output(), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        return view('pages.absensi.guru-kelas-wali-pdf', compact('guru', 'kelas', 'siswas', 'rekap'));
     }
 }

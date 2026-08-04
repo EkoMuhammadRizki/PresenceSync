@@ -1,4 +1,4 @@
-<x-base-layout>
+﻿<x-base-layout>
 
 @section('title', 'Log Scan Fingerprint')
 
@@ -15,7 +15,6 @@
 @include('pages.absensi._partials.toolbar', ['pageTitle' => 'Log Scan Fingerprint', 'toolbarActions' => ''])
 
 <div class="post d-flex flex-column-fluid" id="kt_post">
-<div id="kt_content_container" class="container-xxl">
 
     {{-- Alert Flash --}}
     @if(session('success'))

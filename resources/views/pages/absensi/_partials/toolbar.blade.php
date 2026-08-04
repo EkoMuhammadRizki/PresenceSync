@@ -5,41 +5,37 @@
 
 <!--begin::Toolbar-->
 @if (!empty($breadcrumb) || !empty($toolbarActions ?? null))
-<div class="toolbar py-0 mb-6" id="kt_toolbar" style="background: transparent; box-shadow: none;">
-    <div id="kt_toolbar_container" class="container-xxl">
-        <div class="card card-flush py-3 px-6 d-flex flex-row align-items-center justify-content-between">
-            <div class="page-title d-flex flex-column me-3">
-                @if (!empty($breadcrumb))
-                    <ul class="breadcrumb breadcrumb-separatorless fw-bold fs-7 my-1">
-                        @foreach ($breadcrumb as $item)
-                            @if ($item['active'] === true)
-                                <li class="breadcrumb-item text-dark">{{ $item['title'] }}</li>
+<div class="card card-flush py-3 px-6 d-flex flex-row align-items-center justify-content-between mb-6">
+    <div class="page-title d-flex flex-column me-3">
+        @if (!empty($breadcrumb))
+            <ul class="breadcrumb breadcrumb-separatorless fw-bold fs-7 my-1">
+                @foreach ($breadcrumb as $item)
+                    @if ($item['active'] === true)
+                        <li class="breadcrumb-item text-dark">{{ $item['title'] }}</li>
+                    @else
+                        <li class="breadcrumb-item text-muted">
+                            @if (!empty($item['path']))
+                                @php
+                                    $url = ($item['path'] === 'index' || strtolower($item['title']) === 'home') ? 'javascript:location.reload()' : theme()->getPageUrl($item['path']);
+                                @endphp
+                                <a href="{{ $url }}" class="text-muted text-hover-primary">{{ $item['title'] }}</a>
                             @else
-                                <li class="breadcrumb-item text-muted">
-                                    @if (!empty($item['path']))
-                                        @php
-                                            $url = ($item['path'] === 'index' || strtolower($item['title']) === 'home') ? 'javascript:location.reload()' : theme()->getPageUrl($item['path']);
-                                        @endphp
-                                        <a href="{{ $url }}" class="text-muted text-hover-primary">{{ $item['title'] }}</a>
-                                    @else
-                                        {{ $item['title'] }}
-                                    @endif
-                                </li>
+                                {{ $item['title'] }}
                             @endif
-                            @if (next($breadcrumb))
-                                <li class="breadcrumb-item"><span class="bullet bg-gray-200 w-5px h-2px ms-2 me-2"></span></li>
-                            @endif
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
-            @if (!empty($toolbarActions ?? null))
-                <div class="d-flex align-items-center gap-2 gap-lg-3">
-                    {!! $toolbarActions !!}
-                </div>
-            @endif
-        </div>
+                        </li>
+                    @endif
+                    @if (next($breadcrumb))
+                        <li class="breadcrumb-item"><span class="bullet bg-gray-200 w-5px h-2px ms-2 me-2"></span></li>
+                    @endif
+                @endforeach
+            </ul>
+        @endif
     </div>
+    @if (!empty($toolbarActions ?? null))
+        <div class="d-flex align-items-center gap-2 gap-lg-3">
+            {!! $toolbarActions !!}
+        </div>
+    @endif
 </div>
 @endif
 <!--end::Toolbar-->

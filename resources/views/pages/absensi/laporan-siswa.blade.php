@@ -22,7 +22,7 @@
 </style>
 @endpush
 
-<div id="kt_content_container" class="container-xxl">
+
 
     {{-- ─── Statistik Rekap ─── --}}
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-5 mb-8">
@@ -219,5 +219,4 @@
         </div>
     </div>
 
-</div>
 </x-base-layout>

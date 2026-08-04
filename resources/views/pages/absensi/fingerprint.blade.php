@@ -1,4 +1,4 @@
-<x-base-layout>
+﻿<x-base-layout>
 
 @section('title', 'Manajemen Fingerprint')
 
@@ -18,7 +18,6 @@
 @include('pages.absensi._partials.toolbar', ['pageTitle' => 'Manajemen Fingerprint', 'toolbarActions' => ''])
 
 <div class="post d-flex flex-column-fluid" id="kt_post">
-<div id="kt_content_container" class="container-xxl">
 
     {{-- Alert Flash --}}
     @if(session('success'))
@@ -94,9 +93,9 @@
                         <span class="text-muted mt-1 fw-bold fs-7">Semua device fingerprint yang terdaftar di sistem</span>
                     </h3>
                     <div class="card-toolbar d-flex align-items-center gap-2">
-                        <form action="{{ route('fingerprint.sync-all-templates') }}" method="POST" class="d-inline" onsubmit="return confirm('Salin semua data nama & sidik jari siswa ke seluruh mesin (Gerbang 1 & Gerbang 2)?')">
+                        <form action="{{ route('fingerprint.sync-all-templates') }}" method="POST" id="form-sync-all-templates" class="d-inline">
                             @csrf
-                            <button type="submit" class="btn btn-light-primary btn-sm" title="Salin data sidik jari siswa ke seluruh mesin">
+                            <button type="button" class="btn btn-light-primary btn-sm" onclick="confirmSyncAllTemplates()" title="Salin data sidik jari siswa ke seluruh mesin">
                                 <i class="bi bi-arrow-repeat me-1"></i>Sync Sidik Jari Antar Mesin
                             </button>
                         </form>
@@ -514,6 +513,25 @@
 <script src="{{ asset('assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
 <script>
 var CSRF_TOKEN = '{{ csrf_token() }}';
+
+// ============================================================
+// Sync Sidik Jari Antar Mesin Konfirmasi SweetAlert2
+// ============================================================
+function confirmSyncAllTemplates() {
+    Swal.fire({
+        title: 'Sync Sidik Jari Antar Mesin?',
+        html: 'Salin semua data nama & sidik jari siswa ke seluruh mesin (Gerbang 1 & Gerbang 2)?<br><small class="text-muted">Proses ini akan memastikan seluruh mesin memiliki data sidik jari siswa yang identik.</small>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-arrow-repeat me-1"></i>Ya, Sync Sekarang',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#009ef7'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            document.getElementById('form-sync-all-templates').submit();
+        }
+    });
+}
 
 // ============================================================
 // Test Koneksi AJAX

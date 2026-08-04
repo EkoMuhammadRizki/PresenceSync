@@ -2,8 +2,8 @@
 return array(
     // Product
     'product' => array(
-        'name'        => 'PresenceSync',
-        'description' => 'PresenceSync - Laravel Presence Management System',
+        'name'        => 'SIAP',
+        'description' => 'SIAP - Sistem Informasi Absensi Presensi',
         'preview'     => 'http://127.0.0.1:8000',
         'home'        => 'http://127.0.0.1:8000',
         'purchase'    => 'https://1.envato.market/EA4JP',

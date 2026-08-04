@@ -175,6 +175,12 @@ return array(
             ),
         ),
 
+        'arsip' => array(
+            'title'  => 'Arsip Tahun Ajaran',
+            'view'   => 'absensi/arsip',
+            'assets' => $dtAssets,
+        ),
+
         'pengaturan-restriksi' => array(
             'kelas' => array(
                 'title'  => 'Restriksi Kelas',

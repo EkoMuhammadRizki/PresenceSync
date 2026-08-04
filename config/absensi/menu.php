@@ -259,6 +259,14 @@ return array(
             ),
         ),
 
+        // Arsip Tahun Ajaran & Semester
+        array(
+            'title' => 'Arsip',
+            'path'  => 'absensi/arsip',
+            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/files/fil017.svg", "svg-icon-2"),
+            'role'  => ['admin', 'kesiswaan'],
+        ),
+
         // Pengaturan Restriksi
         array(
             'title'      => 'Pengaturan Restriksi',

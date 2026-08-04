@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Laporan Data Siswa</title>
     <style>
-        body { font-family: 'Times New Roman', Times, serif; color: #000; line-height: 1.3; font-size: 11px; margin: 0; padding: 0; }
+        body { font-family: 'Times New Roman', Times, serif; color: #000; line-height: 1.3; font-size: 11px; margin: 0; padding: 20px; }
         .kop-surat { width: 100%; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 15px; text-align: center; }
         .kop-surat table { width: 100%; border-collapse: collapse; }
         .kop-surat td { vertical-align: middle; }
@@ -35,16 +35,30 @@
         .content-table td { padding: 6px 5px; border: 1px solid #000; font-size: 10px; }
         .text-center { text-align: center; }
         .footer { margin-top: 25px; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; }
+        }
     </style>
 </head>
 <body>
+    <div class="no-print" style="background: #2aa8d8; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; font-family: sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; border-radius: 8px;">
+        <div>
+            <h4 style="margin: 0; font-size: 14px; font-weight: bold;">Laporan Siap Dicetak</h4>
+            <p style="margin: 2px 0 0 0; font-size: 11px; opacity: 0.85;">Dialog cetak browser akan terbuka otomatis. Pilih opsi "Simpan sebagai PDF" / "Save as PDF" untuk mengunduh berkas.</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="window.print()" style="background: #fff; color: #1a4fa0; border: none; padding: 6px 16px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;">Cetak / Simpan PDF</button>
+            <button onclick="window.close()" style="background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Tutup</button>
+        </div>
+    </div>
+
     <div class="kop-surat">
         <table>
             <tr>
                 <td style="width: 80px; text-align: center; vertical-align: middle;">
-                    @if(!empty($logoBase64))
-                        <img src="data:image/png;base64,{{ $logoBase64 }}" style="width: 75px; height: auto;" />
-                    @endif
+                    <img src="{{ asset('absensi/media/logos/logo-sekolah.png') }}" style="width: 75px; height: auto;" />
                 </td>
                 <td style="text-align: center; vertical-align: middle;">
                     <div class="kop-title-1">PEMERINTAH PROVINSI JAWA BARAT</div>
@@ -169,5 +183,12 @@
             </tr>
         </table>
     </div>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
 </body>
 </html>

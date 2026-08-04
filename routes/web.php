@@ -115,6 +115,10 @@ Route::middleware('auth')->group(function () {
         Route::get('pengaduan/export-excel', [\App\Http\Controllers\Absensi\LaporanController::class, 'exportPengaduanExcel'])->name('pengaduan.export-excel');
     });
 
+    // Arsip Routes
+    Route::get('absensi/arsip', [\App\Http\Controllers\Absensi\ArsipController::class, 'index'])->name('arsip.index');
+    Route::get('absensi/arsip/{semester}/profiling', [\App\Http\Controllers\Absensi\ArsipController::class, 'profiling'])->name('arsip.profiling');
+
     Route::get('absensi/profil-siswa', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'show'])->name('profil-siswa.show');
     Route::put('absensi/profil-siswa/{siswa}', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'update'])->name('profil-siswa.update');
     Route::put('absensi/profil-siswa/password', [\App\Http\Controllers\Absensi\SiswaProfileController::class, 'changePassword'])->name('profil-siswa.changePassword');

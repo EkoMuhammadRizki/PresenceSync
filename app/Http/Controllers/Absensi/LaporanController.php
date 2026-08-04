@@ -88,15 +88,7 @@ class LaporanController extends Controller
         $logoPath = public_path('absensi/media/logos/logo-sekolah.png');
         $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
 
-        $html = view('pages.absensi.laporan-siswa-pdf', compact('siswas', 'filters', 'kelasFilter', 'logoBase64'))->render();
-
-        $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
-        $mpdf->WriteHTML($html);
-        $filename = 'Laporan_Siswa_' . now()->format('Ymd_His') . '.pdf';
-
-        return response($mpdf->Output($filename, 'S'), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        return view('pages.absensi.laporan-siswa-pdf', compact('siswas', 'filters', 'kelasFilter', 'logoBase64'));
     }
 
     public function exportSiswaExcel(Request $request)
@@ -290,15 +282,7 @@ class LaporanController extends Controller
         $logoPath = public_path('absensi/media/logos/logo-sekolah.png');
         $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
 
-        $html = view('pages.absensi.laporan-guru-pdf', compact('gurus', 'kehadiranRekap', 'logoBase64'))->render();
-
-        $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']);
-        $mpdf->WriteHTML($html);
-        $filename = 'Laporan_Guru_' . now()->format('Ymd_His') . '.pdf';
-
-        return response($mpdf->Output($filename, 'S'), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        return view('pages.absensi.laporan-guru-pdf', compact('gurus', 'kehadiranRekap', 'logoBase64'));
     }
 
     public function exportGuruExcel(Request $request)
@@ -505,17 +489,9 @@ class LaporanController extends Controller
         $logoPath = public_path('absensi/media/logos/logo-sekolah.png');
         $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
 
-        $html = view('pages.absensi.laporan-kehadiran-pdf', compact(
+        return view('pages.absensi.laporan-kehadiran-pdf', compact(
             'kehadirans', 'startDate', 'endDate', 'kelasFilter', 'statusFilter', 'rekap', 'logoBase64'
-        ))->render();
-
-        $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']);
-        $mpdf->WriteHTML($html);
-        $filename = 'Laporan_Kehadiran_' . now()->format('Ymd_His') . '.pdf';
-
-        return response($mpdf->Output($filename, 'S'), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        ));
     }
 
     public function exportKehadiranExcel(Request $request)
@@ -706,15 +682,7 @@ class LaporanController extends Controller
         $logoPath = public_path('absensi/media/logos/logo-sekolah.png');
         $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
 
-        $html = view('pages.absensi.laporan-pengaduan-pdf', compact('pengaduans', 'startDate', 'endDate', 'kelasFilter', 'logoBase64'))->render();
-
-        $mpdf = new Mpdf(['mode' => 'utf-8', 'format' => 'A4']);
-        $mpdf->WriteHTML($html);
-        $filename = 'Laporan_Pengaduan_' . now()->format('Ymd_His') . '.pdf';
-
-        return response($mpdf->Output($filename, 'S'), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        return view('pages.absensi.laporan-pengaduan-pdf', compact('pengaduans', 'startDate', 'endDate', 'kelasFilter', 'logoBase64'));
     }
 
     public function exportPengaduanExcel(Request $request)

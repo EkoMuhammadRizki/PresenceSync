@@ -133,18 +133,21 @@ class AbsensiSeeder extends Seeder
         $guru1->user->assignRole('guru');
 
         // 11. Kesiswaan Account
-        $kesiswaanUser = User::updateOrCreate(['email' => 'kesiswaan@demo.com'], [
-            'first_name'        => 'Ratna',
-            'last_name'         => 'Sari, S.Pd',
+        $kesiswaanUser = User::updateOrCreate(['email' => 'kesiswaan@gmail.com'], [
+            'first_name'        => 'Kesiswaan',
+            'last_name'         => 'Sekolah',
             'password'          => Hash::make('demo'),
             'email_verified_at' => now(),
         ]);
-        $kesiswaanUser->assignRole('kesiswaan');
+        if (class_exists(\Spatie\Permission\Models\Role::class)) {
+            \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'kesiswaan']);
+            $kesiswaanUser->assignRole('kesiswaan');
+        }
 
         Guru::updateOrCreate(['user_id' => $kesiswaanUser->id], [
             'nip'     => '199203172020042007',
-            'nama'    => 'Ratna Sari, S.Pd',
-            'email'   => 'kesiswaan@demo.com',
+            'nama'    => 'Kesiswaan Sekolah',
+            'email'   => 'kesiswaan@gmail.com',
             'no_hp'   => '081256789012',
             'alamat'  => 'Jl. Merdeka No. 77',
         ]);

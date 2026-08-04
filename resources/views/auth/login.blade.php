@@ -6,27 +6,27 @@
     @csrf
 
         <!--begin::Heading-->
-        <div class="text-center mb-8">
+        <div class="text-center mb-5">
             <!--begin::Title-->
-            <h1 class="text-dark mb-3 fw-bolder fs-2">
-                {{ __('Masuk ke PresenceSync') }}
+            <h1 class="text-dark mb-2 fw-bolder fs-2">
+                {{ __('Masuk ke SIAP') }}
             </h1>
             <!--end::Title-->
         </div>
         <!--begin::Heading-->
 
         <!--begin::Notice Box-->
-        <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-4 mb-8">
+        <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-3 mb-5">
             <div class="d-flex flex-stack flex-grow-1">
                 <div class="fw-bold text-gray-700 fs-7 text-center w-100">
-                    Gunakan <span class="fw-bolder text-primary">NIS</span> (Siswa) atau <span class="fw-bolder text-primary">NIP</span> (Guru) dan password <span class="fw-bolder text-primary">demo</span> untuk masuk.
+                    Gunakan <span class="fw-bolder text-primary">NIS</span> (Siswa) atau <span class="fw-bolder text-primary">NIP</span> (Guru) untuk masuk.
                 </div>
             </div>
         </div>
         <!--end::Notice Box-->
 
         <!--begin::Input group - Identifier-->
-        <div class="fv-row mb-10">
+        <div class="fv-row mb-5">
             <!--begin::Label-->
             <label class="form-label fs-6 fw-bolder text-dark">{{ __('NIS / NIP') }}</label>
             <!--end::Label-->
@@ -38,7 +38,7 @@
         <!--end::Input group-->
 
         <!--begin::Input group - Password-->
-        <div class="fv-row mb-10">
+        <div class="fv-row mb-5">
             <!--begin::Wrapper-->
             <div class="d-flex flex-stack mb-2">
                 <!--begin::Label-->
@@ -48,7 +48,7 @@
             <!--end::Wrapper-->
 
             <!--begin::Input wrapper-->
-            <div class="position-relative mb-3" data-kt-password-meter="true">
+            <div class="position-relative mb-2" data-kt-password-meter="true">
                 <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="current-password" value="{{ old('password', $lastPassword ?? request()->cookie('last_login_password', 'demo')) }}" required/>
                 <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
                     <i class="bi bi-eye-slash fs-2"></i>
@@ -60,7 +60,7 @@
         <!--end::Input group-->
 
         <!--begin::Input group - Remember-->
-        <div class="fv-row mb-10">
+        <div class="fv-row mb-6">
             <label class="form-check form-check-custom form-check-solid">
                 <input class="form-check-input" type="checkbox" name="remember"/>
                 <span class="form-check-label fw-bold text-gray-700 fs-6">{{ __('Ingat saya') }}</span>
@@ -71,7 +71,7 @@
         <!--begin::Actions-->
         <div class="text-center">
             <!--begin::Submit button-->
-            <button type="submit" id="kt_sign_in_submit" class="btn btn-lg btn-primary w-100 mb-5">
+            <button type="submit" id="kt_sign_in_submit" class="btn btn-lg btn-primary w-100 mb-0">
                 @include('partials.general._button-indicator', ['label' => __('Masuk')])
             </button>
             <!--end::Submit button-->

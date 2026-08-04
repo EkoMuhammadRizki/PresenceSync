@@ -22,9 +22,35 @@
     {{--begin::Brand--}}
     <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {{--begin::Logo--}}
-        <a href="{{ theme()->getPageUrl('') }}">
-            <span class="text-white fs-2 fw-bolder">PresenceSync</span>
+        <a href="{{ theme()->getPageUrl('') }}" class="d-flex align-items-center me-2">
+            <div class="d-flex align-items-center logo-default brand-text-container">
+                <img alt="Logo" src="{{ asset('demo1/media/logos/Siap_Logo.png') }}" class="h-40px me-3" />
+                <div class="d-flex flex-column">
+                    <span class="text-white fw-bolder fs-2 lh-1">SIAP</span>
+                    <span class="text-gray-400 fs-9 lh-1 mt-1">Sistem Informasi Absensi Presensi</span>
+                </div>
+            </div>
+            <img alt="Logo" src="{{ asset('demo1/media/logos/Siap_Logo.png') }}" class="h-40px logo-minimize" />
         </a>
+        <style>
+            /* Ketika sidebar mengecil & TIDAK di-hover: sembunyikan default/teks, tampilkan minimize logo */
+            [data-kt-aside-minimize="on"] .aside:not(:hover) .aside-logo .logo-default,
+            [data-kt-aside-minimize="on"] .aside:not(:hover) .aside-logo .brand-text-container {
+                display: none !important;
+            }
+            [data-kt-aside-minimize="on"] .aside:not(:hover) .aside-logo .logo-minimize {
+                display: inline-block !important;
+            }
+
+            /* Ketika sidebar mengecil & SEDANG di-hover: tampilkan default/teks, sembunyikan minimize logo */
+            [data-kt-aside-minimize="on"] .aside:hover .aside-logo .logo-default,
+            [data-kt-aside-minimize="on"] .aside:hover .aside-logo .brand-text-container {
+                display: flex !important;
+            }
+            [data-kt-aside-minimize="on"] .aside:hover .aside-logo .logo-minimize {
+                display: none !important;
+            }
+        </style>
         {{--end::Logo--}}
 
         @if (theme()->getOption('layout', 'aside/minimize') === true)

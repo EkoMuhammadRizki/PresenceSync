@@ -1,4 +1,4 @@
-<x-base-layout>
+﻿<x-base-layout>
 @include('pages.absensi._partials.toolbar')
 
 @push('styles')
@@ -13,7 +13,6 @@
 </style>
 @endpush
 
-<div id="kt_content_container" class="container-xxl">
 
     {{-- ─── Statistik ─── --}}
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-5 mb-8">
@@ -169,5 +168,4 @@
         </div>
     </div>
 
-</div>
 </x-base-layout>

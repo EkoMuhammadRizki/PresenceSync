@@ -154,10 +154,10 @@
                 </div>
                 <div class="card-toolbar">
                     <div class="d-flex justify-content-end gap-2">
-                        <a href="{{ route('guru.kelas-wali.export-pdf') }}" class="btn btn-sm btn-danger">
+                        <a href="{{ route('guru.kelas-wali.export-pdf') }}" class="btn btn-sm btn-danger" target="_blank" data-ajax="false">
                             {!! theme()->getSvgIcon("icons/duotune/files/fil003.svg", "svg-icon-4") !!} Export PDF
                         </a>
-                        <a href="{{ route('guru.kelas-wali.export-excel') }}" class="btn btn-sm btn-success">
+                        <a href="{{ route('guru.kelas-wali.export-excel') }}" class="btn btn-sm btn-success" target="_blank" data-ajax="false">
                             {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-4") !!} Export Excel
                         </a>
                     </div>
