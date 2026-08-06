@@ -70,17 +70,21 @@ class AdmsController extends Controller
 
         $processedCount = 0;
 
-        if ($content && ($table === 'ATTLOG' || str_contains($content, "\t"))) {
+        if ($content) {
             $lines = explode("\n", trim($content));
             foreach ($lines as $line) {
                 $line = trim($line);
                 if (empty($line)) continue;
 
                 // Format ADMS ATTLOG: PIN \t DateTime \t Status \t Verified
-                $cols = preg_split('/\s+/', $line);
+                // Atau: PIN, DateTime, Status, Verified
+                $cols = preg_split('/[\t,]+/', $line);
                 if (count($cols) >= 2) {
-                    $pin = $cols[0];
-                    $dateTimeStr = $cols[1] . (isset($cols[2]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $cols[2]) ? ' ' . $cols[2] : '');
+                    $pin = trim($cols[0]);
+                    $dateTimeStr = trim($cols[1]);
+                    if (isset($cols[2]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', trim($cols[2]))) {
+                        $dateTimeStr .= ' ' . trim($cols[2]);
+                    }
 
                     try {
                         $scanTime = Carbon::parse($dateTimeStr);
@@ -95,7 +99,7 @@ class AdmsController extends Controller
                             'is_processed' => false,
                         ]);
 
-                        if ($log->wasRecentlyCreated) {
+                        if ($log->wasRecentlyCreated || !$log->is_processed) {
                             $this->fingerprintService->processSingleLog($log);
                             $processedCount++;
                         }
