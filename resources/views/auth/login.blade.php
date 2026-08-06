@@ -32,7 +32,7 @@
             <!--end::Label-->
 
             <!--begin::Input-->
-            <input class="form-control form-control-lg form-control-solid" type="text" name="identifier" autocomplete="username" placeholder="Masukkan NIS atau NIP" value="{{ old('identifier', $lastIdentifier ?? request()->cookie('last_login_identifier', '')) }}" required autofocus/>
+            <input class="form-control form-control-lg form-control-solid" type="text" name="identifier" autocomplete="off" placeholder="Masukkan NIS atau NIP" value="{{ old('identifier') }}" required autofocus/>
             <!--end::Input-->
         </div>
         <!--end::Input group-->
@@ -49,7 +49,7 @@
 
             <!--begin::Input wrapper-->
             <div class="position-relative mb-2" data-kt-password-meter="true">
-                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="current-password" value="{{ old('password', $lastPassword ?? request()->cookie('last_login_password', 'demo')) }}" required/>
+                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="new-password" placeholder="Masukkan Password" value="" required/>
                 <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
                     <i class="bi bi-eye-slash fs-2"></i>
                     <i class="bi bi-eye fs-2 d-none"></i>
