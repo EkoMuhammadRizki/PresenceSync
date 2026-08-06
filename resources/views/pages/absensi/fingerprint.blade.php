@@ -1,4 +1,4 @@
-﻿<x-base-layout>
+<x-base-layout>
 
 @section('title', 'Manajemen Fingerprint')
 
@@ -17,10 +17,8 @@
 
 @include('pages.absensi._partials.toolbar', ['pageTitle' => 'Manajemen Fingerprint', 'toolbarActions' => ''])
 
-<div class="post d-flex flex-column-fluid" id="kt_post">
-
-    {{-- Alert Flash --}}
-    @if(session('success'))
+{{-- Alert Flash --}}
+@if(session('success'))
     <div class="alert alert-dismissible bg-light-success d-flex align-items-center p-5 mb-5">
         <i class="bi bi-check-circle-fill text-success fs-2 me-4"></i>
         <div class="d-flex flex-column"><span class="text-dark fw-bold">{{ session('success') }}</span></div>
@@ -435,9 +433,6 @@
             </div>
         </div>
     </div>
-
-</div>
-</div>
 
 {{-- ===================================================== --}}
 {{-- MODAL: Tambah Device --}}
