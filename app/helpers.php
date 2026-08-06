@@ -10,7 +10,15 @@ if (!function_exists('get_svg_icon')) {
         $file_path = public_path($path);
 
         if (!file_exists($file_path)) {
-            return '';
+            // Fallback for cPanel shared hosting (public_html)
+            $publicHtmlPath = base_path('../public_html/' . ltrim($path, '/\\'));
+            if (file_exists($publicHtmlPath)) {
+                $file_path = $publicHtmlPath;
+            } elseif (file_exists(base_path('public_html/' . ltrim($path, '/\\')))) {
+                $file_path = base_path('public_html/' . ltrim($path, '/\\'));
+            } else {
+                return '';
+            }
         }
 
         $svg_content = file_get_contents($file_path);
