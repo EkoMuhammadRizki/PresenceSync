@@ -9,6 +9,12 @@ use App\Http\Controllers\PagesController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
+// ADMS Push Receiver Routes (ZKTeco / Solution Hardware Protocol)
+Route::get('/iclock/cdata', [\App\Http\Controllers\Absensi\AdmsController::class, 'handshake']);
+Route::post('/iclock/cdata', [\App\Http\Controllers\Absensi\AdmsController::class, 'receiveData']);
+Route::get('/iclock/getrequest', [\App\Http\Controllers\Absensi\AdmsController::class, 'getRequest']);
+Route::post('/iclock/devicecmd', [\App\Http\Controllers\Absensi\AdmsController::class, 'deviceCmd']);
+
 Route::get('/', function () {
     // If not logged in, go to login page for prototype
     if (!auth()->check()) {
