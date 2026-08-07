@@ -89,18 +89,27 @@ class AdmsController extends Controller
                     try {
                         $scanTime = Carbon::parse($dateTimeStr);
 
+                        // Parse verified code dari ADMS data (kolom ke-4 jika ada)
+                        // 0=Password, 1=Fingerprint, 2=Card
+                        $verifiedCode = 1; // Default fingerprint karena mesin sidik jari
+                        if (isset($cols[3])) {
+                            $verifiedCode = (int) trim($cols[3]);
+                        } elseif (isset($cols[2]) && !preg_match('/^\d{2}:\d{2}:\d{2}$/', trim($cols[2]))) {
+                            $verifiedCode = (int) trim($cols[2]);
+                        }
+
                         // Simpan log ke database
                         $log = FingerprintSyncLog::firstOrCreate([
                             'fingerprint_device_id' => $device?->id ?? 1,
                             'fingerprint_uid'       => $pin,
                             'scan_time'             => $scanTime,
                         ], [
-                            'raw_payload'  => $line,
+                            'verified'     => $verifiedCode,
                             'is_processed' => false,
                         ]);
 
                         if ($log->wasRecentlyCreated || !$log->is_processed) {
-                            $this->fingerprintService->processSingleLog($log);
+                            $this->fingerprintService->processSyncLog($log);
                             $processedCount++;
                         }
                     } catch (\Throwable $e) {
