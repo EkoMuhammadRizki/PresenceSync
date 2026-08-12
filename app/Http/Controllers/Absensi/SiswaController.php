@@ -79,7 +79,9 @@ class SiswaController extends Controller
             'jenis_kelamin' => $request->jenis_kelamin,
             'tanggal_lahir' => $request->tanggal_lahir,
             'alamat'        => $request->alamat,
+            'status'        => 'aktif',
             'is_pushed'     => false,
+            'is_enrolled'   => false,
         ]);
 
         // Auto-assign ID Fingerprint dari ID Siswa (database auto-increment ID)
@@ -104,6 +106,7 @@ class SiswaController extends Controller
             'tanggal_lahir' => 'nullable|date|before_or_equal:today',
             'alamat'        => 'nullable|string',
             'fingerprint_id'=> 'nullable|string|max:50',
+            'status'        => 'nullable|in:aktif,lulus,keluar',
         ], [
             'nisn.unique'                  => 'NISN sudah terdaftar.',
             'nis.unique'                   => 'NIS sudah terdaftar.',
@@ -115,7 +118,7 @@ class SiswaController extends Controller
         $oldFingerprintId = (string) $siswa->fingerprint_id;
 
         $siswa->update($request->only(
-            'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat'
+            'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat', 'status'
         ));
 
         $newFingerprintId = $request->filled('fingerprint_id')
@@ -406,7 +409,9 @@ class SiswaController extends Controller
                 'alamat'          => $alamat,
                 'no_hp'           => $noHp,
                 'no_hp_orang_tua' => $noHpOrangTua,
-                'status'          => $status,
+                'status'          => in_array(strtolower($status ?? 'aktif'), ['aktif','lulus','keluar']) ? strtolower($status) : 'aktif',
+                'is_pushed'       => false,
+                'is_enrolled'     => false,
             ]);
 
             // Auto-assign ID Fingerprint dari ID Siswa
@@ -463,20 +468,32 @@ class SiswaController extends Controller
         foreach ($devices as $device) {
             $count = 0;
             foreach ($siswas as $siswa) {
-                $res = $service->uploadUserName($device, (string) $siswa->fingerprint_id, $siswa->nama);
-                if ($res['success']) {
-                    $count++;
-                    $totalPushed++;
-                    $pushedSiswaIds[] = $siswa->id;
+                try {
+                    $service->uploadUserName($device, (string) $siswa->fingerprint_id, $siswa->nama);
+                } catch (\Throwable $e) {}
+
+                // Queue perintah ADMS agar mesin fisik mengunduh nama siswa via HTTPS ADMS polling
+                if (!empty($siswa->fingerprint_id)) {
+                    $admsCmd = "DATA USER PIN={$siswa->fingerprint_id}\tName={$siswa->nama}\tPri=0\tPass=\tCard=\tGrp=1\tTZ=0000000100000000";
+                    \App\Http\Controllers\Absensi\AdmsController::queueCommand($admsCmd);
                 }
+
+                $count++;
+                $totalPushed++;
+                $pushedSiswaIds[] = $siswa->id;
             }
-            // Kirim RefreshDB agar hardware me-reload data terbaru (nama diubah/diupdate)
-            $service->refreshDB($device);
+            // Kirim RefreshDB jika device dapat dijangkau
+            try {
+                $service->refreshDB($device);
+            } catch (\Throwable $e) {}
             $deviceMsg[] = "{$device->nama}: {$count} siswa";
         }
 
         if (!empty($pushedSiswaIds)) {
-            Siswa::whereIn('id', array_unique($pushedSiswaIds))->update(['is_pushed' => true]);
+            Siswa::whereIn('id', array_unique($pushedSiswaIds))->update([
+                'is_pushed'    => true,
+                'is_enrolled'  => true,
+            ]);
         }
 
         $summary = implode(', ', $deviceMsg);
@@ -517,5 +534,120 @@ class SiswaController extends Controller
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning("Auto push fingerprint error: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Tandai siswa terpilih sebagai Lulus + hapus dari semua perangkat mesin fingerprint aktif
+     */
+    public function markLulus(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|integer',
+        ]);
+
+        $ids = $request->input('ids');
+        $siswas = Siswa::whereIn('id', $ids)->get();
+
+        if ($siswas->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada siswa yang dipilih.');
+        }
+
+        // Update status menjadi lulus + reset enrollment (tidak aktif di mesin)
+        Siswa::whereIn('id', $ids)->update([
+            'status'      => 'lulus',
+            'is_enrolled' => false,
+            'is_pushed'   => false,
+        ]);
+
+        // Hapus dari seluruh perangkat mesin fingerprint yang aktif & queue ADMS delete
+        foreach ($siswas as $siswa) {
+            if (!empty($siswa->fingerprint_id)) {
+                $admsCmd = "DATA DELETE USER PIN={$siswa->fingerprint_id}";
+                \App\Http\Controllers\Absensi\AdmsController::queueCommand($admsCmd);
+            }
+        }
+
+        $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
+        if ($activeDevices->isNotEmpty()) {
+            try {
+                $service = app(\App\Services\FingerprintService::class);
+                foreach ($activeDevices as $dev) {
+                    foreach ($siswas as $siswa) {
+                        if (!empty($siswa->fingerprint_id)) {
+                            $service->deleteUser($dev, (string) $siswa->fingerprint_id);
+                        }
+                    }
+                    $service->refreshDB($dev);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("markLulus delete from device error: " . $e->getMessage());
+            }
+        }
+
+        $count = $siswas->count();
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->log("Menandai {$count} siswa sebagai Lulus dan menghapus dari mesin fingerprint.");
+        }
+
+        return redirect()->route('siswa.index')
+            ->with('success', "{$count} siswa berhasil ditandai sebagai Lulus dan telah dihapus dari perangkat mesin fingerprint.");
+    }
+
+    /**
+     * Tandai satu siswa sebagai Keluar + hapus dari semua perangkat mesin fingerprint aktif
+     */
+    public function markKeluar(Siswa $siswa)
+    {
+        $siswa->update([
+            'status'      => 'keluar',
+            'is_enrolled' => false,
+            'is_pushed'   => false,
+        ]);
+
+        if (!empty($siswa->fingerprint_id)) {
+            $admsCmd = "DATA DELETE USER PIN={$siswa->fingerprint_id}";
+            \App\Http\Controllers\Absensi\AdmsController::queueCommand($admsCmd);
+
+            $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
+            try {
+                $service = app(\App\Services\FingerprintService::class);
+                foreach ($activeDevices as $dev) {
+                    $service->deleteUser($dev, (string) $siswa->fingerprint_id);
+                    $service->refreshDB($dev);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("markKeluar delete from device error: " . $e->getMessage());
+            }
+        }
+
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->performedOn($siswa)->log("Menandai siswa sebagai Keluar: {$siswa->nama}");
+        }
+
+        return redirect()->route('siswa.index')
+            ->with('success', "Siswa {$siswa->nama} berhasil ditandai sebagai Keluar dan telah dihapus dari perangkat mesin fingerprint.");
+    }
+
+    /**
+     * Tandai siswa sebagai Aktif kembali + otomatis push ke mesin fingerprint aktif
+     */
+    public function markAktif(Siswa $siswa)
+    {
+        $siswa->update([
+            'status'      => 'aktif',
+            'is_pushed'   => false,
+            'is_enrolled' => false, // Perlu di-push ulang ke mesin agar enrolled kembali
+        ]);
+
+        // Auto push ke mesin fingerprint jika ada ID Fingerprint
+        $this->autoPushFingerprintToDevices($siswa);
+
+        if (auth()->check()) {
+            activity()->causedBy(auth()->user())->performedOn($siswa)->log("Menandai siswa sebagai Aktif kembali: {$siswa->nama}");
+        }
+
+        return redirect()->route('siswa.index')
+            ->with('success', "Siswa {$siswa->nama} berhasil diaktifkan kembali. Data siswa telah di-POST ulang ke mesin fingerprint.");
     }
 }

@@ -344,7 +344,7 @@
                                         <span class="badge badge-light-primary fw-bolder fs-8">ID: {{ $siswa->fingerprint_id }}</span>
                                     </td>
                                     <td class="pe-3 text-end">
-                                        <form action="{{ route('fingerprint.toggle-enrollment', $siswa) }}" method="POST" class="d-inline" onsubmit="return confirm('Ubah status {{ $siswa->nama }} menjadi Belum Enrolled?')">
+                                        <form action="{{ route('fingerprint.toggle-enrollment', $siswa) }}" method="POST" class="d-inline" onsubmit="return confirmToggleEnrollment(event, this, '{{ addslashes($siswa->nama) }}', true)">
                                             @csrf
                                             <button type="submit" class="btn btn-light-danger btn-xs py-1 px-2 fs-8" title="Tandai Belum Enrolled">
                                                 <i class="bi bi-x-circle me-1 fs-9"></i>Batal Enrolled
@@ -413,7 +413,7 @@
                                         <span class="badge badge-light-secondary fw-bold fs-8">ID: {{ $siswa->fingerprint_id }}</span>
                                     </td>
                                     <td class="pe-3 text-end">
-                                        <form action="{{ route('fingerprint.toggle-enrollment', $siswa) }}" method="POST" class="d-inline" onsubmit="return confirm('Tandai {{ $siswa->nama }} sudah enrolled sidik jari?')">
+                                        <form action="{{ route('fingerprint.toggle-enrollment', $siswa) }}" method="POST" class="d-inline" onsubmit="return confirmToggleEnrollment(event, this, '{{ addslashes($siswa->nama) }}', false)">
                                             @csrf
                                             <button type="submit" class="btn btn-light-success btn-xs py-1 px-2 fs-8" title="Tandai Sudah Scan Sidik Jari / Enrolled">
                                                 <i class="bi bi-check-circle me-1 fs-9"></i>Tandai Enrolled
@@ -508,6 +508,39 @@
 <script src="{{ asset('assets/plugins/custom/datatables/datatables.bundle.js') }}"></script>
 <script>
 var CSRF_TOKEN = '{{ csrf_token() }}';
+
+// ============================================================
+// Toggle Enrollment (Batal Enrolled / Tandai Enrolled) SweetAlert2
+// ============================================================
+function confirmToggleEnrollment(event, form, nama, currentEnrolled) {
+    event.preventDefault();
+    var titleText = currentEnrolled ? 'Batal Enrolled?' : 'Tandai Enrolled?';
+    var htmlText = currentEnrolled 
+        ? 'Ubah status <b>' + nama + '</b> menjadi <b class="text-danger">Belum Enrolled</b>?'
+        : 'Tandai <b>' + nama + '</b> <b class="text-success">sudah enrolled</b> sidik jari?';
+    var iconType = currentEnrolled ? 'warning' : 'question';
+    var btnText = currentEnrolled ? '<i class="bi bi-x-circle me-1"></i>Ya, Batal Enrolled' : '<i class="bi bi-check-circle me-1"></i>Ya, Tandai Enrolled';
+
+    Swal.fire({
+        title: titleText,
+        html: htmlText,
+        icon: iconType,
+        showCancelButton: true,
+        confirmButtonText: btnText,
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: 'btn btn-primary fw-bold px-6',
+            cancelButton: 'btn btn-danger fw-bold px-6 me-3'
+        },
+        buttonsStyling: false,
+        reverseButtons: true
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            form.submit();
+        }
+    });
+    return false;
+}
 
 // ============================================================
 // Sync Sidik Jari Antar Mesin Konfirmasi SweetAlert2

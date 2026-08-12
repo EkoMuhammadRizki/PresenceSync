@@ -144,13 +144,17 @@
                     </div>
                 </div>
                 
-                @if($siswa && $siswa->nama_orang_tua)
+                @php
+                    $parentName = $siswa->nama_orang_tua ?? ($parentProfile->nama_ayah ?? ($parentProfile->nama_ibu ?? null));
+                    $parentPhone = $siswa->no_hp_orang_tua ?? ($parentProfile->no_hp_ayah ?? ($parentProfile->no_hp_ibu ?? null));
+                @endphp
+                @if($parentName)
                     <!-- Orang Tua / Wali -->
                     <div class="d-flex align-items-center mt-7">
                         <div class="flex-grow-1">
                             <span class="text-muted fw-bold d-block fs-7">Nama Orang Tua & Kontak Wali</span>
                             <span class="text-gray-800 fw-bolder fs-6">
-                                {{ $siswa->nama_orang_tua }} ({{ $siswa->no_hp_orang_tua ?? '-' }})
+                                {{ $parentName }} ({{ $parentPhone ?? '-' }})
                             </span>
                         </div>
                     </div>

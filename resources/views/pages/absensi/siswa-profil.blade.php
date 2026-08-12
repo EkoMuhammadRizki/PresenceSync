@@ -61,7 +61,7 @@
                         <div class="row mb-6">
                             <label class="col-lg-4 col-form-label fw-bold fs-6">NIK Ayah</label>
                             <div class="col-lg-8 fv-row">
-                                <input type="text" name="nik_ayah" class="form-control form-control-lg form-control-solid" placeholder="NIK Ayah" value="{{ old('nik_ayah', $profile->nik_ayah) }}"/>
+                                <input type="text" name="nik_ayah" class="form-control form-control-lg form-control-solid" placeholder="NIK Ayah (16 digit)" value="{{ old('nik_ayah', $profile->nik_ayah) }}" maxlength="16" oninput="this.value = this.value.replace(/[^0-9]/g, '')"/>
                             </div>
                         </div>
 
@@ -125,7 +125,7 @@
                         <div class="row mb-6">
                             <label class="col-lg-4 col-form-label fw-bold fs-6">NIK Ibu</label>
                             <div class="col-lg-8 fv-row">
-                                <input type="text" name="nik_ibu" class="form-control form-control-lg form-control-solid" placeholder="NIK Ibu" value="{{ old('nik_ibu', $profile->nik_ibu) }}"/>
+                                <input type="text" name="nik_ibu" class="form-control form-control-lg form-control-solid" placeholder="NIK Ibu (16 digit)" value="{{ old('nik_ibu', $profile->nik_ibu) }}" maxlength="16" oninput="this.value = this.value.replace(/[^0-9]/g, '')"/>
                             </div>
                         </div>
 

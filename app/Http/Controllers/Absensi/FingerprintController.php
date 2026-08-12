@@ -33,7 +33,12 @@ class FingerprintController extends Controller
             ->get();
 
         // Siswa yang sudah enrolled (sudah daftar scan sidik jari / terdeteksi hardware)
-        $siswaWithFingerprint = Siswa::where('status', 'aktif')
+        // Hanya siswa aktif (status='aktif' atau null/kosong) yang ditampilkan
+        $siswaWithFingerprint = Siswa::where(function ($q) {
+                $q->where('status', 'aktif')
+                  ->orWhereNull('status')
+                  ->orWhere('status', '');
+            })
             ->where(function ($q) {
                 $q->where('is_enrolled', true)
                   ->orWhereHas('syncLogs');
@@ -43,11 +48,14 @@ class FingerprintController extends Controller
             ->get();
 
         // Siswa yang belum enrolled (siswa yang baru dibuat saja datanya di tabel siswa)
-        $siswaTanpaFingerprint = Siswa::where('status', 'aktif')
-            ->where(function ($q) {
-                $q->where('is_enrolled', false)
-                  ->whereDoesntHave('syncLogs');
+        // Hanya siswa aktif (status='aktif' atau null/kosong) yang ditampilkan
+        $siswaTanpaFingerprint = Siswa::where(function ($q) {
+                $q->where('status', 'aktif')
+                  ->orWhereNull('status')
+                  ->orWhere('status', '');
             })
+            ->where('is_enrolled', false)
+            ->whereDoesntHave('syncLogs')
             ->with('kelas')
             ->orderBy('nama')
             ->get();

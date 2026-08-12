@@ -78,11 +78,9 @@ class SiswaProfileController extends Controller
 
         $completionRate = $this->calculateCompletionRate($siswa, $user);
 
-        // Parent Profile Info
-        $parentProfile = null;
-        if ($siswa->orang_tua_user_id) {
-            $parentProfile = \App\Models\ParentProfile::where('parent_user_id', $siswa->orang_tua_user_id)->first();
-        }
+        // Parent Profile Info (check both orang_tua_user_id and user_id)
+        $parentUserIds = array_filter([$siswa->orang_tua_user_id, $siswa->user_id]);
+        $parentProfile = \App\Models\ParentProfile::whereIn('parent_user_id', $parentUserIds)->first();
 
         // Attendance grid data (cloned from SiswaDashboardController)
         $periode = $request->input('periode', date('Ym'));

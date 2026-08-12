@@ -136,11 +136,52 @@ class AdmsController extends Controller
     }
 
     /**
+     * Tambahkan perintah ADMS ke antrean (Queue) agar diambil oleh mesin fisik saat polling
+     */
+    public static function queueCommand(string $commandText)
+    {
+        $queue = \Illuminate\Support\Facades\Cache::get('adms_cmd_queue', []);
+        $nextId = (int) \Illuminate\Support\Facades\Cache::get('adms_cmd_last_id', 100) + 1;
+        \Illuminate\Support\Facades\Cache::put('adms_cmd_last_id', $nextId);
+
+        $queue[] = [
+            'id'      => $nextId,
+            'command' => "C:{$nextId}:{$commandText}",
+        ];
+
+        \Illuminate\Support\Facades\Cache::put('adms_cmd_queue', $queue, now()->addDays(7));
+        Log::info("ADMS Command Queued: C:{$nextId}:{$commandText}");
+    }
+
+    /**
      * Menerima polling perintah dari mesin ADMS
      * GET /iclock/getrequest
      */
     public function getRequest(Request $request)
     {
+        $sn = $request->query('SN');
+        if ($sn) {
+            $device = FingerprintDevice::where('serial_number', $sn)->first();
+            if ($device) {
+                $device->update([
+                    'is_aktif'       => true,
+                    'last_synced_at' => now(),
+                ]);
+            }
+        }
+
+        // Cek apakah ada antrean perintah ADMS dari cloud hosting (seperti upload/delete user)
+        $queue = \Illuminate\Support\Facades\Cache::get('adms_cmd_queue', []);
+        if (!empty($queue)) {
+            $item = array_shift($queue);
+            \Illuminate\Support\Facades\Cache::put('adms_cmd_queue', $queue, now()->addDays(7));
+
+            Log::info("ADMS sending command to device {$sn}", ['cmd' => $item['command']]);
+
+            return response($item['command'], 200)
+                ->header('Content-Type', 'text/plain');
+        }
+
         return response("OK", 200)
             ->header('Content-Type', 'text/plain');
     }
@@ -151,6 +192,9 @@ class AdmsController extends Controller
      */
     public function deviceCmd(Request $request)
     {
+        $content = $request->getContent();
+        Log::info("ADMS DeviceCmd Response received", ['body' => $content]);
+
         return response("OK", 200)
             ->header('Content-Type', 'text/plain');
     }

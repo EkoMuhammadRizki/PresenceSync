@@ -88,7 +88,7 @@
                         <td>{{ $nama }}</td>
                         <td>{{ $aktivitasText }}</td>
                         <td><span class="badge badge-light-{{ $badgeClass }} fw-bolder">{{ $metode }}</span></td>
-                        <td>{{ $waktuFormatted }}</td>
+                        <td data-order="{{ $log->created_at ? $log->created_at->timestamp : 0 }}">{{ $waktuFormatted }}</td>
                     </tr>
                     @endforeach
                 @else

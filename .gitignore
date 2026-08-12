@@ -35,3 +35,8 @@ _ide_helper.php
 _ide_helper_models.php
 .phpstorm.meta.php
 scratch/
+*.zip
+_deploy_patch/
+_deploy_patch_full/
+_temp_final_fix/
+_temp_solusi/

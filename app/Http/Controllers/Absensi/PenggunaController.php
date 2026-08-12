@@ -58,6 +58,11 @@ class PenggunaController extends Controller
         $role = Role::firstOrCreate(['name' => $request->role]);
         $user->assignRole($role);
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->log("Menambah data user baru: {$user->email}");
+
         return redirect()->route('pengguna.index')
             ->with('success', 'Pengguna berhasil ditambahkan.');
     }
@@ -124,6 +129,11 @@ class PenggunaController extends Controller
             $pengguna->syncRoles([$role]);
         }
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($pengguna)
+            ->log("Mengubah data user: {$pengguna->email}");
+
         return redirect()->route('pengguna.index')
             ->with('success', 'Pengguna berhasil diperbarui.');
     }
@@ -138,6 +148,8 @@ class PenggunaController extends Controller
                 ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
+        $userEmail = $pengguna->email;
+
         // Delete Guru if exists
         if ($pengguna->guru) {
             $pengguna->guru->delete();
@@ -149,6 +161,10 @@ class PenggunaController extends Controller
         }
 
         $pengguna->delete();
+
+        activity()
+            ->causedBy(auth()->user())
+            ->log("Menghapus data user: {$userEmail}");
 
         return redirect()->route('pengguna.index')
             ->with('success', 'Pengguna berhasil dihapus.');

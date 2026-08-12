@@ -137,9 +137,9 @@
     </div>
     <!--end::Card-->
 
-    @section('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
+    <script>
+        (function() {
+            function initRestriksiForm() {
                 const toggle = document.getElementById('restriksi_kelas_toggle');
                 const badge = document.getElementById('toggle_status_badge');
                 const form = document.getElementById('form_restriksi_kelas');
@@ -157,7 +157,9 @@
                 }
 
                 if (form) {
+                    let isSubmitting = false;
                     form.addEventListener('submit', function(e) {
+                        if (isSubmitting) return true;
                         e.preventDefault();
                         
                         Swal.fire({
@@ -171,12 +173,19 @@
                             cancelButtonColor: '#7E8299'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                form.submit();
+                                isSubmitting = true;
+                                HTMLFormElement.prototype.submit.call(form);
                             }
                         });
                     });
                 }
-            });
-        </script>
-    @endsection
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initRestriksiForm);
+            } else {
+                initRestriksiForm();
+            }
+        })();
+    </script>
 </x-base-layout>

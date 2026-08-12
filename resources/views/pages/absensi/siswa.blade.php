@@ -75,6 +75,7 @@
                         @endif
                     </button>
                 </form>
+
                 <a href="{{ route('siswa.download-template', ['empty' => 1]) }}" class="btn btn-light-warning btn-sm btn-md-md">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
                     <span class="d-none d-sm-inline">Download Template</span>
@@ -94,6 +95,16 @@
                     {!! theme()->getSvgIcon("icons/duotune/arrows/arr075.svg", "svg-icon-2") !!}
                     Tambah
                 </button>
+                {{-- Tombol Tandai Lulus (muncul di sebelah kanan tombol Tambah saat ada checkbox terpilih) --}}
+                <form id="form_mark_lulus" action="{{ route('siswa.mark-lulus') }}" method="POST" class="d-inline d-none">
+                    @csrf
+                    {{-- IDs dikirim sebagai hidden fields array, diisi oleh JS --}}
+                    <div id="lulus_ids_container"></div>
+                    <button type="button" onclick="confirmMarkLulus()" class="btn btn-success btn-sm btn-md-md" id="btn_mark_lulus" title="Tandai siswa terpilih sebagai Lulus & hapus dari mesin fingerprint">
+                        <i class="bi bi-mortarboard-fill me-1"></i>
+                        <span>Tandai Lulus (<span id="lulus_count">0</span>)</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -112,6 +123,7 @@
                         <th class="min-w-90px">Jenis Kelamin</th>
                         <th class="min-w-100px">Kelas</th>
                         <th class="min-w-100px">Fingerprint ID</th>
+                        <th class="min-w-90px">Status</th>
                         <th class="text-end min-w-70px">Aksi</th>
                     </tr>
                 </thead>
@@ -152,11 +164,28 @@
                                 <span class="badge badge-light-secondary text-gray-500 fw-bold">Belum Registrasi</span>
                             @endif
                         </td>
+                        <td>
+                            @php
+                                $rawStatus = strtolower(trim($item->status ?? ''));
+                                $statusVal = in_array($rawStatus, ['aktif', 'lulus', 'keluar']) ? $rawStatus : 'aktif';
+                                $statusBadge = match($statusVal) {
+                                    'lulus'  => 'badge-light-primary',
+                                    'keluar' => 'badge-light-danger',
+                                    default  => 'badge-light-success',
+                                };
+                                $statusLabel = match($statusVal) {
+                                    'lulus'  => 'Lulus',
+                                    'keluar' => 'Keluar',
+                                    default  => 'Aktif',
+                                };
+                            @endphp
+                            <span class="badge {{ $statusBadge }} fw-bold fs-8">{{ $statusLabel }}</span>
+                        </td>
                         <td class="text-end">
                             <a href="#" class="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                                 Aksi {!! theme()->getSvgIcon("icons/duotune/arrows/arr072.svg", "svg-icon-5 m-0") !!}
                             </a>
-                            <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-125px py-4" data-kt-menu="true">
+                            <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-bold fs-7 w-150px py-4" data-kt-menu="true">
                                 <div class="menu-item px-3">
                                     <a href="{{ theme()->getPageUrl('absensi/profil-siswa') }}?id={{ $item->id }}" class="menu-link px-3">
                                         Detail
@@ -177,10 +206,24 @@
                                        data-jk="{{ $item->jenis_kelamin }}"
                                        data-lahir="{{ $item->tanggal_lahir ? $item->tanggal_lahir->format('Y-m-d') : '' }}"
                                        data-alamat="{{ $item->alamat ?? '' }}"
-                                       data-fingerprint="{{ $item->fingerprint_id ?? '' }}">
+                                       data-fingerprint="{{ $item->fingerprint_id ?? '' }}"
+                                       data-status="{{ $statusVal }}">
                                         Ubah
                                     </a>
                                 </div>
+                                @if($statusVal === 'aktif')
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3 text-warning" onclick="confirmMarkKeluar('{{ $item->id }}', '{{ addslashes($item->nama) }}')">
+                                        Tandai Keluar
+                                    </a>
+                                </div>
+                                @else
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3 text-success fw-bold" onclick="confirmMarkAktif('{{ $item->id }}', '{{ addslashes($item->nama) }}')">
+                                        Aktifkan Kembali
+                                    </a>
+                                </div>
+                                @endif
                                 <div class="menu-item px-3">
                                     <form action="{{ route('siswa.destroy', $item->id) }}" method="POST" class="d-inline form-konfirmasi">
                                         @csrf
@@ -385,6 +428,14 @@
                         </div>
                     </div>
                     <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Status Siswa</label>
+                        <select name="status" class="form-select form-select-solid" required>
+                            <option value="aktif">Aktif</option>
+                            <option value="lulus">Lulus</option>
+                            <option value="keluar">Keluar</option>
+                        </select>
+                    </div>
+                    <div class="fv-row mb-7">
                         <label class="fw-bold fs-6 mb-2">Alamat Lengkap</label>
                         <textarea name="alamat" class="form-control form-control-solid" rows="3"></textarea>
                     </div>
@@ -417,7 +468,7 @@ $(document).ready(function() {
         order:[], 
         pageLength:5, 
         lengthChange:true, 
-        columnDefs:[{orderable:false,targets:[0,6]}] 
+        columnDefs:[{orderable:false,targets:[0,7]}]  // kolom 0=checkbox, 7=aksi (status ada di 6)
     });
 
     // Make entire table row clickable (excluding checkbox and actions)
@@ -426,13 +477,39 @@ $(document).ready(function() {
         if (targetTd.length === 0) return;
         var idx = targetTd.index();
         // Skip first column (checkbox) and last column (actions dropdown)
-        if (idx === 0 || idx === 6 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
+        if (idx === 0 || idx === 7 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
             return;
         }
         var link = $(this).find('td:nth-child(3) a');
         if (link.length) {
             window.location.href = link.attr('href');
         }
+    });
+
+    // Fungsi untuk update tombol Tandai Lulus saat checkbox berubah
+    function updateLulusButton() {
+        var checkedBoxes = $('#kt_table_siswa tbody input[type="checkbox"].select-item-checkbox:checked');
+        var count = checkedBoxes.length;
+        var $wrapper = $('#form_mark_lulus');
+        if (count > 0) {
+            $('#lulus_count').text(count);
+            $wrapper.removeClass('d-none');
+        } else {
+            $wrapper.addClass('d-none');
+        }
+    }
+
+    // Pasang listener pada checkbox item
+    $(document).on('change', '.select-item-checkbox', function() {
+        updateLulusButton();
+    });
+
+    // Pasang listener pada checkbox select-all
+    $(document).on('change', '.select-all-checkbox', function() {
+        var checked = $(this).prop('checked');
+        // Check semua checkbox di halaman yang terlihat saat ini
+        table.rows({ page: 'current' }).nodes().to$().find('.select-item-checkbox').prop('checked', checked);
+        updateLulusButton();
     });
     
     $('#search_siswa').on('keyup', function() { 
@@ -571,6 +648,7 @@ $(document).ready(function() {
         var lahir = $(this).data('lahir');
         var alamat = $(this).data('alamat');
         var fingerprint = $(this).data('fingerprint');
+        var status = $(this).data('status');
         
         var form = $('#modal_ubah_siswa form');
         form.attr('action', '{{ url("absensi/master/siswa") }}/' + id);
@@ -582,6 +660,7 @@ $(document).ready(function() {
         form.find('input[name="tanggal_lahir"]').val(lahir);
         form.find('textarea[name="alamat"]').val(alamat);
         form.find('input[name="fingerprint_id"]').val(fingerprint);
+        form.find('select[name="status"]').val(status || 'aktif').trigger('change');
         
         $('#modal_ubah_siswa').modal('show');
     });
@@ -605,6 +684,103 @@ $(document).ready(function() {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 });
+
+function confirmMarkLulus() {
+    var checkedBoxes = $('#kt_table_siswa tbody input[type="checkbox"].select-item-checkbox:checked');
+    var selectedIds = [];
+    checkedBoxes.each(function() {
+        selectedIds.push($(this).val());
+    });
+
+    if (selectedIds.length === 0) {
+        Swal.fire({ text: 'Pilih minimal 1 siswa terlebih dahulu.', icon: 'warning', confirmButtonText: 'Oke', buttonsStyling: false, customClass: { confirmButton: 'btn btn-primary' } });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Tandai ' + selectedIds.length + ' Siswa sebagai Lulus?',
+        html: '<b>' + selectedIds.length + ' siswa terpilih</b> akan ditandai sebagai <b class="text-success">Lulus</b>.<br><br>' +
+              '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Data siswa tersebut akan <b>dihapus dari mesin fingerprint</b> (X100C) sehingga tidak dapat melakukan absensi lagi.</span>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-mortarboard-fill me-1"></i> Ya, Tandai Lulus',
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: 'btn btn-success fw-bold px-6',
+            cancelButton: 'btn btn-light fw-bold px-6 me-3'
+        },
+        buttonsStyling: false,
+        reverseButtons: true
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            // Isi container dengan hidden inputs array
+            var $container = $('#lulus_ids_container');
+            $container.empty();
+            $.each(selectedIds, function(i, id) {
+                $container.append('<input type="hidden" name="ids[]" value="' + id + '">');
+            });
+            $('#form_mark_lulus').submit();
+        }
+    });
+}
+
+function confirmMarkKeluar(siswaId, siswaNama) {
+    Swal.fire({
+        title: 'Tandai Siswa sebagai Keluar?',
+        html: 'Siswa <b>' + siswaNama + '</b> akan ditandai sebagai <b class="text-danger">Keluar</b>.<br><br>' +
+              '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Data siswa ini akan <b>dihapus dari mesin fingerprint</b> (X100C).</span>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-box-arrow-right me-1"></i> Ya, Tandai Keluar',
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: 'btn btn-warning fw-bold px-6',
+            cancelButton: 'btn btn-light fw-bold px-6 me-3'
+        },
+        buttonsStyling: false,
+        reverseButtons: true
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url("absensi/master/siswa") }}/' + siswaId + '/mark-keluar';
+            var csrf = document.createElement('input');
+            csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+function confirmMarkAktif(siswaId, siswaNama) {
+    Swal.fire({
+        title: 'Aktifkan Kembali Siswa?',
+        html: 'Siswa <b>' + siswaNama + '</b> akan ditandai sebagai <b class="text-success">Aktif</b> kembali.<br><br>' +
+              '<span class="text-info"><i class="bi bi-info-circle-fill me-1"></i>Data nama & ID siswa akan <b>di-upload ulang ke mesin fingerprint</b> (X100C).</span>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-check-circle me-1"></i> Ya, Aktifkan Kembali',
+        cancelButtonText: 'Batal',
+        customClass: {
+            confirmButton: 'btn btn-success fw-bold px-6',
+            cancelButton: 'btn btn-light fw-bold px-6 me-3'
+        },
+        buttonsStyling: false,
+        reverseButtons: true
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url("absensi/master/siswa") }}/' + siswaId + '/mark-aktif';
+            var csrf = document.createElement('input');
+            csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
 
 function confirmPostKeMesin() {
     var checkedBoxes = $('#kt_table_siswa tbody input[type="checkbox"].select-item-checkbox:checked');

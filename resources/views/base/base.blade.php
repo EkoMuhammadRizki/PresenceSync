@@ -21,6 +21,9 @@ License: {{ theme()->getOption('product', 'license') }}
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="shortcut icon" type="image/png" href="{{ asset('demo1/media/logos/Siap_Logo.png') }}"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, max-age=0, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 
     {{-- begin::Fonts --}}
     {{ theme()->includeFonts() }}
@@ -856,9 +859,14 @@ License: {{ theme()->getOption('product', 'license') }}
 
     // ─── Global: Intercept tombol Hapus (class .btn-hapus atau text "Hapus" di menu) ─
     $(document).on('click', '.btn-hapus, a.menu-link.text-danger, button.btn-hapus', function(e) {
+        var $btn = $(this);
+        // Jika tombol berada di dalam form.form-konfirmasi, biarkan form.form-konfirmasi yang menangani
+        if ($btn.closest('form.form-konfirmasi').length) {
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
-        var $btn = $(this);
         konfirmasiHapus().then(function(result) {
             if (result.isConfirmed) {
                 // Jika punya data-url, submit DELETE via form
@@ -870,7 +878,7 @@ License: {{ theme()->getOption('product', 'license') }}
                         + '</form>');
                     form.attr('action', url);
                     $('body').append(form);
-                    form.submit();
+                    form[0].submit();
                 } else {
                     // Trigger custom event agar page-level script bisa handle
                     $btn.trigger('hapus:confirmed');
@@ -889,7 +897,7 @@ License: {{ theme()->getOption('product', 'license') }}
             : konfirmasiSimpan();
         promise.then(function(result) {
             if (result.isConfirmed) {
-                $form.off('submit').submit();
+                $form[0].submit();
             }
         });
     });

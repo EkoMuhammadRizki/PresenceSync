@@ -48,13 +48,19 @@ class RestriksiKelasController extends Controller
     {
         $this->checkAdminAccess();
 
-        // The request value will be 'on' if the checkbox is checked, otherwise it won't be sent or we default it to 'off'
-        $restriksiKelasVal = $request->has('restriksi_kelas') ? 'on' : 'off';
+        $restriksiKelasVal = ($request->input('restriksi_kelas') === 'on' || $request->has('restriksi_kelas')) ? 'on' : 'off';
 
         Setting::updateOrCreate(
             ['key' => 'restriksi_kelas'],
             ['value' => $restriksiKelasVal]
         );
+
+        $statusText = $restriksiKelasVal === 'on' ? 'AKTIF (Siswa Bisa Edit)' : 'NONAKTIF (Read-Only)';
+        if (auth()->check()) {
+            activity()
+                ->causedBy(auth()->user())
+                ->log("Mengubah pengaturan restriksi kelas siswa menjadi: {$statusText}");
+        }
 
         return redirect()->back()->with('success', 'Pengaturan restriksi kelas berhasil diperbarui.');
     }

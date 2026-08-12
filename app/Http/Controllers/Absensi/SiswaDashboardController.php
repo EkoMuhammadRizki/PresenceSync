@@ -125,17 +125,22 @@ class SiswaDashboardController extends Controller
         }
 
         $request->validate([
-            'nik_ayah'       => 'nullable|string|max:20',
+            'nik_ayah'       => 'nullable|regex:/^[0-9]+$/|max:16',
             'nama_ayah'      => 'nullable|string|max:255',
             'pekerjaan_ayah' => 'nullable|string|max:100',
             'pendidikan_ayah'=> 'nullable|string|max:50',
             'no_hp_ayah'     => 'nullable|string|max:20',
 
-            'nik_ibu'        => 'nullable|string|max:20',
+            'nik_ibu'        => 'nullable|regex:/^[0-9]+$/|max:16',
             'nama_ibu'       => 'nullable|string|max:255',
             'pekerjaan_ibu'  => 'nullable|string|max:100',
             'pendidikan_ibu' => 'nullable|string|max:50',
             'no_hp_ibu'      => 'nullable|string|max:20',
+        ], [
+            'nik_ayah.regex' => 'NIK Ayah hanya boleh berisi angka.',
+            'nik_ayah.max'   => 'NIK Ayah maksimal 16 digit.',
+            'nik_ibu.regex'  => 'NIK Ibu hanya boleh berisi angka.',
+            'nik_ibu.max'    => 'NIK Ibu maksimal 16 digit.',
         ]);
 
         $parentId = $siswa->orang_tua_user_id ?? $user->id;
@@ -147,6 +152,20 @@ class SiswaDashboardController extends Controller
             'pendidikan_ibu', 'alamat_ibu', 'no_hp_ibu', 'penghasilan_ibu',
         ]));
         $profile->save();
+
+        // Sync nama_orang_tua & no_hp_orang_tua ke tabel siswas
+        $namaOrtu = $request->nama_ayah ?: $request->nama_ibu;
+        $noHpOrtu = $request->no_hp_ayah ?: $request->no_hp_ibu;
+        $siswaUpdates = [];
+        if ($namaOrtu) {
+            $siswaUpdates['nama_orang_tua'] = $namaOrtu;
+        }
+        if ($noHpOrtu) {
+            $siswaUpdates['no_hp_orang_tua'] = $noHpOrtu;
+        }
+        if (!empty($siswaUpdates)) {
+            $siswa->update($siswaUpdates);
+        }
 
         return redirect()->back()->with('success', 'Profil Orang Tua berhasil diperbarui.');
     }

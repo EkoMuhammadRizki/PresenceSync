@@ -49,11 +49,34 @@ class BulkDeleteController extends Controller
         try {
             if ($type === 'siswa') {
                 $siswas = Siswa::whereIn('id', $ids)->with('user')->get();
+                // Kumpulkan fingerprint IDs sebelum delete
+                $fingerprintIds = $siswas->pluck('fingerprint_id')->filter()->values()->toArray();
+
                 foreach ($siswas as $siswa) {
                     $user = $siswa->user;
                     $siswa->delete();
                     if ($user) {
                         $user->delete();
+                    }
+                }
+
+                // Hapus dari semua perangkat mesin fingerprint yang aktif & queue ADMS delete
+                if (!empty($fingerprintIds)) {
+                    foreach ($fingerprintIds as $fpId) {
+                        $admsCmd = "DATA DELETE USER PIN={$fpId}";
+                        \App\Http\Controllers\Absensi\AdmsController::queueCommand($admsCmd);
+                    }
+                    try {
+                        $service = app(\App\Services\FingerprintService::class);
+                        $activeDevices = \App\Models\FingerprintDevice::where('is_aktif', true)->get();
+                        foreach ($activeDevices as $dev) {
+                            foreach ($fingerprintIds as $fpId) {
+                                $service->deleteUser($dev, (string) $fpId);
+                            }
+                            $service->refreshDB($dev);
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("Bulk delete fingerprint error: " . $e->getMessage());
                     }
                 }
             } elseif ($type === 'pengguna') {
