@@ -63,10 +63,10 @@ class Menu extends \App\Core\Menu
             
             $isSiswa = \App\Models\Siswa::where('user_id', $user->id)->exists();
             if (!$isSiswa) {
-                $isKesiswaan = $user->hasRole('kesiswaan');
-                $isOrangTua  = $user->hasRole('orang_tua');
+                $isKesiswaan = ($checkRole && $user->hasRole('kesiswaan')) || ($user->role === 'kesiswaan');
+                $isOrangTua  = ($checkRole && $user->hasRole('orang_tua')) || ($user->role === 'orang_tua');
                 $isGuru      = \App\Models\Guru::where('user_id', $user->id)->exists();
-                $isAdmin     = $user->hasRole('admin');
+                $isAdmin     = ($checkRole && $user->hasRole('admin')) || in_array($user->role ?? '', ['admin', 'superadmin']) || (!$isKesiswaan && !$isOrangTua && !$isGuru);
             }
         }
 
@@ -176,10 +176,16 @@ class Menu extends \App\Core\Menu
                     continue;
                 }
             } else {
-                // Admin or fallback: hide student-only dashboard items
-                if (isset($value['path']) && in_array($value['path'], ['absensi/siswa/dashboard', 'absensi/siswa/kehadiran-mp', 'absensi/siswa/pengaduan'])) {
-                    unset($array[$key]);
-                    continue;
+                // Admin role: Keep absensi/dashboard and non-student/guru items
+                if (isset($value['path'])) {
+                    if ($value['path'] === 'absensi/dashboard') {
+                        // Always keep main Dashboard for Admin
+                        continue;
+                    }
+                    if (in_array($value['path'], ['absensi/siswa/dashboard', 'absensi/guru/dashboard', 'absensi/siswa/kehadiran-mp', 'absensi/siswa/pengaduan', 'absensi/guru/kelas-wali', 'absensi/guru/pengaduan', 'absensi/siswa/profil', 'absensi/siswa/kehadiran'])) {
+                        unset($array[$key]);
+                        continue;
+                    }
                 }
                 
                 // If it is a structural element, clean up recursively
@@ -197,9 +203,16 @@ class Menu extends \App\Core\Menu
                 continue;
             }
 
-            if (!$isSiswa && !$isGuru && $checkRole && isset($value['role']) && !$user->hasAnyRole((array) $value['role'])) {
-                unset($array[$key]);
-                continue;
+            if (!$isSiswa && !$isGuru && isset($value['role'])) {
+                $allowedRoles = (array) $value['role'];
+                $hasRole = ($checkRole && $user->hasAnyRole($allowedRoles))
+                    || in_array($user->role ?? '', $allowedRoles)
+                    || ($isAdmin && in_array('admin', $allowedRoles));
+
+                if (!$hasRole) {
+                    unset($array[$key]);
+                    continue;
+                }
             }
 
             if (is_array($value)) {
