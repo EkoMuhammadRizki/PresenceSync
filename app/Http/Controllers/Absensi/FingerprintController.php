@@ -247,11 +247,21 @@ class FingerprintController extends Controller
      */
     public function logsView(Request $request)
     {
-        // Auto Sync langsung dari mesin fisik sebelum render halaman agar log scan terbaru langsung tampil
+        // Auto Sync dari mesin fisik (jika terjangkau)
         try {
             $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
             foreach ($activeDevices as $dev) {
                 $this->service->syncAndProcess($dev);
+            }
+        } catch (\Throwable $e) {}
+
+        // Proses log ADMS yang masih pending & fix status verifikasi ke Sidik Jari (1)
+        try {
+            FingerprintSyncLog::where('verified', 0)->update(['verified' => 1]);
+
+            $pendingLogs = FingerprintSyncLog::where('is_processed', false)->get();
+            foreach ($pendingLogs as $pLog) {
+                $this->service->processSyncLog($pLog);
             }
         } catch (\Throwable $e) {}
 

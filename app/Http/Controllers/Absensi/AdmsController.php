@@ -104,9 +104,14 @@ class AdmsController extends Controller
                             'fingerprint_uid'       => $pin,
                             'scan_time'             => $scanTime,
                         ], [
-                            'verified'     => $verifiedCode,
+                            'verified'     => 1,
                             'is_processed' => false,
                         ]);
+
+                        // Jika record lama memiliki verified = 0, update ke 1
+                        if ($log->verified == 0) {
+                            $log->update(['verified' => 1]);
+                        }
 
                         if ($log->wasRecentlyCreated || !$log->is_processed) {
                             $this->fingerprintService->processSyncLog($log);
