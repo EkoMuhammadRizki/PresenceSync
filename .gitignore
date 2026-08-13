@@ -41,3 +41,8 @@ _deploy_patch/
 _deploy_patch_full/
 _temp_final_fix/
 _temp_solusi/
+
+# File yang dihasilkan oleh switch_backup.bat (berisi data lokal server)
+.backup_log.txt
+.env_backup_url.txt
+presencesync_backup_*.sql
