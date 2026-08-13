@@ -25,6 +25,7 @@
 /vendor
 .env
 .env.backup
+# .env.production sengaja TIDAK di-ignore (template untuk server sekolah)
 .phpunit.result.cache
 docker-compose.override.yml
 Homestead.json
