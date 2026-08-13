@@ -21,27 +21,56 @@
 
 ## 1. Gambaran Arsitektur
 
-```
-┌─────────────────────────────────────────────────────┐
-│              JARINGAN LAN SEKOLAH                   │
-│                                                     │
-│  ┌──────────────┐     HTTP/LAN    ┌───────────────┐ │
-│  │   Komputer   │ ◄────────────── │  Server       │ │
-│  │   Guru/Staff │                 │  Windows 10   │ │
-│  └──────────────┘                 │               │ │
-│                                   │  Laragon      │ │
-│  ┌──────────────┐     HTTP/LAN    │  ├─ Apache    │ │
-│  │   Komputer   │ ◄────────────── │  ├─ MySQL     │ │
-│  │   Siswa      │                 │  └─ PHP 8.x   │ │
-│  └──────────────┘                 │               │ │
-│                                   │  PresenceSync │ │
-│  ┌──────────────┐   ADMS/TCP      │  (Laravel)    │ │
-│  │   Mesin      │ ──────────────► │               │ │
-│  │ Fingerprint  │                 └───────────────┘ │
-│  └──────────────┘                                   │
-└─────────────────────────────────────────────────────┘
+### Kondisi Normal — Shared Hosting (Sistem Utama)
 
-URL Akses: http://192.168.x.x/presencesync/public
+```
+                        INTERNET
+                           │
+   ┌───────────────────────▼────────────────────────┐
+   │            SHARED HOSTING (UTAMA)              │
+   │         https://presencesync.domain.com        │
+   │                  PHP + MySQL                   │
+   └───────────────────────┬────────────────────────┘
+                           │ ADMS/HTTP
+              ┌────────────▼───────────┐
+              │    Mesin Fingerprint   │
+              └────────────────────────┘
+```
+
+### Kondisi Darurat — Server Sekolah (Backup)
+
+> Digunakan **hanya jika** shared hosting error / tidak bisa diakses.
+
+```
+   ┌───────────────────────────────────────────────────┐
+   │               JARINGAN LAN SEKOLAH                │
+   │                                                   │
+   │   Mesin Fingerprint                               │
+   │   ┌─────────────┐  ADMS/TCP  ┌─────────────────┐ │
+   │   │   Absensi   │ ─────────► │  Server Sekolah │ │
+   │   │ Fingerprint │            │  Windows 10      │ │
+   │   └─────────────┘            │                 │ │
+   │                              │  Laragon        │ │
+   │                              │  ├─ Apache      │ │
+   │                              │  ├─ MySQL       │ │
+   │                              │  └─ PHP 8.x     │ │
+   │                              │                 │ │
+   │                              │  PresenceSync   │ │
+   │                              │  (Laravel)      │ │
+   │                              └─────────────────┘ │
+   └───────────────────────────────────────────────────┘
+
+URL Backup: http://[IP-SERVER]/presencesync/public
+```
+
+### Ringkasan Peran
+
+| | Shared Hosting | Server Sekolah |
+|---|---|---|
+| **Peran** | ✅ Sistem Utama | 🔁 Backup / Fallback |
+| **Kapan dipakai** | Setiap hari | Saat hosting error |
+| **Akses** | Internet (domain) | LAN sekolah (IP) |
+| **ADMS Fingerprint** | Point ke domain | Point ke IP server |
 ```
 
 ---
@@ -271,24 +300,31 @@ Buka dengan Notepad → `Ctrl+F` → cari kata `ERROR` atau `CRITICAL`
 
 ## 8. FAQ
 
-**Q: Apakah harus tetap buka Command Prompt agar sistem jalan?**  
-A: **Tidak.** Laragon yang menjalankan sistem otomatis di background. Tidak perlu terminal terbuka.
+**Q: Kapan server sekolah ini digunakan?**  
+A: Server sekolah adalah **backup**. Digunakan hanya saat shared hosting error atau tidak bisa diakses. Dalam kondisi normal, sistem berjalan di shared hosting (online).
 
-**Q: Apakah server harus selalu terhubung internet?**  
-A: **Tidak**, sistem bisa berjalan offline di LAN sekolah. Internet hanya dibutuhkan saat pertama deploy dan saat update.
+**Q: Bagaimana cara beralih ke server sekolah saat hosting error?**  
+A: Masuk ke pengaturan mesin fingerprint → ubah URL ADMS dari domain hosting ke IP server sekolah. Setelah hosting normal kembali, ubah balik ke domain.
+
+**Q: Apakah data absensi di server sekolah akan sinkron dengan hosting?**  
+A: **Tidak otomatis.** Saat beralih ke backup, data tersimpan di database lokal server sekolah. Setelah hosting pulih, data perlu di-export dan di-import manual ke hosting (via phpMyAdmin).
+
+**Q: Apakah harus tetap buka Command Prompt agar sistem jalan?**  
+A: **Tidak.** Laragon menjalankan sistem otomatis di background. Tidak perlu terminal terbuka.
+
+**Q: Apakah server sekolah harus selalu terhubung internet?**  
+A: **Tidak.** Justru tujuannya bisa jalan tanpa internet (offline LAN). Internet hanya dibutuhkan saat pertama deploy dan saat update (`update.bat`).
 
 **Q: Bagaimana jika IP server berubah?**  
-A: Edit file `.env` di server (ubah `APP_URL`), lalu jalankan `maintenance.bat` → menu [4] untuk rebuild cache. Update juga konfigurasi ADMS di mesin fingerprint.
+A: Edit file `.env` (ubah `APP_URL`), lalu jalankan `maintenance.bat` → menu **[4]**. Update juga URL ADMS di mesin fingerprint.
 
 **Q: Bagaimana jika Laragon tidak auto-start setelah restart Windows?**  
 A: Buka Laragon → klik kanan ikon di system tray → **Preferences** → centang **"Run Laragon on Windows startup"**.
 
-**Q: Bolehkah server digunakan untuk hal lain (browsing, kerja)?**  
-A: Boleh, tapi sebaiknya server **dedicated** hanya untuk sistem PresenceSync agar stabil dan tidak kena virus.
-
-**Q: Bagaimana cara tambah user admin baru?**  
-A: Login ke sistem → menu Users → tambah user baru dengan role Admin.
+**Q: Apakah komputer server boleh dipakai untuk hal lain?**  
+A: Boleh, tapi sebaiknya **tidak** — agar performa stabil dan tidak kena virus yang bisa merusak data.
 
 ---
 
 *Untuk bantuan teknis, hubungi developer: **Eko Muhammad Rizki***
+
