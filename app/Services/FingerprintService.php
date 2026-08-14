@@ -505,7 +505,7 @@ class FingerprintService
             if ($aturanJam) {
                 $jamMasukDevice  = Carbon::createFromFormat('H:i:s', $scanTime);
                 $jamMasukAturan  = Carbon::createFromFormat('H:i:s', $aturanJam->jam_masuk);
-                $batasLate       = $jamMasukAturan->copy()->addMinutes($aturanJam->toleransi_keterlambatan ?? 0);
+                $batasLate       = $jamMasukAturan->copy(); // toleransi dihapus
 
                 if ($jamMasukDevice->gt($batasLate)) {
                     $status = 'terlambat';
@@ -536,7 +536,14 @@ class FingerprintService
                     activity()->log("Melakukan presensi masuk (fingerprint): {$siswa->nama}");
                 }
             } elseif ($scanTime > $kehadiran->jam_masuk) {
-                $kehadiran->update(['jam_pulang' => $scanTime]);
+                $batasAwalPulang = $aturanJam ? ($aturanJam->batas_awal_pulang ?? 0) : 0;
+                $jamMasukLog = Carbon::createFromFormat('H:i:s', $kehadiran->jam_masuk);
+                $jamScan = Carbon::createFromFormat('H:i:s', $scanTime);
+                $jamBatasPulang = $jamMasukLog->copy()->addMinutes($batasAwalPulang);
+
+                if ($jamScan->gte($jamBatasPulang)) {
+                    $kehadiran->update(['jam_pulang' => $scanTime]);
+                }
             }
 
             $syncLog->update([

@@ -46,3 +46,6 @@ _temp_solusi/
 .backup_log.txt
 .env_backup_url.txt
 presencesync_backup_*.sql
+
+patch_aturan_jam/
+patch_aturan_jam.zip

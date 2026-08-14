@@ -278,7 +278,7 @@ class FingerprintController extends Controller
         $search    = $request->input('search');
         $dateRange = $request->input('date_range');
 
-        $query = FingerprintSyncLog::with(['device'])
+        $query = FingerprintSyncLog::with(['device', 'kehadiran'])
             ->orderByDesc('scan_time');
 
         if ($deviceId) {

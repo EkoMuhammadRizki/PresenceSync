@@ -58,8 +58,7 @@
                     </th>
                     <th class="min-w-150px">Hari</th>
                     <th class="min-w-120px">Jam Masuk</th>
-                    <th class="min-w-120px">Toleransi (Menit)</th>
-                    <th class="min-w-120px">Jam Pulang</th>
+                    <th class="min-w-150px">Batas Absen Pulang</th>
                     <th class="min-w-100px">Status Aktif</th>
                     <th class="text-end min-w-70px">Aksi</th>
                 </tr>
@@ -76,8 +75,14 @@
                         <strong>{{ $item->hari ?? '-' }}</strong>
                     </td>
                     <td>{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}</td>
-                    <td>{{ $item->toleransi_keterlambatan }} menit</td>
-                    <td>{{ \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') }}</td>
+                    @php
+                        $batasJam = floor($item->batas_awal_pulang / 60);
+                        $batasMenit = $item->batas_awal_pulang % 60;
+                        $batasText = [];
+                        if ($batasJam > 0) $batasText[] = $batasJam . ' jam';
+                        if ($batasMenit > 0 || empty($batasText)) $batasText[] = $batasMenit . ' menit';
+                    @endphp
+                    <td>{{ implode(' ', $batasText) }} setelah masuk</td>
                     <td>
                         @if ($item->is_aktif)
                             <span class="badge badge-light-success fw-bolder">Aktif</span>
@@ -95,8 +100,7 @@
                                    data-id="{{ $item->id }}"
                                    data-hari="{{ $item->hari }}"
                                    data-masuk="{{ \Carbon\Carbon::parse($item->jam_masuk)->format('H:i') }}"
-                                   data-toleransi="{{ $item->toleransi_keterlambatan }}"
-                                   data-pulang="{{ \Carbon\Carbon::parse($item->jam_pulang)->format('H:i') }}"
+                                   data-batas="{{ $item->batas_awal_pulang }}"
                                    data-aktif="{{ $item->is_aktif ? '1' : '0' }}">
                                     Ubah
                                 </a>
@@ -137,19 +141,18 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Jam Masuk</label>
-                            <input type="time" name="jam_masuk" class="form-control form-control-solid" required />
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Toleransi (Menit)</label>
-                            <input type="number" name="toleransi_keterlambatan" class="form-control form-control-solid" value="15" min="0" required />
-                        </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Jam Masuk</label>
+                        <input type="time" name="jam_masuk" class="form-control form-control-solid" required />
                     </div>
                     <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Jam Pulang</label>
-                        <input type="time" name="jam_pulang" class="form-control form-control-solid" required />
+                        <label class="required fw-bold fs-6 mb-2">Batas Awal Absen Pulang</label>
+                        <div class="d-flex align-items-center">
+                            <input type="number" name="batas_awal_pulang_jam" class="form-control form-control-solid me-2" value="2" min="0" required placeholder="Jam" title="Jam" />
+                            <span class="me-4 fw-bold">Jam</span>
+                            <input type="number" name="batas_awal_pulang_menit" class="form-control form-control-solid me-2" value="0" min="0" required placeholder="Menit" title="Menit" />
+                            <span class="fw-bold">Menit</span>
+                        </div>
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
@@ -189,19 +192,18 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="row g-9 mb-7">
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Jam Masuk</label>
-                            <input type="time" name="jam_masuk" class="form-control form-control-solid" required />
-                        </div>
-                        <div class="col-md-6 fv-row">
-                            <label class="required fw-bold fs-6 mb-2">Toleransi (Menit)</label>
-                            <input type="number" name="toleransi_keterlambatan" class="form-control form-control-solid" min="0" required />
-                        </div>
+                    <div class="fv-row mb-7">
+                        <label class="required fw-bold fs-6 mb-2">Jam Masuk</label>
+                        <input type="time" name="jam_masuk" class="form-control form-control-solid" required />
                     </div>
                     <div class="fv-row mb-7">
-                        <label class="required fw-bold fs-6 mb-2">Jam Pulang</label>
-                        <input type="time" name="jam_pulang" class="form-control form-control-solid" required />
+                        <label class="required fw-bold fs-6 mb-2">Batas Awal Absen Pulang</label>
+                        <div class="d-flex align-items-center">
+                            <input type="number" name="batas_awal_pulang_jam" class="form-control form-control-solid me-2" min="0" required placeholder="Jam" title="Jam" />
+                            <span class="me-4 fw-bold">Jam</span>
+                            <input type="number" name="batas_awal_pulang_menit" class="form-control form-control-solid me-2" min="0" required placeholder="Menit" title="Menit" />
+                            <span class="fw-bold">Menit</span>
+                        </div>
                     </div>
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Status Aktif</label>
@@ -229,7 +231,7 @@ $(document).ready(function() {
         order:[], 
         pageLength:5, 
         lengthChange:true, 
-        columnDefs:[{orderable:false,targets:[0,6]}] 
+        columnDefs:[{orderable:false,targets:[0,5]}] 
     });
 
     // Re-init Metronic menu instances on table redraw (pagination, search, sort)
@@ -245,16 +247,20 @@ $(document).ready(function() {
         var id = $(this).data('id');
         var hari = $(this).data('hari');
         var masuk = $(this).data('masuk');
-        var toleransi = $(this).data('toleransi');
-        var pulang = $(this).data('pulang');
+        var batas = $(this).data('batas');
         var aktif = $(this).data('aktif');
         
         var form = $('#modal_ubah_jam form');
         form.attr('action', '{{ url("absensi/master/aturan-jam") }}/' + id);
         form.find('select[name="hari"]').val(hari).trigger('change');
         form.find('input[name="jam_masuk"]').val(masuk);
-        form.find('input[name="toleransi_keterlambatan"]').val(toleransi);
-        form.find('input[name="jam_pulang"]').val(pulang);
+        
+        var batasTotal = parseInt(batas) || 0;
+        var batasJam = Math.floor(batasTotal / 60);
+        var batasMenit = batasTotal % 60;
+        form.find('input[name="batas_awal_pulang_jam"]').val(batasJam);
+        form.find('input[name="batas_awal_pulang_menit"]').val(batasMenit);
+        
         form.find('select[name="is_aktif"]').val(aktif).trigger('change');
         
         $('#modal_ubah_jam').modal('show');

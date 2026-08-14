@@ -1036,6 +1036,7 @@ class SiswaDashboardController extends Controller
                 'is_libur' => $isWeekend,
                 'msk_lbr' => '',
                 'msk_jam' => '',
+                'plg_jam' => '',
                 'keterangan' => '',
                 'status' => ''
             ];
@@ -1052,6 +1053,7 @@ class SiswaDashboardController extends Controller
                     if (in_array($record->status, ['hadir', 'terlambat'])) {
                         $row['msk_lbr'] = '✓';
                         $row['msk_jam'] = $record->jam_masuk ? Carbon::parse($record->jam_masuk)->format('H:i:s') : '';
+                        $row['plg_jam'] = $record->jam_pulang ? Carbon::parse($record->jam_pulang)->format('H:i:s') : '';
 
                         if ($record->status === 'terlambat') {
                             $row['keterangan'] = 'Terlambat';

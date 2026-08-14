@@ -25,7 +25,7 @@ class SiswaController extends Controller
         $siswaUserIds = Siswa::pluck('user_id')->filter()->toArray();
         $users = User::whereNotIn('id', $siswaUserIds)->orderBy('email')->get();
         
-        $unpushedCount = Siswa::where('is_pushed', false)->count();
+        $unpushedCount = Siswa::where('is_pushed', false)->where('status', 'aktif')->count();
 
         return view('pages.absensi.siswa', compact('siswas', 'kelas', 'users', 'unpushedCount'));
     }
@@ -116,6 +116,7 @@ class SiswaController extends Controller
         ]);
 
         $oldFingerprintId = (string) $siswa->fingerprint_id;
+        $oldStatus = $siswa->status;
 
         $siswa->update($request->only(
             'nama', 'nisn', 'nis', 'kelas_id', 'jenis_kelamin', 'tanggal_lahir', 'alamat', 'status'
@@ -125,8 +126,56 @@ class SiswaController extends Controller
             ? (string) $request->fingerprint_id
             : (empty($siswa->fingerprint_id) ? (string) $siswa->id : (string) $siswa->fingerprint_id);
 
-        // Jika fingerprint_id berubah, hapus PIN lama dari seluruh device aktif
-        if (!empty($oldFingerprintId) && $oldFingerprintId !== $newFingerprintId) {
+        $newStatus = $siswa->status;
+
+        // Kondisi 1: Status baru adalah 'lulus' atau 'keluar' (wajib dihapus dari mesin)
+        if ($newStatus === 'lulus' || $newStatus === 'keluar') {
+            $siswa->update([
+                'fingerprint_id' => $newFingerprintId,
+                'is_enrolled'    => false,
+                'is_pushed'      => true, // Ditandai true agar tidak dianggap "Perlu Post" di UI
+            ]);
+
+            // Queue perintah ADMS untuk menghapus user
+            if (!empty($oldFingerprintId)) {
+                $admsCmd = "DATA DELETE USER PIN={$oldFingerprintId}";
+                \App\Http\Controllers\Absensi\AdmsController::queueCommand($admsCmd);
+            }
+
+            // Hapus dari perangkat aktif via SDK
+            try {
+                $service = app(\App\Services\FingerprintService::class);
+                $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
+                foreach ($activeDevices as $dev) {
+                    if (!empty($oldFingerprintId)) {
+                        $service->deleteUser($dev, $oldFingerprintId);
+                    }
+                    $service->refreshDB($dev);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Edit siswa (lulus/keluar) delete device error: " . $e->getMessage());
+            }
+        }
+        // Kondisi 2: Status berubah dari 'lulus'/'keluar' ke 'aktif'
+        elseif (($oldStatus === 'lulus' || $oldStatus === 'keluar') && $newStatus === 'aktif') {
+            $siswa->update([
+                'fingerprint_id' => $newFingerprintId,
+                'is_enrolled'    => false,
+                'is_pushed'      => false,
+            ]);
+
+            // Otomatis push ulang ke perangkat
+            $this->autoPushFingerprintToDevices($siswa);
+        }
+        // Kondisi 3: Status tetap aktif, tapi fingerprint_id berubah
+        elseif ($oldFingerprintId !== $newFingerprintId && !empty($oldFingerprintId) && $newStatus === 'aktif') {
+            $siswa->update([
+                'fingerprint_id' => $newFingerprintId,
+                'is_enrolled'    => false,
+                'is_pushed'      => false,
+            ]);
+
+            // Hapus fingerprint_id lama dari device
             try {
                 $service = app(\App\Services\FingerprintService::class);
                 $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
@@ -135,13 +184,18 @@ class SiswaController extends Controller
                     $service->refreshDB($dev);
                 }
             } catch (\Throwable $e) {}
+
+            // Auto push ID baru
+            $this->autoPushFingerprintToDevices($siswa);
+        }
+        // Kondisi 4: Update data biasa (tetap aktif, detail berubah)
+        else {
+            $siswa->update([
+                'fingerprint_id' => $newFingerprintId,
+                'is_pushed'      => false,
+            ]);
         }
 
-        // Tandai is_pushed = false agar ke-flag untuk di-post ulang ke mesin
-        $siswa->update([
-            'fingerprint_id' => $newFingerprintId,
-            'is_pushed'      => false,
-        ]);
 
         // Update nama user terkait
         if ($siswa->user) {
@@ -436,6 +490,8 @@ class SiswaController extends Controller
      */
     public function pushToDevices(Request $request)
     {
+        set_time_limit(0); // Prevent timeout when pushing to multiple devices
+
         $devices = FingerprintDevice::where('is_aktif', true)->get();
 
         if ($devices->isEmpty()) {
@@ -448,7 +504,8 @@ class SiswaController extends Controller
         }
 
         $query = Siswa::whereNotNull('fingerprint_id')
-            ->where('fingerprint_id', '!=', '');
+            ->where('fingerprint_id', '!=', '')
+            ->where('status', 'aktif');
 
         if (!empty($selectedIds) && is_array($selectedIds)) {
             $query->whereIn('id', $selectedIds);
@@ -511,7 +568,7 @@ class SiswaController extends Controller
      */
     protected function autoPushFingerprintToDevices(Siswa $siswa)
     {
-        if (empty($siswa->fingerprint_id)) {
+        if (empty($siswa->fingerprint_id) || $siswa->status !== 'aktif') {
             return;
         }
 
@@ -557,7 +614,7 @@ class SiswaController extends Controller
         Siswa::whereIn('id', $ids)->update([
             'status'      => 'lulus',
             'is_enrolled' => false,
-            'is_pushed'   => false,
+            'is_pushed'   => true, // Tandai true agar tidak muncul di daftar unpushed/Perlu Post
         ]);
 
         // Hapus dari seluruh perangkat mesin fingerprint yang aktif & queue ADMS delete
@@ -602,7 +659,7 @@ class SiswaController extends Controller
         $siswa->update([
             'status'      => 'keluar',
             'is_enrolled' => false,
-            'is_pushed'   => false,
+            'is_pushed'   => true, // Tandai true agar tidak muncul di daftar unpushed/Perlu Post
         ]);
 
         if (!empty($siswa->fingerprint_id)) {

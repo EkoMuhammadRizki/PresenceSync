@@ -154,7 +154,9 @@
                             @if($item->fingerprint_id)
                                 <div class="d-flex align-items-center gap-1">
                                     <span class="badge badge-light-primary fw-boldest fs-7">ID: {{ $item->fingerprint_id }}</span>
-                                    @if($item->is_pushed)
+                                    @if(strtolower($item->status ?? 'aktif') !== 'aktif')
+                                        <span class="badge badge-light-secondary text-gray-500 fw-bold fs-8" title="Siswa tidak aktif di mesin">Tidak Aktif</span>
+                                    @elseif($item->is_pushed)
                                         <span class="badge badge-light-success fw-bold fs-8" title="Nama & ID sudah ter-sync ke mesin">Ter-sync</span>
                                     @else
                                         <span class="badge badge-light-warning fw-bold fs-8" title="Data baru/diubah, perlu di-POST ulang ke mesin">Perlu Post</span>

@@ -145,6 +145,16 @@
 </style>
 @endpush
 
+        {{-- ==================== SYNC DATABASE BUTTON (ADMIN ONLY) ==================== --}}
+        @if(auth()->user() && auth()->user()->hasRole('admin'))
+        <div class="d-flex justify-content-end mb-5">
+            <button type="button" id="btn-sync-database" class="btn btn-sm btn-warning fw-bold" onclick="confirmSyncDatabase()">
+                <i class="bi bi-cloud-upload me-2"></i>
+                <span id="sync-btn-text">Sinkronkan DB ke Hosting</span>
+            </button>
+        </div>
+        @endif
+
         <!-- ==================== ROW 1: TOP STATISTICS CARDS ==================== -->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-5 mb-8">
             
@@ -1123,6 +1133,80 @@
             window.fetchGuruTrendData();
         }
     });
+
+    // ==================== SYNC DATABASE TO HOSTING ====================
+    function confirmSyncDatabase() {
+        Swal.fire({
+            title: 'Sinkronkan Database ke Hosting?',
+            html: `
+                <div class="text-start">
+                    <p class="text-gray-700 mb-3">Proses ini akan <strong>menimpa seluruh database hosting</strong> dengan data dari lokal.</p>
+                    <div class="alert alert-warning d-flex align-items-center p-4">
+                        <i class="bi bi-exclamation-triangle-fill fs-3 text-warning me-3"></i>
+                        <div class="text-warning fw-bold fs-7">Pastikan Anda yakin! Data hosting yang tidak ada di lokal akan hilang.</div>
+                    </div>
+                </div>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-cloud-upload me-1"></i> Ya, Sinkronkan Sekarang!',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#f59e0b',
+            cancelButtonColor: '#6c757d',
+            reverseButtons: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                startSyncDatabase();
+            }
+        });
+    }
+
+    function startSyncDatabase() {
+        const btn = document.getElementById('btn-sync-database');
+        const btnText = document.getElementById('sync-btn-text');
+
+        // Loading state
+        btn.disabled = true;
+        btnText.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Menyinkronkan...';
+
+        fetch('{{ route("sync.send-to-hosting") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="bi bi-cloud-upload me-2"></i>Sinkronkan DB ke Hosting';
+
+            if (data.success) {
+                Swal.fire({
+                    title: 'Berhasil! 🎉',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonText: 'Oke',
+                    confirmButtonColor: '#50cd89',
+                });
+            } else {
+                Swal.fire({
+                    title: 'Sinkronisasi Gagal',
+                    html: `<p>${data.message}</p>${data.detail ? '<pre class="text-start fs-8 text-danger bg-light p-3 rounded mt-3" style="max-height:150px;overflow:auto">' + data.detail + '</pre>' : ''}`,
+                    icon: 'error',
+                    confirmButtonText: 'Tutup',
+                });
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="bi bi-cloud-upload me-2"></i>Sinkronkan DB ke Hosting';
+            Swal.fire({
+                title: 'Koneksi Gagal',
+                text: 'Tidak dapat terhubung ke server. Pastikan koneksi internet Anda aktif.',
+                icon: 'error',
+            });
+        });
+    }
 </script>
 @endpush
 

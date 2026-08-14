@@ -19,15 +19,15 @@ class AturanJamController extends Controller
         $request->validate([
             'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'jam_masuk'               => 'required',
-            'toleransi_keterlambatan' => 'required|integer|min:0',
-            'jam_pulang'              => 'required',
+            'batas_awal_pulang_jam'   => 'required|integer|min:0',
+            'batas_awal_pulang_menit' => 'required|integer|min:0',
             'is_aktif'                => 'required|in:0,1',
         ], [
             'hari.required'                    => 'Hari wajib dipilih.',
             'hari.in'                          => 'Hari tidak valid.',
             'jam_masuk.required'               => 'Jam masuk wajib diisi.',
-            'toleransi_keterlambatan.required'  => 'Toleransi keterlambatan wajib diisi.',
-            'jam_pulang.required'              => 'Jam pulang wajib diisi.',
+            'batas_awal_pulang_jam.required'   => 'Jam batas awal absen pulang wajib diisi.',
+            'batas_awal_pulang_menit.required' => 'Menit batas awal absen pulang wajib diisi.',
         ]);
 
         $isAktif = (bool) $request->is_aktif;
@@ -39,8 +39,7 @@ class AturanJamController extends Controller
         AturanJam::create([
             'hari'                    => $request->hari,
             'jam_masuk'               => $request->jam_masuk,
-            'toleransi_keterlambatan' => $request->toleransi_keterlambatan,
-            'jam_pulang'              => $request->jam_pulang,
+            'batas_awal_pulang'       => ($request->batas_awal_pulang_jam * 60) + $request->batas_awal_pulang_menit,
             'is_aktif'                => $isAktif,
         ]);
 
@@ -53,8 +52,8 @@ class AturanJamController extends Controller
         $request->validate([
             'hari'                    => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'jam_masuk'               => 'required',
-            'toleransi_keterlambatan' => 'required|integer|min:0',
-            'jam_pulang'              => 'required',
+            'batas_awal_pulang_jam'   => 'required|integer|min:0',
+            'batas_awal_pulang_menit' => 'required|integer|min:0',
             'is_aktif'                => 'required|in:0,1',
         ]);
 
@@ -69,8 +68,7 @@ class AturanJamController extends Controller
         $aturanJam->update([
             'hari'                    => $request->hari,
             'jam_masuk'               => $request->jam_masuk,
-            'toleransi_keterlambatan' => $request->toleransi_keterlambatan,
-            'jam_pulang'              => $request->jam_pulang,
+            'batas_awal_pulang'       => ($request->batas_awal_pulang_jam * 60) + $request->batas_awal_pulang_menit,
             'is_aktif'                => $isAktif,
         ]);
 

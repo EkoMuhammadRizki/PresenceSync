@@ -92,7 +92,13 @@ class PenggunaController extends Controller
             'role.required'     => 'Peran wajib dipilih.',
         ]);
 
-        $nameParts = explode('.', trim($request->username), 2);
+        $username = trim($request->username);
+        if ($pengguna->siswa || $pengguna->guru) {
+            $usernameSpace = str_replace('.', ' ', $username);
+            $nameParts = explode(' ', $usernameSpace, 2);
+        } else {
+            $nameParts = explode('.', $username, 2);
+        }
         $firstName = $nameParts[0];
         $lastName  = $nameParts[1] ?? $nameParts[0];
 

@@ -15,6 +15,10 @@ Route::post('/iclock/cdata', [\App\Http\Controllers\Absensi\AdmsController::clas
 Route::get('/iclock/getrequest', [\App\Http\Controllers\Absensi\AdmsController::class, 'getRequest']);
 Route::post('/iclock/devicecmd', [\App\Http\Controllers\Absensi\AdmsController::class, 'deviceCmd']);
 
+// Database Sync Routes
+// Receiver: Dijalankan di hosting untuk menerima file SQL dari lokal (proteksi via secret key)
+Route::post('/sync/receive-database', [\App\Http\Controllers\Absensi\SyncReceiverController::class, 'receive'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 Route::get('/', function () {
     // If not logged in, go to login page for prototype
     if (!auth()->check()) {
@@ -243,3 +247,6 @@ Route::middleware('auth')->resource('users', UsersController::class);
 Route::get('/auth/redirect/{provider}', [SocialiteLoginController::class, 'redirect']);
 
 require __DIR__.'/auth.php';
+
+// Database Sync - Sender (Lokal Only, Admin Auth)
+Route::middleware('auth')->post('/sync/send-to-hosting', [\App\Http\Controllers\Absensi\DatabaseSyncController::class, 'sendToHosting'])->name('sync.send-to-hosting');

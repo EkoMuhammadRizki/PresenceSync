@@ -112,8 +112,8 @@ test('creating a student automatically list them in the user management page', f
 
     // Retrieve the user page and check that student username and email exists
     $pageResponse = $this->actingAs($admin)->get('absensi/pengguna/data');
-    $pageResponse->assertSee('eko.muhammad');
-    $pageResponse->assertSee('eko.muhammad@siswa.com');
+    $pageResponse->assertSee('Eko Muhammad');
+    $pageResponse->assertSee('12345678@siswa.internal');
     $pageResponse->assertSee('Siswa');
 });
 
@@ -135,7 +135,7 @@ test('creating a teacher automatically list them in the user management page', f
 
     // Retrieve the user page and check that teacher username and email exists
     $pageResponse = $this->actingAs($admin)->get('absensi/pengguna/data');
-    $pageResponse->assertSee('eko.guru');
+    $pageResponse->assertSee('Eko Guru');
     $pageResponse->assertSee('eko.guru@sekolah.com');
     $pageResponse->assertSee('Guru');
 });

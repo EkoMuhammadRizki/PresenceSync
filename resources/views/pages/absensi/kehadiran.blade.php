@@ -136,6 +136,7 @@
                     <th class="min-w-125px">Kelas</th>
                     <th class="min-w-125px">Tanggal</th>
                     <th class="min-w-120px">Jam Masuk</th>
+                    <th class="min-w-120px">Jam Pulang</th>
                     <th class="min-w-100px">Status</th>
                     <th class="text-end min-w-100px">Aksi</th>
                 </tr>
@@ -180,6 +181,13 @@
                     <td>
                         @if ($kh->jam_masuk)
                             <span class="badge badge-light-primary fw-bolder">{{ \Carbon\Carbon::parse($kh->jam_masuk)->format('H:i') }}</span>
+                        @else
+                            <span class="badge badge-light-secondary fw-bold">-</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if ($kh->jam_pulang)
+                            <span class="badge badge-light-info fw-bolder">{{ \Carbon\Carbon::parse($kh->jam_pulang)->format('H:i') }}</span>
                         @else
                             <span class="badge badge-light-secondary fw-bold">-</span>
                         @endif
@@ -366,7 +374,7 @@
             "lengthChange": true,
             'columnDefs': [
                 { orderable: false, targets: 0 }, // Disable order on column 0 (checkbox)
-                { orderable: false, targets: 6 }, // Disable order on column 6 (actions)
+                { orderable: false, targets: 7 }, // Disable order on column 7 (actions)
             ]
         });
 

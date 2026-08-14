@@ -163,6 +163,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getUsernameAttribute()
     {
+        if ($this->siswa) {
+            return $this->siswa->nama;
+        }
+        if ($this->guru) {
+            return $this->guru->nama;
+        }
         return strtolower(\Illuminate\Support\Str::before($this->email, '@'));
     }
 }

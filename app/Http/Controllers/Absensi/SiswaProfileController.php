@@ -345,6 +345,7 @@ class SiswaProfileController extends Controller
                 'is_libur' => $isWeekend,
                 'msk_lbr' => '',
                 'msk_jam' => '',
+                'plg_jam' => '',
                 'keterangan' => '',
             ];
 
@@ -360,6 +361,7 @@ class SiswaProfileController extends Controller
                     if (in_array($record->status, ['hadir', 'terlambat'])) {
                         $row['msk_lbr'] = '✓';
                         $row['msk_jam'] = $record->jam_masuk ? \Illuminate\Support\Carbon::parse($record->jam_masuk)->format('H:i:s') : '';
+                        $row['plg_jam'] = $record->jam_pulang ? \Illuminate\Support\Carbon::parse($record->jam_pulang)->format('H:i:s') : '';
 
                         if ($record->status === 'terlambat') {
                             $row['keterangan'] = 'Terlambat';

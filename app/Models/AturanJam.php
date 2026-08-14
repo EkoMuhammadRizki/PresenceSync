@@ -12,8 +12,7 @@ class AturanJam extends Model
     protected $fillable = [
         'hari',
         'jam_masuk',
-        'toleransi_keterlambatan',
-        'jam_pulang',
+        'batas_awal_pulang',
         'is_aktif',
     ];
 

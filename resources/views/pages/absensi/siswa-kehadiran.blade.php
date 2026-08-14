@@ -84,6 +84,7 @@
                         <th class="w-150px border-end">Tanggal</th>
                         <th class="w-80px border-end">Msk/Lbr</th>
                         <th class="w-100px border-end">Masuk Jam</th>
+                        <th class="w-100px border-end">Pulang Jam</th>
                         <th class="min-w-120px border-end">Keterangan</th>
                     </tr>
                 </thead>
@@ -103,8 +104,8 @@
                                 @else
                                     -
                                 @endif
-                            </td>
-                            <td class="text-center border-end text-danger" data-col="msk_jam">{{ $row['msk_jam'] ?: '-' }}</td>
+                            <td class="text-center border-end text-primary" data-col="msk_jam">{{ $row['msk_jam'] ?: '-' }}</td>
+                            <td class="text-center border-end text-success" data-col="plg_jam">{{ $row['plg_jam'] ?: '-' }}</td>
                             <td class="border-end" data-col="keterangan">{{ $row['keterangan'] ?: '-' }}</td>
                         </tr>
                     @endforeach

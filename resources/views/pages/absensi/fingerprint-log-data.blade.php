@@ -200,9 +200,29 @@
                                 </td>
                                 <td>
                                     @if($log->is_processed)
-                                        <span class="badge badge-light-success fw-bolder px-3 py-2">
-                                            <i class="bi bi-check-all text-success me-1"></i> Berhasil Diproses
-                                        </span>
+                                        <div class="d-flex flex-column align-items-start">
+                                            <span class="badge badge-light-success fw-bolder px-3 py-2 mb-1">
+                                                <i class="bi bi-check-all text-success me-1"></i> Berhasil Diproses
+                                            </span>
+                                            @if($log->kehadiran)
+                                                @php
+                                                    $scanTimeHims = \Carbon\Carbon::parse($log->scan_time)->format('H:i:s');
+                                                @endphp
+                                                @if($scanTimeHims == $log->kehadiran->jam_masuk)
+                                                    <span class="badge badge-light-primary fw-bolder px-3 py-2">
+                                                        <i class="bi bi-box-arrow-in-right text-primary me-1"></i> Absen Masuk
+                                                    </span>
+                                                @elseif($scanTimeHims == $log->kehadiran->jam_pulang)
+                                                    <span class="badge badge-light-info fw-bolder px-3 py-2">
+                                                        <i class="bi bi-box-arrow-right text-info me-1"></i> Absen Pulang
+                                                    </span>
+                                                @else
+                                                    <span class="badge badge-light-secondary text-muted fw-bolder px-3 py-2">
+                                                        <i class="bi bi-clock-history text-muted me-1"></i> Scan Berulang
+                                                    </span>
+                                                @endif
+                                            @endif
+                                        </div>
                                     @else
                                         <span class="badge badge-light-warning fw-bolder px-3 py-2">
                                             <i class="bi bi-hourglass-split text-warning me-1"></i> Pending

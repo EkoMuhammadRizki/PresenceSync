@@ -342,7 +342,8 @@
                                             <th class="min-w-150px border-end">Nama</th>
                                             <th class="w-150px border-end">Tanggal</th>
                                             <th class="w-80px border-end">Msk/Lbr</th>
-                                            <th class="w-120px border-end">Masuk Jam</th>
+                                            <th class="w-100px border-end">Masuk Jam</th>
+                                            <th class="w-100px border-end">Pulang Jam</th>
                                             <th class="min-w-150px border-end">Keterangan</th>
                                         </tr>
                                     </thead>
@@ -356,7 +357,8 @@
                                                 <td class="text-center border-end fw-bolder {{ $row['is_libur'] ? 'text-danger' : 'text-success' }}">
                                                     {{ $row['msk_lbr'] }}
                                                 </td>
-                                                <td class="text-center border-end">{{ $row['msk_jam'] ?: '-' }}</td>
+                                                <td class="text-center border-end text-primary">{{ $row['msk_jam'] ?: '-' }}</td>
+                                                <td class="text-center border-end text-success">{{ $row['plg_jam'] ?: '-' }}</td>
                                                 <td class="border-end">
                                                     @if($row['keterangan'] === 'Libur')
                                                         <span class="badge badge-light-danger">Libur</span>
