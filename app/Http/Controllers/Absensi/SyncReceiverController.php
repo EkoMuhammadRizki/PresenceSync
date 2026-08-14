@@ -124,8 +124,8 @@ class SyncReceiverController extends Controller
         foreach ($lines as $line) {
             $trimmed = trim($line);
 
-            // Skip komentar
-            if (str_starts_with($trimmed, '--') || str_starts_with($trimmed, '#') || empty($trimmed)) {
+            // Skip komentar (compatible with PHP 7.x)
+            if (substr($trimmed, 0, 2) === '--' || substr($trimmed, 0, 1) === '#' || empty($trimmed)) {
                 continue;
             }
 
@@ -137,8 +137,8 @@ class SyncReceiverController extends Controller
 
             $current .= $line . "\n";
 
-            // Cek apakah statement sudah selesai
-            if (str_ends_with(rtrim($trimmed), $delimiter)) {
+            // Cek apakah statement sudah selesai (compatible with PHP 7.x)
+            if (substr(rtrim($trimmed), -strlen($delimiter)) === $delimiter) {
                 // Hapus delimiter di akhir jika bukan ';'
                 if ($delimiter !== ';') {
                     $current = substr(rtrim($current), 0, -strlen($delimiter));
