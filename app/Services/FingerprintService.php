@@ -51,6 +51,9 @@ class FingerprintService
             ];
         }
 
+        // Batasi waktu baca/tulis agar fgets tidak hang jika device lambat merespons
+        stream_set_timeout($connect, $this->timeout);
+
         $newLine = "\r\n";
         fwrite($connect, "POST /iWsService HTTP/1.0" . $newLine);
         fwrite($connect, "Content-Type: text/xml" . $newLine);
@@ -59,6 +62,11 @@ class FingerprintService
 
         $buffer = '';
         while ($response = fgets($connect, 4096)) {
+            // Cek apakah stream sudah timeout
+            $meta = stream_get_meta_data($connect);
+            if ($meta['timed_out']) {
+                break;
+            }
             $buffer .= $response;
         }
         fclose($connect);

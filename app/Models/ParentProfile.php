@@ -15,6 +15,7 @@ class ParentProfile extends Model
         // Ayah
         'nik_ayah',
         'nama_ayah',
+        'tahun_lahir_ayah',
         'pekerjaan_ayah',
         'ket_pekerjaan_ayah',
         'pendidikan_ayah',
@@ -25,6 +26,7 @@ class ParentProfile extends Model
         // Ibu
         'nik_ibu',
         'nama_ibu',
+        'tahun_lahir_ibu',
         'pekerjaan_ibu',
         'ket_pekerjaan_ibu',
         'pendidikan_ibu',
@@ -36,5 +38,37 @@ class ParentProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'parent_user_id');
+    }
+
+    public function getPenghasilanAyahFormattedAttribute(): string
+    {
+        if ($this->penghasilan_ayah === null || trim((string)$this->penghasilan_ayah) === '') {
+            return '';
+        }
+        $clean = trim((string)$this->penghasilan_ayah);
+        if (str_starts_with(strtoupper($clean), 'RP')) {
+            return $clean;
+        }
+        $digits = preg_replace('/[^0-9]/', '', $clean);
+        if ($digits !== '') {
+            return 'Rp ' . number_format((float)$digits, 0, ',', '.');
+        }
+        return $clean;
+    }
+
+    public function getPenghasilanIbuFormattedAttribute(): string
+    {
+        if ($this->penghasilan_ibu === null || trim((string)$this->penghasilan_ibu) === '') {
+            return '';
+        }
+        $clean = trim((string)$this->penghasilan_ibu);
+        if (str_starts_with(strtoupper($clean), 'RP')) {
+            return $clean;
+        }
+        $digits = preg_replace('/[^0-9]/', '', $clean);
+        if ($digits !== '') {
+            return 'Rp ' . number_format((float)$digits, 0, ',', '.');
+        }
+        return $clean;
     }
 }

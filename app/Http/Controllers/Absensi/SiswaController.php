@@ -218,15 +218,29 @@ class SiswaController extends Controller
 
     public function destroy(Siswa $siswa)
     {
-        $oldFingerprintId = (string) $siswa->fingerprint_id;
-        $user = $siswa->user;
-        $siswa->delete();
+        set_time_limit(60); // Beri waktu cukup untuk komunikasi ke fingerprint device
 
+        $oldFingerprintId = (string) $siswa->fingerprint_id;
+        $namaSiswa = $siswa->nama;
+        $user = $siswa->user;
+
+        // Hapus data siswa & user dari database terlebih dahulu
+        $siswa->delete();
         if ($user) {
             $user->delete();
         }
 
+        // Coba hapus dari perangkat fingerprint & daftarkan ke antrean ADMS
         if (!empty($oldFingerprintId)) {
+            // 1. Masukkan ke antrean ADMS (jika mesin offline, saat mesin online/poll lagi akan otomatis terhapus)
+            try {
+                $admsCmd = "DATA DELETE USER PIN={$oldFingerprintId}";
+                \App\Http\Controllers\Absensi\AdmsController::queueCommand($admsCmd);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("destroy siswa ADMS queue error: " . $e->getMessage());
+            }
+
+            // 2. Coba hapus langsung via SDK/SOAP jika mesin sedang online di LAN saat ini
             try {
                 $service = app(\App\Services\FingerprintService::class);
                 $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
@@ -234,11 +248,13 @@ class SiswaController extends Controller
                     $service->deleteUser($dev, $oldFingerprintId);
                     $service->refreshDB($dev);
                 }
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("destroy siswa: gagal hapus langsung dari fingerprint device via LAN. " . $e->getMessage());
+            }
         }
 
         if (auth()->check()) {
-            activity()->causedBy(auth()->user())->log("Menghapus data siswa: {$siswa->nama}");
+            activity()->causedBy(auth()->user())->log("Menghapus data siswa: {$namaSiswa}");
         }
 
         return redirect()->route('siswa.index')
@@ -253,47 +269,112 @@ class SiswaController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Siswa');
         
-        // Headers disamakan dengan urutan tabel web: NIS | NAMA | JENIS KELAMIN | KELAS | FINGERPRINT ID
+        // Headers: Data Siswa (A-L) | Data Ayah (M-U) | Data Ibu (V-AD)
         $headers = [
+            // Data Siswa (A-L)
             'nis',
             'nama',
             'jenis_kelamin',
             'kelas',
-            'id_fingerprint',
+            'nik',
             'tempat_lahir',
             'tanggal_lahir',
+            'agama',
             'alamat',
             'no_hp',
-            'no_hp_orang_tua',
-            'status'
+            'status',
+            'asal_sekolah',
+            // Data Ayah (M-U)
+            'nik_ayah',
+            'nama_ayah',
+            'tahun_lahir_ayah',
+            'pekerjaan_ayah',
+            'ket_pekerjaan_ayah',
+            'pendidikan_ayah',
+            'alamat_ayah',
+            'no_hp_ayah',
+            'penghasilan_ayah',
+            // Data Ibu (V-AD)
+            'nik_ibu',
+            'nama_ibu',
+            'tahun_lahir_ibu',
+            'pekerjaan_ibu',
+            'ket_pekerjaan_ibu',
+            'pendidikan_ibu',
+            'alamat_ibu',
+            'no_hp_ibu',
+            'penghasilan_ibu',
         ];
         
         foreach ($headers as $colIndex => $header) {
             $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
             $sheet->setCellValue($colLetter . '1', $header);
         }
+
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+
+        // Style header: bold
+        $sheet->getStyle('A1:' . $lastColLetter . '1')->getFont()->setBold(true);
+        // Warna pemisah: Data Siswa (Biru muda), Data Ayah (Kuning muda), Data Ibu (Merah muda)
+        $sheet->getStyle('A1:L1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('DDEEFF');
+        $sheet->getStyle('M1:U1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('FFE8CC');
+        $sheet->getStyle('V1:AD1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('FFDDEE');
         
         // Populate existing students if requested (default / when not 'empty')
         if (!$request->has('empty')) {
             $siswas = Siswa::with(['kelas'])->orderBy('nama')->get();
             $rowNum = 2;
             foreach ($siswas as $siswa) {
+                // Data Siswa
                 $sheet->setCellValue('A' . $rowNum, $siswa->nis ?? '');
                 $sheet->setCellValue('B' . $rowNum, $siswa->nama);
                 $sheet->setCellValue('C' . $rowNum, $siswa->jenis_kelamin);
                 $sheet->setCellValue('D' . $rowNum, $siswa->kelas->nama ?? '');
-                $sheet->setCellValue('E' . $rowNum, $siswa->fingerprint_id ?? '');
+                $sheet->setCellValue('E' . $rowNum, $siswa->nik ?? '');
                 $sheet->setCellValue('F' . $rowNum, $siswa->tempat_lahir ?? '');
                 $sheet->setCellValue('G' . $rowNum, $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '');
-                $sheet->setCellValue('H' . $rowNum, $siswa->alamat ?? '');
-                $sheet->setCellValue('I' . $rowNum, $siswa->no_hp ?? '');
-                $sheet->setCellValue('J' . $rowNum, $siswa->no_hp_orang_tua ?? '');
+                $sheet->setCellValue('H' . $rowNum, $siswa->agama ?? '');
+                $sheet->setCellValue('I' . $rowNum, $siswa->alamat ?? '');
+                $sheet->setCellValue('J' . $rowNum, $siswa->no_hp ?? '');
                 $sheet->setCellValue('K' . $rowNum, $siswa->status ?? 'aktif');
+                $sheet->setCellValue('L' . $rowNum, $siswa->asal_sekolah ?? '');
+
+                // Data Orang Tua — ambil dari parent_profiles via user siswa
+                $parentUserId = $siswa->orang_tua_user_id ?? $siswa->user_id;
+                $parentProfile = null;
+                if ($parentUserId) {
+                    $parentProfile = \App\Models\ParentProfile::where('parent_user_id', $parentUserId)->first();
+                }
+                // Ayah
+                $sheet->setCellValue('M' . $rowNum, $parentProfile->nik_ayah ?? '');
+                $sheet->setCellValue('N' . $rowNum, $parentProfile->nama_ayah ?? '');
+                $sheet->setCellValue('O' . $rowNum, $parentProfile->tahun_lahir_ayah ?? '');
+                $sheet->setCellValue('P' . $rowNum, $parentProfile->pekerjaan_ayah ?? '');
+                $sheet->setCellValue('Q' . $rowNum, $parentProfile->ket_pekerjaan_ayah ?? '');
+                $sheet->setCellValue('R' . $rowNum, $parentProfile->pendidikan_ayah ?? '');
+                $sheet->setCellValue('S' . $rowNum, $parentProfile->alamat_ayah ?? '');
+                $sheet->setCellValue('T' . $rowNum, $parentProfile->no_hp_ayah ?? '');
+                $sheet->setCellValue('U' . $rowNum, $parentProfile->penghasilan_ayah ?? '');
+                // Ibu
+                $sheet->setCellValue('V' . $rowNum, $parentProfile->nik_ibu ?? '');
+                $sheet->setCellValue('W' . $rowNum, $parentProfile->nama_ibu ?? '');
+                $sheet->setCellValue('X' . $rowNum, $parentProfile->tahun_lahir_ibu ?? '');
+                $sheet->setCellValue('Y' . $rowNum, $parentProfile->pekerjaan_ibu ?? '');
+                $sheet->setCellValue('Z' . $rowNum, $parentProfile->ket_pekerjaan_ibu ?? '');
+                $sheet->setCellValue('AA' . $rowNum, $parentProfile->pendidikan_ibu ?? '');
+                $sheet->setCellValue('AB' . $rowNum, $parentProfile->alamat_ibu ?? '');
+                $sheet->setCellValue('AC' . $rowNum, $parentProfile->no_hp_ibu ?? '');
+                $sheet->setCellValue('AD' . $rowNum, $parentProfile->penghasilan_ibu ?? '');
+
                 $rowNum++;
             }
         }
-        
-        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
         
         // Sheet 2: Daftar Kelas (untuk referensi)
         $kelasSheet = $spreadsheet->createSheet();
@@ -354,38 +435,89 @@ class SiswaController extends Controller
             return redirect()->back()->withErrors(['error' => 'File Excel kosong atau hanya berisi header.']);
         }
         
-        $header = array_shift($rows);
+        $rawHeader = array_shift($rows);
 
-        // Validasi format template agar guru tidak diimport ke siswa
-        $column1 = isset($header[0]) ? strtolower(trim($header[0])) : '';
-        if ($column1 === 'nip' || $worksheet->getTitle() === 'Template Guru') {
+        // Buat Header Map dinamis: lowercase, trim, ganti spasi/dash dengan underscore
+        $headerMap = [];
+        foreach ($rawHeader as $index => $colName) {
+            if ($colName !== null && trim($colName) !== '') {
+                $cleanName = strtolower(trim((string)$colName));
+                $cleanName = preg_replace('/[^a-z0-9_]/', '_', str_replace([' ', '-', '.'], '_', $cleanName));
+                $cleanName = preg_replace('/_+/', '_', $cleanName);
+                $headerMap[$cleanName] = $index;
+            }
+        }
+
+        // Validasi format template
+        if (isset($headerMap['nip']) || $worksheet->getTitle() === 'Template Guru') {
             return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Guru. Silakan unggah file template Siswa yang benar.']);
         }
-        if ($column1 !== 'nis') {
-            return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Pastikan Anda menggunakan file template Siswa yang diunduh dari sistem.']);
+        if (!isset($headerMap['nis']) && !isset($headerMap['nama'])) {
+            return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Kolom "nis" dan "nama" tidak ditemukan dalam file Excel.']);
         }
+
+        // Helper untuk mengambil nilai kolom berdasarkan alias header
+        $getVal = function ($row, ...$aliases) use ($headerMap) {
+            foreach ($aliases as $alias) {
+                $cleanAlias = strtolower(trim($alias));
+                $cleanAlias = preg_replace('/[^a-z0-9_]/', '_', str_replace([' ', '-', '.'], '_', $cleanAlias));
+                $cleanAlias = preg_replace('/_+/', '_', $cleanAlias);
+                if (isset($headerMap[$cleanAlias])) {
+                    $idx = $headerMap[$cleanAlias];
+                    if (isset($row[$idx]) && $row[$idx] !== null) {
+                        $val = trim((string)$row[$idx]);
+                        if ($val !== '') {
+                            return $val;
+                        }
+                    }
+                }
+            }
+            return null;
+        };
 
         $successCount = 0;
         $skipCount = 0;
 
         foreach ($rows as $row) {
-            // Struktur kolom baru (sesuai urutan tabel web): nis(0) | nama(1) | jenis_kelamin(2) | kelas(3) | id_fingerprint(4) | tempat_lahir(5) | tanggal_lahir(6) | alamat(7) | no_hp(8) | no_hp_orang_tua(9) | status(10)
-            // Skip baris jika nama (kolom B / index 1) kosong
-            if (empty($row[1])) {
+            // Ambil data siswa
+            $nama = $getVal($row, 'nama');
+            if (empty($nama)) {
                 continue;
             }
 
-            $nis           = !empty($row[0]) ? trim($row[0]) : null;
-            $nama          = trim($row[1]);
-            $jk            = !empty($row[2]) ? strtoupper(trim($row[2])) : 'L';
-            $kelasName     = !empty($row[3]) ? trim($row[3]) : null;
-            $fingerprintId = !empty($row[4]) ? trim($row[4]) : null;
-            $tempatLahir   = !empty($row[5]) ? trim($row[5]) : null;
-            $tanggalLahirRaw = !empty($row[6]) ? trim($row[6]) : null;
-            $alamat        = !empty($row[7]) ? trim($row[7]) : null;
-            $noHp          = !empty($row[8]) ? trim($row[8]) : null;
-            $noHpOrangTua  = !empty($row[9]) ? trim($row[9]) : null;
-            $status        = !empty($row[10]) ? trim($row[10]) : 'aktif';
+            $nis          = $getVal($row, 'nis');
+            $jk           = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
+            $kelasName    = $getVal($row, 'kelas', 'nama_kelas');
+            $nik          = substr($getVal($row, 'nik', 'nik_siswa') ?? '', 0, 20) ?: null;
+            $tempatLahir  = $getVal($row, 'tempat_lahir');
+            $tanggalLahirRaw = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
+            $agama        = $getVal($row, 'agama');
+            $alamat       = $getVal($row, 'alamat', 'alamat_siswa');
+            $noHp         = substr($getVal($row, 'no_hp', 'no_telepon', 'nohp') ?? '', 0, 30) ?: null;
+            $status       = strtolower($getVal($row, 'status') ?? 'aktif');
+            $asalSekolah  = $getVal($row, 'asal_sekolah', 'sekolah_asal');
+
+            // Ambil data Ayah
+            $nikAyah          = substr($getVal($row, 'nik_ayah', 'nik_bapak') ?? '', 0, 20) ?: null;
+            $namaAyah         = substr($getVal($row, 'nama_ayah', 'nama_lengkap_ayah', 'nama_bapak') ?? '', 0, 255) ?: null;
+            $tahunLahirAyah   = substr($getVal($row, 'tahun_lahir_ayah', 'thn_lahir_ayah', 'tahun_ayah') ?? '', 0, 20) ?: null;
+            $pekerjaanAyah    = substr($getVal($row, 'pekerjaan_ayah', 'pekerjaan_bapak') ?? '', 0, 100) ?: null;
+            $ketPekerjaanAyah = substr($getVal($row, 'ket_pekerjaan_ayah', 'keterangan_pekerjaan_ayah', 'ket_pekerjaan', 'keterangan_pekerjaan') ?? '', 0, 255) ?: null;
+            $pendidikanAyah   = substr($getVal($row, 'pendidikan_ayah', 'pendidikan_terakhir_ayah', 'pendidikan_bapak') ?? '', 0, 100) ?: null;
+            $alamatAyah       = $getVal($row, 'alamat_ayah', 'alamat_tinggal_ayah', 'alamat_bapak');
+            $noHpAyah         = substr($getVal($row, 'no_hp_ayah', 'nomor_hp_ayah', 'no_telepon_ayah', 'nohp_ayah', 'hp_ayah') ?? '', 0, 30) ?: null;
+            $penghasilanAyah  = substr($getVal($row, 'penghasilan_ayah', 'penghasilan_per_bulan_ayah', 'gaji_ayah') ?? '', 0, 100) ?: null;
+
+            // Ambil data Ibu
+            $nikIbu           = substr($getVal($row, 'nik_ibu') ?? '', 0, 20) ?: null;
+            $namaIbu          = substr($getVal($row, 'nama_ibu', 'nama_lengkap_ibu') ?? '', 0, 255) ?: null;
+            $tahunLahirIbu    = substr($getVal($row, 'tahun_lahir_ibu', 'thn_lahir_ibu', 'tahun_ibu') ?? '', 0, 20) ?: null;
+            $pekerjaanIbu     = substr($getVal($row, 'pekerjaan_ibu') ?? '', 0, 100) ?: null;
+            $ketPekerjaanIbu  = substr($getVal($row, 'ket_pekerjaan_ibu', 'keterangan_pekerjaan_ibu') ?? '', 0, 255) ?: null;
+            $pendidikanIbu    = substr($getVal($row, 'pendidikan_ibu', 'pendidikan_terakhir_ibu') ?? '', 0, 100) ?: null;
+            $alamatIbu        = $getVal($row, 'alamat_ibu', 'alamat_tinggal_ibu');
+            $noHpIbu          = substr($getVal($row, 'no_hp_ibu', 'nomor_hp_ibu', 'no_telepon_ibu', 'nohp_ibu', 'hp_ibu') ?? '', 0, 30) ?: null;
+            $penghasilanIbu   = substr($getVal($row, 'penghasilan_ibu', 'penghasilan_per_bulan_ibu', 'gaji_ibu') ?? '', 0, 100) ?: null;
 
             // NIS wajib ada
             if (empty($nis)) {
@@ -407,7 +539,7 @@ class SiswaController extends Controller
                 }
             }
 
-            // Pengecekan duplikat berdasarkan NIS saja
+            // Pengecekan duplikat berdasarkan NIS
             if (Siswa::where('nis', $nis)->exists()) {
                 $skipCount++;
                 continue;
@@ -432,14 +564,17 @@ class SiswaController extends Controller
                     }
                 } else {
                     try {
-                        $tanggalLahir = date('Y-m-d', strtotime($tanggalLahirRaw));
+                        $parsedDate = date('Y-m-d', strtotime(str_replace('/', '-', $tanggalLahirRaw)));
+                        if ($parsedDate && $parsedDate !== '1970-01-01') {
+                            $tanggalLahir = $parsedDate;
+                        }
                     } catch (\Exception $e) {
                         $tanggalLahir = null;
                     }
                 }
             }
 
-            $password = $nis; // Default password disamakan dengan NIS
+            $password = $nis; // Default password = NIS
 
             $nameParts = explode(' ', trim($nama), 2);
             $firstName = $nameParts[0];
@@ -453,29 +588,79 @@ class SiswaController extends Controller
             ]);
 
             $siswa = Siswa::create([
-                'user_id'         => $user->id,
-                'kelas_id'        => $kelasId,
-                'nama'            => $nama,
-                'nis'             => $nis,
-                'jenis_kelamin'   => $jk,
-                'tempat_lahir'    => $tempatLahir,
-                'tanggal_lahir'   => $tanggalLahir,
-                'alamat'          => $alamat,
-                'no_hp'           => $noHp,
-                'no_hp_orang_tua' => $noHpOrangTua,
-                'status'          => in_array(strtolower($status ?? 'aktif'), ['aktif','lulus','keluar']) ? strtolower($status) : 'aktif',
-                'is_pushed'       => false,
-                'is_enrolled'     => false,
+                'user_id'       => $user->id,
+                'kelas_id'      => $kelasId,
+                'nama'          => $nama,
+                'nis'           => $nis,
+                'nik'           => $nik,
+                'jenis_kelamin' => $jk,
+                'tempat_lahir'  => $tempatLahir,
+                'tanggal_lahir' => $tanggalLahir,
+                'agama'         => $agama,
+                'alamat'        => $alamat,
+                'no_hp'         => $noHp,
+                'status'        => in_array($status, ['aktif', 'lulus', 'keluar']) ? $status : 'aktif',
+                'asal_sekolah'  => $asalSekolah,
+                'is_pushed'     => false,
+                'is_enrolled'   => false,
             ]);
 
             // Auto-assign ID Fingerprint dari ID Siswa
             $siswa->update(['fingerprint_id' => (string) $siswa->id]);
 
+            // Simpan data orang tua ke parent_profiles jika ada isinya
+            $adaDataOrtu = $nikAyah || $namaAyah || $tahunLahirAyah || $pekerjaanAyah
+                        || $ketPekerjaanAyah || $pendidikanAyah || $alamatAyah || $noHpAyah || $penghasilanAyah
+                        || $nikIbu || $namaIbu || $tahunLahirIbu || $pekerjaanIbu
+                        || $ketPekerjaanIbu || $pendidikanIbu || $alamatIbu || $noHpIbu || $penghasilanIbu;
+
+            if ($adaDataOrtu) {
+                // Gunakan user_id siswa sebagai parent_user_id (konsisten dengan fallback di SiswaDashboardController)
+                \App\Models\ParentProfile::updateOrCreate(
+                    ['parent_user_id' => $user->id],
+                    [
+                        'nik_ayah'           => $nikAyah,
+                        'nama_ayah'          => $namaAyah,
+                        'tahun_lahir_ayah'   => $tahunLahirAyah,
+                        'pekerjaan_ayah'     => $pekerjaanAyah,
+                        'ket_pekerjaan_ayah' => $ketPekerjaanAyah,
+                        'pendidikan_ayah'    => $pendidikanAyah,
+                        'alamat_ayah'        => $alamatAyah,
+                        'no_hp_ayah'         => $noHpAyah,
+                        'penghasilan_ayah'   => $penghasilanAyah,
+
+                        'nik_ibu'            => $nikIbu,
+                        'nama_ibu'           => $namaIbu,
+                        'tahun_lahir_ibu'    => $tahunLahirIbu,
+                        'pekerjaan_ibu'      => $pekerjaanIbu,
+                        'ket_pekerjaan_ibu'  => $ketPekerjaanIbu,
+                        'pendidikan_ibu'     => $pendidikanIbu,
+                        'alamat_ibu'         => $alamatIbu,
+                        'no_hp_ibu'          => $noHpIbu,
+                        'penghasilan_ibu'    => $penghasilanIbu,
+                    ]
+                );
+
+                // Sync nama_orang_tua & no_hp_orang_tua ke kolom siswas untuk kompatibilitas
+                $namaOrtu = $namaAyah ?: $namaIbu;
+                $noHpOrtu = $noHpAyah ?: $noHpIbu;
+                $siswaUpdates = [];
+                if ($namaOrtu) {
+                    $siswaUpdates['nama_orang_tua'] = $namaOrtu;
+                }
+                if ($noHpOrtu) {
+                    $siswaUpdates['no_hp_orang_tua'] = $noHpOrtu;
+                }
+                if (!empty($siswaUpdates)) {
+                    $siswa->update($siswaUpdates);
+                }
+            }
+
             $successCount++;
         }
 
         if (auth()->check() && $successCount > 0) {
-            activity()->causedBy(auth()->user())->log("Import data siswa dari Excel ({$successCount} disimpen)");
+            activity()->causedBy(auth()->user())->log("Import data siswa dari Excel ({$successCount} disimpan)");
         }
 
         return redirect()->route('siswa.index')

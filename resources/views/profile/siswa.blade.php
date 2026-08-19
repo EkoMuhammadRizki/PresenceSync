@@ -794,6 +794,14 @@
                                 </div>
                             </div>
 
+                            <!-- Tahun Lahir Ayah -->
+                            <div class="row mb-6">
+                                <label class="col-lg-4 col-form-label fw-bold fs-6 text-gray-700">Tahun Lahir</label>
+                                <div class="col-lg-8">
+                                    <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Tahun Lahir Ayah" value="{{ $parentProfile->tahun_lahir_ayah ?? '' }}" readonly />
+                                </div>
+                            </div>
+
                             <!-- Pekerjaan Ayah -->
                             <div class="row mb-6">
                                 <label class="col-lg-4 col-form-label fw-bold fs-6 text-gray-700">Pekerjaan</label>
@@ -838,7 +846,7 @@
                             <div class="row mb-6">
                                 <label class="col-lg-4 col-form-label fw-bold fs-6 text-gray-700">Penghasilan</label>
                                 <div class="col-lg-8">
-                                    <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Penghasilan Per Bulan" value="{{ $parentProfile->penghasilan_ayah ?? '' }}" readonly />
+                                    <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Penghasilan Per Bulan" value="{{ $parentProfile->penghasilan_ayah_formatted ?? '' }}" readonly />
                                 </div>
                             </div>
                         </div>
@@ -865,6 +873,14 @@
                                 <label class="col-lg-4 col-form-label fw-bold fs-6 text-gray-700">Nama Ibu</label>
                                 <div class="col-lg-8">
                                     <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Nama Lengkap Ibu" value="{{ $parentProfile->nama_ibu ?? '' }}" readonly />
+                                </div>
+                            </div>
+
+                            <!-- Tahun Lahir Ibu -->
+                            <div class="row mb-6">
+                                <label class="col-lg-4 col-form-label fw-bold fs-6 text-gray-700">Tahun Lahir</label>
+                                <div class="col-lg-8">
+                                    <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Tahun Lahir Ibu" value="{{ $parentProfile->tahun_lahir_ibu ?? '' }}" readonly />
                                 </div>
                             </div>
 
@@ -912,7 +928,7 @@
                             <div class="row mb-6">
                                 <label class="col-lg-4 col-form-label fw-bold fs-6 text-gray-700">Penghasilan</label>
                                 <div class="col-lg-8">
-                                    <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Penghasilan Per Bulan" value="{{ $parentProfile->penghasilan_ibu ?? '' }}" readonly />
+                                    <input type="text" class="form-control form-control-lg form-control-solid" placeholder="Penghasilan Per Bulan" value="{{ $parentProfile->penghasilan_ibu_formatted ?? '' }}" readonly />
                                 </div>
                             </div>
                         </div>

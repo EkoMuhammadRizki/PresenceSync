@@ -125,30 +125,38 @@ class SiswaDashboardController extends Controller
         }
 
         $request->validate([
-            'nik_ayah'       => 'nullable|regex:/^[0-9]+$/|max:16',
-            'nama_ayah'      => 'nullable|string|max:255',
-            'pekerjaan_ayah' => 'nullable|string|max:100',
-            'pendidikan_ayah'=> 'nullable|string|max:50',
-            'no_hp_ayah'     => 'nullable|string|max:20',
+            'nik_ayah'          => 'nullable|regex:/^[0-9]+$/|max:20',
+            'nama_ayah'         => 'nullable|string|max:255',
+            'tahun_lahir_ayah'  => 'nullable|string|max:20',
+            'pekerjaan_ayah'    => 'nullable|string|max:100',
+            'ket_pekerjaan_ayah'=> 'nullable|string|max:255',
+            'pendidikan_ayah'   => 'nullable|string|max:100',
+            'alamat_ayah'       => 'nullable|string',
+            'no_hp_ayah'        => 'nullable|string|max:30',
+            'penghasilan_ayah'  => 'nullable|string|max:100',
 
-            'nik_ibu'        => 'nullable|regex:/^[0-9]+$/|max:16',
-            'nama_ibu'       => 'nullable|string|max:255',
-            'pekerjaan_ibu'  => 'nullable|string|max:100',
-            'pendidikan_ibu' => 'nullable|string|max:50',
-            'no_hp_ibu'      => 'nullable|string|max:20',
+            'nik_ibu'           => 'nullable|regex:/^[0-9]+$/|max:20',
+            'nama_ibu'          => 'nullable|string|max:255',
+            'tahun_lahir_ibu'   => 'nullable|string|max:20',
+            'pekerjaan_ibu'     => 'nullable|string|max:100',
+            'ket_pekerjaan_ibu' => 'nullable|string|max:255',
+            'pendidikan_ibu'    => 'nullable|string|max:100',
+            'alamat_ibu'        => 'nullable|string',
+            'no_hp_ibu'         => 'nullable|string|max:30',
+            'penghasilan_ibu'   => 'nullable|string|max:100',
         ], [
             'nik_ayah.regex' => 'NIK Ayah hanya boleh berisi angka.',
-            'nik_ayah.max'   => 'NIK Ayah maksimal 16 digit.',
+            'nik_ayah.max'   => 'NIK Ayah maksimal 20 digit.',
             'nik_ibu.regex'  => 'NIK Ibu hanya boleh berisi angka.',
-            'nik_ibu.max'    => 'NIK Ibu maksimal 16 digit.',
+            'nik_ibu.max'    => 'NIK Ibu maksimal 20 digit.',
         ]);
 
         $parentId = $siswa->orang_tua_user_id ?? $user->id;
         $profile = \App\Models\ParentProfile::firstOrNew(['parent_user_id' => $parentId]);
         $profile->fill($request->only([
-            'nik_ayah', 'nama_ayah', 'pekerjaan_ayah', 'ket_pekerjaan_ayah',
+            'nik_ayah', 'nama_ayah', 'tahun_lahir_ayah', 'pekerjaan_ayah', 'ket_pekerjaan_ayah',
             'pendidikan_ayah', 'alamat_ayah', 'no_hp_ayah', 'penghasilan_ayah',
-            'nik_ibu', 'nama_ibu', 'pekerjaan_ibu', 'ket_pekerjaan_ibu',
+            'nik_ibu', 'nama_ibu', 'tahun_lahir_ibu', 'pekerjaan_ibu', 'ket_pekerjaan_ibu',
             'pendidikan_ibu', 'alamat_ibu', 'no_hp_ibu', 'penghasilan_ibu',
         ]));
         $profile->save();

@@ -73,6 +73,14 @@
                             </div>
                         </div>
 
+                        <!-- Tahun Lahir Ayah -->
+                        <div class="row mb-6">
+                            <label class="col-lg-4 col-form-label fw-bold fs-6">Tahun Lahir</label>
+                            <div class="col-lg-8 fv-row">
+                                <input type="text" name="tahun_lahir_ayah" class="form-control form-control-lg form-control-solid" placeholder="Tahun Lahir Ayah (contoh: 1980)" value="{{ old('tahun_lahir_ayah', $profile->tahun_lahir_ayah) }}"/>
+                            </div>
+                        </div>
+
                         <!-- Pekerjaan Ayah -->
                         <div class="row mb-6">
                             <label class="col-lg-4 col-form-label fw-bold fs-6">Pekerjaan</label>
@@ -112,6 +120,14 @@
                                 <input type="text" name="no_hp_ayah" class="form-control form-control-lg form-control-solid" placeholder="Nomor Telepon Seluler" value="{{ old('no_hp_ayah', $profile->no_hp_ayah) }}"/>
                             </div>
                         </div>
+
+                        <!-- Penghasilan Ayah -->
+                        <div class="row mb-6">
+                            <label class="col-lg-4 col-form-label fw-bold fs-6">Penghasilan</label>
+                            <div class="col-lg-8 fv-row">
+                                <input type="text" name="penghasilan_ayah" class="form-control form-control-lg form-control-solid input-rupiah" placeholder="Penghasilan Per Bulan (contoh: Rp 5.000.000)" value="{{ old('penghasilan_ayah', $profile->penghasilan_ayah_formatted) }}" oninput="formatRupiah(this)"/>
+                            </div>
+                        </div>
                     </div>
 
                     <!--==================== MOTHER PROFILE COLUMN ====================-->
@@ -134,6 +150,14 @@
                             <label class="col-lg-4 col-form-label fw-bold fs-6">Nama Ibu</label>
                             <div class="col-lg-8 fv-row">
                                 <input type="text" name="nama_ibu" class="form-control form-control-lg form-control-solid" placeholder="Nama Lengkap Ibu" value="{{ old('nama_ibu', $profile->nama_ibu) }}"/>
+                            </div>
+                        </div>
+
+                        <!-- Tahun Lahir Ibu -->
+                        <div class="row mb-6">
+                            <label class="col-lg-4 col-form-label fw-bold fs-6">Tahun Lahir</label>
+                            <div class="col-lg-8 fv-row">
+                                <input type="text" name="tahun_lahir_ibu" class="form-control form-control-lg form-control-solid" placeholder="Tahun Lahir Ibu (contoh: 1982)" value="{{ old('tahun_lahir_ibu', $profile->tahun_lahir_ibu) }}"/>
                             </div>
                         </div>
 
@@ -176,6 +200,14 @@
                                 <input type="text" name="no_hp_ibu" class="form-control form-control-lg form-control-solid" placeholder="Nomor Telepon Seluler" value="{{ old('no_hp_ibu', $profile->no_hp_ibu) }}"/>
                             </div>
                         </div>
+
+                        <!-- Penghasilan Ibu -->
+                        <div class="row mb-6">
+                            <label class="col-lg-4 col-form-label fw-bold fs-6">Penghasilan</label>
+                            <div class="col-lg-8 fv-row">
+                                <input type="text" name="penghasilan_ibu" class="form-control form-control-lg form-control-solid input-rupiah" placeholder="Penghasilan Per Bulan (contoh: Rp 3.000.000)" value="{{ old('penghasilan_ibu', $profile->penghasilan_ibu_formatted) }}" oninput="formatRupiah(this)"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -192,4 +224,15 @@
     </div>
     <!--end::Content-->
 </div>
+
+<script>
+    function formatRupiah(input) {
+        let rawVal = input.value.replace(/[^0-9]/g, '');
+        if (rawVal) {
+            input.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(rawVal);
+        } else {
+            input.value = '';
+        }
+    }
+</script>
 </x-base-layout>

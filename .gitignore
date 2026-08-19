@@ -49,3 +49,5 @@ presencesync_backup_*.sql
 
 patch_aturan_jam/
 patch_aturan_jam.zip
+patch_*/
+create_patch.ps1
