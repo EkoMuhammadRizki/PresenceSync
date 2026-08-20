@@ -145,8 +145,18 @@
 </style>
 @endpush
 
-        {{-- ==================== SYNC DATABASE BUTTON (ADMIN ONLY) ==================== --}}
-        @if(auth()->user() && auth()->user()->hasRole('admin'))
+        {{-- ==================== SYNC DATABASE BUTTON (ADMIN ONLY & LOKAL ONLY) ==================== --}}
+        @php
+            $syncHostingUrl = env('HOSTING_SYNC_URL');
+            $syncHostingHost = $syncHostingUrl ? parse_url($syncHostingUrl, PHP_URL_HOST) : null;
+            $currentHost = request()->getHost();
+            $showSyncBtn = auth()->user() && auth()->user()->hasRole('admin') 
+                            && !empty($syncHostingUrl) 
+                            && !env('IS_HOSTING', false) 
+                            && ($syncHostingHost !== $currentHost);
+        @endphp
+
+        @if($showSyncBtn)
         <div class="d-flex justify-content-end mb-5">
             <button type="button" id="btn-sync-database" class="btn btn-sm btn-warning fw-bold" onclick="confirmSyncDatabase()">
                 <i class="bi bi-cloud-upload me-2"></i>
