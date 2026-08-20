@@ -51,30 +51,81 @@
                     </div>
                 </div>
 
-                @if($profileRole === 'siswa')
-                    <!-- Jenis Kelamin -->
+                <!-- Jenis Kelamin -->
+                @if(($siswa && $siswa->jenis_kelamin) || ($guru && $guru->jenis_kelamin))
                     <div class="d-flex align-items-center mb-7">
                         <div class="flex-grow-1">
                             <span class="text-muted fw-bold d-block fs-7">Jenis Kelamin</span>
                             <span class="text-gray-800 fw-bolder fs-6">
-                                {{ ($siswa->jenis_kelamin ?? '') === 'L' ? 'Laki-laki' : (($siswa->jenis_kelamin ?? '') === 'P' ? 'Perempuan' : '-') }}
+                                @php
+                                    $jkVal = $siswa->jenis_kelamin ?? ($guru->jenis_kelamin ?? '');
+                                @endphp
+                                {{ $jkVal === 'L' ? 'Laki-laki' : ($jkVal === 'P' ? 'Perempuan' : '-') }}
                             </span>
                         </div>
                     </div>
+                @endif
 
-                    <!-- Tanggal Lahir -->
+                <!-- Tempat & Tanggal Lahir -->
+                @if(($siswa && ($siswa->tempat_lahir || $siswa->tanggal_lahir)) || ($guru && ($guru->tempat_lahir || $guru->tanggal_lahir)))
                     <div class="d-flex align-items-center mb-7">
                         <div class="flex-grow-1">
-                            <span class="text-muted fw-bold d-block fs-7">Tanggal Lahir</span>
+                            <span class="text-muted fw-bold d-block fs-7">Tempat, Tanggal Lahir</span>
                             <span class="text-gray-800 fw-bolder fs-6">
-                                @if($siswa)
-                                    {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('d F Y') : '-' }}
-                                @else
-                                    {{ $guru->tanggal_lahir ? \Carbon\Carbon::parse($guru->tanggal_lahir)->format('d F Y') : '-' }}
-                                @endif
+                                @php
+                                    $tempat = $siswa->tempat_lahir ?? ($guru->tempat_lahir ?? '');
+                                    $tgl = $siswa ? ($siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('d F Y') : '') : ($guru->tanggal_lahir ? $guru->tanggal_lahir->format('d F Y') : '');
+                                @endphp
+                                {{ $tempat && $tgl ? $tempat . ', ' . $tgl : ($tempat ?: ($tgl ?: '-')) }}
                             </span>
                         </div>
                     </div>
+                @endif
+
+                <!-- Agama -->
+                @if(($siswa && $siswa->agama) || ($guru && $guru->agama))
+                    <div class="d-flex align-items-center mb-7">
+                        <div class="flex-grow-1">
+                            <span class="text-muted fw-bold d-block fs-7">Agama</span>
+                            <span class="text-gray-800 fw-bolder fs-6">{{ $siswa->agama ?? ($guru->agama ?? '-') }}</span>
+                        </div>
+                    </div>
+                @endif
+
+                @if($guru)
+                    <!-- NIK, NUPTK, NPWP -->
+                    @if($guru->nik || $guru->nuptk || $guru->npwp)
+                        <div class="d-flex align-items-center mb-7">
+                            <div class="flex-grow-1">
+                                <span class="text-muted fw-bold d-block fs-7">Identitas Pegawai (NIK / NUPTK / NPWP)</span>
+                                <span class="text-gray-800 fw-bolder fs-6">
+                                    NIK: {{ $guru->nik ?? '-' }} • NUPTK: {{ $guru->nuptk ?? '-' }} • NPWP: {{ $guru->npwp ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Status Kepegawaian & Pangkat Golongan -->
+                    @if($guru->status_kepegawaian || $guru->pangkat_golongan)
+                        <div class="d-flex align-items-center mb-7">
+                            <div class="flex-grow-1">
+                                <span class="text-muted fw-bold d-block fs-7">Status Kepegawaian & Golongan</span>
+                                <span class="text-gray-800 fw-bolder fs-6">
+                                    {{ $guru->status_kepegawaian ?? '-' }} {{ $guru->pangkat_golongan ? '(' . $guru->pangkat_golongan . ')' : '' }}
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Tugas Tambahan -->
+                    @if($guru->tugas_tambahan)
+                        <div class="d-flex align-items-center mb-7">
+                            <div class="flex-grow-1">
+                                <span class="text-muted fw-bold d-block fs-7">Tugas Tambahan</span>
+                                <span class="text-gray-800 fw-bolder fs-6">{{ $guru->tugas_tambahan }}</span>
+                            </div>
+                        </div>
+                    @endif
                 @endif
 
                 <!-- Alamat -->

@@ -144,19 +144,46 @@ class GuruController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Guru');
 
-        // Headers (NIP sebagai kolom pertama, tanpa kolom email & password)
+        // Headers (21 kolom sesuai template guru resmi)
         $headers = [
             'nip',
             'nama',
-            'no_hp',
+            'jenis_kelamin',
+            'tempat_lahir',
+            'tanggal_lahir',
+            'agama',
             'alamat',
+            'no_telepon',
+            'email',
             'status',
+            'nik',
+            'npwp',
+            'nuptk',
+            'status_kepegawaian',
+            'tugas_tambahan',
+            'sk_cpns',
+            'tanggal_cpns',
+            'sk_pengangkatan',
+            'tmt_pengangkatan',
+            'lembaga_pengangkatan',
+            'pangkat_golongan',
         ];
 
         foreach ($headers as $colIndex => $header) {
             $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
             $sheet->setCellValue($colLetter . '1', $header);
         }
+
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+
+        // Style header: bold & background color
+        $sheet->getStyle('A1:' . $lastColLetter . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:' . $lastColLetter . '1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('DDEEFF');
+
+        // Note: NIP adalah kolom wajib
+        $sheet->getComment('A1')->getText()->createTextRun('Wajib diisi. Digunakan untuk login guru.');
 
         // Populate existing teachers if requested (default / when not 'empty')
         if (!$request->has('empty')) {
@@ -165,17 +192,28 @@ class GuruController extends Controller
             foreach ($gurus as $guru) {
                 $sheet->setCellValue('A' . $rowNum, $guru->nip ?? '');
                 $sheet->setCellValue('B' . $rowNum, $guru->nama);
-                $sheet->setCellValue('C' . $rowNum, $guru->no_hp ?? '');
-                $sheet->setCellValue('D' . $rowNum, $guru->alamat ?? '');
-                $sheet->setCellValue('E' . $rowNum, 'aktif');
+                $sheet->setCellValue('C' . $rowNum, $guru->jenis_kelamin ?? '');
+                $sheet->setCellValue('D' . $rowNum, $guru->tempat_lahir ?? '');
+                $sheet->setCellValue('E' . $rowNum, $guru->tanggal_lahir ? $guru->tanggal_lahir->format('Y-m-d') : '');
+                $sheet->setCellValue('F' . $rowNum, $guru->agama ?? '');
+                $sheet->setCellValue('G' . $rowNum, $guru->alamat ?? '');
+                $sheet->setCellValue('H' . $rowNum, $guru->no_hp ?? '');
+                $sheet->setCellValue('I' . $rowNum, $guru->email ?? '');
+                $sheet->setCellValue('J' . $rowNum, $guru->status ?? 'aktif');
+                $sheet->setCellValue('K' . $rowNum, $guru->nik ?? '');
+                $sheet->setCellValue('L' . $rowNum, $guru->npwp ?? '');
+                $sheet->setCellValue('M' . $rowNum, $guru->nuptk ?? '');
+                $sheet->setCellValue('N' . $rowNum, $guru->status_kepegawaian ?? '');
+                $sheet->setCellValue('O' . $rowNum, $guru->tugas_tambahan ?? '');
+                $sheet->setCellValue('P' . $rowNum, $guru->sk_cpns ?? '');
+                $sheet->setCellValue('Q' . $rowNum, $guru->tanggal_cpns ? $guru->tanggal_cpns->format('Y-m-d') : '');
+                $sheet->setCellValue('R' . $rowNum, $guru->sk_pengangkatan ?? '');
+                $sheet->setCellValue('S' . $rowNum, $guru->tmt_pengangkatan ? $guru->tmt_pengangkatan->format('Y-m-d') : '');
+                $sheet->setCellValue('T' . $rowNum, $guru->lembaga_pengangkatan ?? '');
+                $sheet->setCellValue('U' . $rowNum, $guru->pangkat_golongan ?? '');
                 $rowNum++;
             }
         }
-
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
-
-        // Note: NIP adalah kolom wajib
-        $sheet->getComment('A1')->getText()->createTextRun('Wajib diisi. Digunakan untuk login guru.');
 
         // Autofit columns
         foreach ($sheet->getColumnIterator() as $column) {
@@ -214,39 +252,113 @@ class GuruController extends Controller
         }
 
         if (count($rows) <= 1) {
-            return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Siswa. Silakan unggah file template Guru yang benar.']);
+            return redirect()->back()->withErrors(['error' => 'File Excel kosong atau hanya berisi header.']);
         }
 
-        $header = array_shift($rows); // Buang header
+        $rawHeader = array_shift($rows); // Buang header
+
+        // Buat Header Map dinamis: lowercase, trim, ganti spasi/dash dengan underscore
+        $headerMap = [];
+        foreach ($rawHeader as $index => $colName) {
+            if ($colName !== null && trim($colName) !== '') {
+                $cleanName = strtolower(trim((string)$colName));
+                $cleanName = preg_replace('/[^a-z0-9_]/', '_', str_replace([' ', '-', '.'], '_', $cleanName));
+                $cleanName = preg_replace('/_+/', '_', $cleanName);
+                $headerMap[$cleanName] = $index;
+            }
+        }
 
         // Validasi format template agar siswa tidak diimport ke guru
-        $column1 = isset($header[0]) ? strtolower(trim($header[0])) : '';
-        if ($column1 === 'nis' || $worksheet->getTitle() === 'Template Siswa') {
+        if (isset($headerMap['nis']) || $worksheet->getTitle() === 'Template Siswa') {
             return redirect()->back()->withErrors(['error' => 'File Excel yang diunggah adalah template Siswa. Silakan unggah file template Guru yang benar.']);
         }
-        if ($column1 !== 'nip') {
-            return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Pastikan Anda menggunakan file template Guru yang diunduh dari sistem.']);
+        if (!isset($headerMap['nip']) && !isset($headerMap['nama'])) {
+            return redirect()->back()->withErrors(['error' => 'Format template tidak sesuai. Kolom "nip" dan "nama" tidak ditemukan dalam file Excel.']);
         }
+
+        // Helper untuk mengambil nilai kolom berdasarkan alias header
+        $getVal = function ($row, ...$aliases) use ($headerMap) {
+            foreach ($aliases as $alias) {
+                $cleanAlias = strtolower(trim($alias));
+                $cleanAlias = preg_replace('/[^a-z0-9_]/', '_', str_replace([' ', '-', '.'], '_', $cleanAlias));
+                $cleanAlias = preg_replace('/_+/', '_', $cleanAlias);
+                if (isset($headerMap[$cleanAlias])) {
+                    $idx = $headerMap[$cleanAlias];
+                    if (isset($row[$idx]) && $row[$idx] !== null) {
+                        $val = trim((string)$row[$idx]);
+                        if ($val !== '') {
+                            return $val;
+                        }
+                    }
+                }
+            }
+            return null;
+        };
+
+        // Helper untuk parsing tanggal (Excel date number maupun string)
+        $parseDate = function ($dateRaw) {
+            if (empty($dateRaw)) {
+                return null;
+            }
+            if (is_numeric($dateRaw) && $dateRaw > 20000) {
+                try {
+                    return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateRaw)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    return null;
+                }
+            } else {
+                try {
+                    $parsed = date('Y-m-d', strtotime(str_replace('/', '-', $dateRaw)));
+                    if ($parsed && $parsed !== '1970-01-01') {
+                        return $parsed;
+                    }
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+            return null;
+        };
 
         $successCount = 0;
         $skipCount    = 0;
 
         foreach ($rows as $row) {
-            // Struktur kolom baru: nip(0) | nama(1) | no_hp(2) | alamat(3) | status(4)
-            // Skip baris jika nama (kolom B / index 1) kosong
-            if (empty($row[1])) {
+            // Ambil nama
+            $nama = $getVal($row, 'nama');
+            if (empty($nama)) {
                 continue;
             }
 
-            $nip    = !empty($row[0]) ? trim($row[0]) : null;
-            $nama   = trim($row[1]);
-            $noHp   = !empty($row[2]) ? trim($row[2]) : null;
-            $alamat = !empty($row[3]) ? trim($row[3]) : null;
+            $nip                 = $getVal($row, 'nip');
+            $jk                  = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
+            $tempatLahir         = $getVal($row, 'tempat_lahir');
+            $tanggalLahirRaw     = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
+            $agama               = $getVal($row, 'agama');
+            $alamat              = $getVal($row, 'alamat');
+            $noHp                = substr($getVal($row, 'no_telepon', 'no_hp', 'telepon', 'nohp') ?? '', 0, 30) ?: null;
+            $emailInput          = $getVal($row, 'email');
+            $status              = strtolower($getVal($row, 'status') ?? 'aktif');
+            $nik                 = substr($getVal($row, 'nik') ?? '', 0, 20) ?: null;
+            $npwp                = substr($getVal($row, 'npwp') ?? '', 0, 30) ?: null;
+            $nuptk               = substr($getVal($row, 'nuptk') ?? '', 0, 30) ?: null;
+            $statusKepegawaian   = substr($getVal($row, 'status_kepegawaian') ?? '', 0, 100) ?: null;
+            $tugasTambahan       = substr($getVal($row, 'tugas_tambahan') ?? '', 0, 150) ?: null;
+            $skCpns              = substr($getVal($row, 'sk_cpns') ?? '', 0, 100) ?: null;
+            $tanggalCpnsRaw      = $getVal($row, 'tanggal_cpns', 'tgl_cpns');
+            $skPengangkatan      = substr($getVal($row, 'sk_pengangkatan') ?? '', 0, 100) ?: null;
+            $tmtPengangkatanRaw  = $getVal($row, 'tmt_pengangkatan', 'tmt');
+            $lembagaPengangkatan = substr($getVal($row, 'lembaga_pengangkatan') ?? '', 0, 150) ?: null;
+            $pangkatGolongan     = substr($getVal($row, 'pangkat_golongan', 'pangkat', 'golongan') ?? '', 0, 50) ?: null;
 
             // NIP wajib ada
             if (empty($nip)) {
                 $skipCount++;
                 continue;
+            }
+
+            // Normalisasi jenis kelamin
+            if ($jk !== 'P') {
+                $jk = 'L';
             }
 
             // Pengecekan duplikat berdasarkan NIP saja
@@ -255,12 +367,15 @@ class GuruController extends Controller
                 continue;
             }
 
-            // Generate email internal dari NIP
-            $email = $nip . '@guru.internal';
-            $counter = 1;
-            while (User::where('email', $email)->exists()) {
-                $email = $nip . $counter . '@guru.internal';
-                $counter++;
+            // Generate email jika tidak diinput
+            $email = $emailInput;
+            if (empty($email)) {
+                $email = $nip . '@guru.internal';
+                $counter = 1;
+                while (User::where('email', $email)->exists()) {
+                    $email = $nip . $counter . '@guru.internal';
+                    $counter++;
+                }
             }
 
             $password = $nip; // Default password disamakan dengan NIP
@@ -277,19 +392,35 @@ class GuruController extends Controller
             ]);
 
             Guru::create([
-                'user_id' => $user->id,
-                'nama'    => $nama,
-                'nip'     => $nip,
-                'email'   => $email,
-                'no_hp'   => $noHp,
-                'alamat'  => $alamat,
+                'user_id'              => $user->id,
+                'nama'                 => $nama,
+                'nip'                  => $nip,
+                'jenis_kelamin'        => $jk,
+                'tempat_lahir'         => $tempatLahir,
+                'tanggal_lahir'        => $parseDate($tanggalLahirRaw),
+                'agama'                => $agama,
+                'alamat'               => $alamat,
+                'no_hp'                => $noHp,
+                'email'                => $email,
+                'status'               => in_array($status, ['aktif', 'nonaktif', 'cuti']) ? $status : 'aktif',
+                'nik'                  => $nik,
+                'npwp'                 => $npwp,
+                'nuptk'                => $nuptk,
+                'status_kepegawaian'   => $statusKepegawaian,
+                'tugas_tambahan'       => $tugasTambahan,
+                'sk_cpns'              => $skCpns,
+                'tanggal_cpns'         => $parseDate($tanggalCpnsRaw),
+                'sk_pengangkatan'      => $skPengangkatan,
+                'tmt_pengangkatan'     => $parseDate($tmtPengangkatanRaw),
+                'lembaga_pengangkatan' => $lembagaPengangkatan,
+                'pangkat_golongan'     => $pangkatGolongan,
             ]);
 
             $successCount++;
         }
 
         if (auth()->check() && $successCount > 0) {
-            activity()->causedBy(auth()->user())->log("Import data guru dari Excel ({$successCount} disimpen)");
+            activity()->causedBy(auth()->user())->log("Import data guru dari Excel ({$successCount} disimpan)");
         }
 
         return redirect()->route('guru.index')
