@@ -269,13 +269,14 @@ class SiswaController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Siswa');
         
-        // Headers: Data Siswa (A-L) | Data Ayah (M-U) | Data Ibu (V-AD)
+        // Headers: Data Siswa (A-M) | Data Ayah (N-V) | Data Ibu (W-AE)
         $headers = [
-            // Data Siswa (A-L)
+            // Data Siswa (A-M)
             'nis',
             'nama',
             'jenis_kelamin',
             'kelas',
+            'id_fingerprint',
             'nik',
             'tempat_lahir',
             'tanggal_lahir',
@@ -284,7 +285,7 @@ class SiswaController extends Controller
             'no_hp',
             'status',
             'asal_sekolah',
-            // Data Ayah (M-U)
+            // Data Ayah (N-V)
             'nik_ayah',
             'nama_ayah',
             'tahun_lahir_ayah',
@@ -294,7 +295,7 @@ class SiswaController extends Controller
             'alamat_ayah',
             'no_hp_ayah',
             'penghasilan_ayah',
-            // Data Ibu (V-AD)
+            // Data Ibu (W-AE)
             'nik_ibu',
             'nama_ibu',
             'tahun_lahir_ibu',
@@ -316,13 +317,13 @@ class SiswaController extends Controller
         // Style header: bold
         $sheet->getStyle('A1:' . $lastColLetter . '1')->getFont()->setBold(true);
         // Warna pemisah: Data Siswa (Biru muda), Data Ayah (Kuning muda), Data Ibu (Merah muda)
-        $sheet->getStyle('A1:L1')->getFill()
+        $sheet->getStyle('A1:M1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setRGB('DDEEFF');
-        $sheet->getStyle('M1:U1')->getFill()
+        $sheet->getStyle('N1:V1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setRGB('FFE8CC');
-        $sheet->getStyle('V1:AD1')->getFill()
+        $sheet->getStyle('W1:AE1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setRGB('FFDDEE');
         
@@ -336,14 +337,15 @@ class SiswaController extends Controller
                 $sheet->setCellValue('B' . $rowNum, $siswa->nama);
                 $sheet->setCellValue('C' . $rowNum, $siswa->jenis_kelamin);
                 $sheet->setCellValue('D' . $rowNum, $siswa->kelas->nama ?? '');
-                $sheet->setCellValue('E' . $rowNum, $siswa->nik ?? '');
-                $sheet->setCellValue('F' . $rowNum, $siswa->tempat_lahir ?? '');
-                $sheet->setCellValue('G' . $rowNum, $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '');
-                $sheet->setCellValue('H' . $rowNum, $siswa->agama ?? '');
-                $sheet->setCellValue('I' . $rowNum, $siswa->alamat ?? '');
-                $sheet->setCellValue('J' . $rowNum, $siswa->no_hp ?? '');
-                $sheet->setCellValue('K' . $rowNum, $siswa->status ?? 'aktif');
-                $sheet->setCellValue('L' . $rowNum, $siswa->asal_sekolah ?? '');
+                $sheet->setCellValue('E' . $rowNum, $siswa->fingerprint_id ?? '');
+                $sheet->setCellValue('F' . $rowNum, $siswa->nik ?? '');
+                $sheet->setCellValue('G' . $rowNum, $siswa->tempat_lahir ?? '');
+                $sheet->setCellValue('H' . $rowNum, $siswa->tanggal_lahir ? $siswa->tanggal_lahir->format('Y-m-d') : '');
+                $sheet->setCellValue('I' . $rowNum, $siswa->agama ?? '');
+                $sheet->setCellValue('J' . $rowNum, $siswa->alamat ?? '');
+                $sheet->setCellValue('K' . $rowNum, $siswa->no_hp ?? '');
+                $sheet->setCellValue('L' . $rowNum, $siswa->status ?? 'aktif');
+                $sheet->setCellValue('M' . $rowNum, $siswa->asal_sekolah ?? '');
 
                 // Data Orang Tua — ambil dari parent_profiles via user siswa
                 $parentUserId = $siswa->orang_tua_user_id ?? $siswa->user_id;
@@ -352,25 +354,25 @@ class SiswaController extends Controller
                     $parentProfile = \App\Models\ParentProfile::where('parent_user_id', $parentUserId)->first();
                 }
                 // Ayah
-                $sheet->setCellValue('M' . $rowNum, $parentProfile->nik_ayah ?? '');
-                $sheet->setCellValue('N' . $rowNum, $parentProfile->nama_ayah ?? '');
-                $sheet->setCellValue('O' . $rowNum, $parentProfile->tahun_lahir_ayah ?? '');
-                $sheet->setCellValue('P' . $rowNum, $parentProfile->pekerjaan_ayah ?? '');
-                $sheet->setCellValue('Q' . $rowNum, $parentProfile->ket_pekerjaan_ayah ?? '');
-                $sheet->setCellValue('R' . $rowNum, $parentProfile->pendidikan_ayah ?? '');
-                $sheet->setCellValue('S' . $rowNum, $parentProfile->alamat_ayah ?? '');
-                $sheet->setCellValue('T' . $rowNum, $parentProfile->no_hp_ayah ?? '');
-                $sheet->setCellValue('U' . $rowNum, $parentProfile->penghasilan_ayah ?? '');
+                $sheet->setCellValue('N' . $rowNum, $parentProfile->nik_ayah ?? '');
+                $sheet->setCellValue('O' . $rowNum, $parentProfile->nama_ayah ?? '');
+                $sheet->setCellValue('P' . $rowNum, $parentProfile->tahun_lahir_ayah ?? '');
+                $sheet->setCellValue('Q' . $rowNum, $parentProfile->pekerjaan_ayah ?? '');
+                $sheet->setCellValue('R' . $rowNum, $parentProfile->ket_pekerjaan_ayah ?? '');
+                $sheet->setCellValue('S' . $rowNum, $parentProfile->pendidikan_ayah ?? '');
+                $sheet->setCellValue('T' . $rowNum, $parentProfile->alamat_ayah ?? '');
+                $sheet->setCellValue('U' . $rowNum, $parentProfile->no_hp_ayah ?? '');
+                $sheet->setCellValue('V' . $rowNum, $parentProfile->penghasilan_ayah ?? '');
                 // Ibu
-                $sheet->setCellValue('V' . $rowNum, $parentProfile->nik_ibu ?? '');
-                $sheet->setCellValue('W' . $rowNum, $parentProfile->nama_ibu ?? '');
-                $sheet->setCellValue('X' . $rowNum, $parentProfile->tahun_lahir_ibu ?? '');
-                $sheet->setCellValue('Y' . $rowNum, $parentProfile->pekerjaan_ibu ?? '');
-                $sheet->setCellValue('Z' . $rowNum, $parentProfile->ket_pekerjaan_ibu ?? '');
-                $sheet->setCellValue('AA' . $rowNum, $parentProfile->pendidikan_ibu ?? '');
-                $sheet->setCellValue('AB' . $rowNum, $parentProfile->alamat_ibu ?? '');
-                $sheet->setCellValue('AC' . $rowNum, $parentProfile->no_hp_ibu ?? '');
-                $sheet->setCellValue('AD' . $rowNum, $parentProfile->penghasilan_ibu ?? '');
+                $sheet->setCellValue('W' . $rowNum, $parentProfile->nik_ibu ?? '');
+                $sheet->setCellValue('X' . $rowNum, $parentProfile->nama_ibu ?? '');
+                $sheet->setCellValue('Y' . $rowNum, $parentProfile->tahun_lahir_ibu ?? '');
+                $sheet->setCellValue('Z' . $rowNum, $parentProfile->pekerjaan_ibu ?? '');
+                $sheet->setCellValue('AA' . $rowNum, $parentProfile->ket_pekerjaan_ibu ?? '');
+                $sheet->setCellValue('AB' . $rowNum, $parentProfile->pendidikan_ibu ?? '');
+                $sheet->setCellValue('AC' . $rowNum, $parentProfile->alamat_ibu ?? '');
+                $sheet->setCellValue('AD' . $rowNum, $parentProfile->no_hp_ibu ?? '');
+                $sheet->setCellValue('AE' . $rowNum, $parentProfile->penghasilan_ibu ?? '');
 
                 $rowNum++;
             }
@@ -488,6 +490,7 @@ class SiswaController extends Controller
             $nis          = $getVal($row, 'nis');
             $jk           = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
             $kelasName    = $getVal($row, 'kelas', 'nama_kelas');
+            $fingerprintId = substr($getVal($row, 'id_fingerprint', 'fingerprint_id', 'id_finger', 'fingerprint', 'pin') ?? '', 0, 50) ?: null;
             $nik          = substr($getVal($row, 'nik', 'nik_siswa') ?? '', 0, 20) ?: null;
             $tempatLahir  = $getVal($row, 'tempat_lahir');
             $tanggalLahirRaw = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
@@ -587,26 +590,37 @@ class SiswaController extends Controller
                 'password'   => Hash::make($password),
             ]);
 
+            // Tentukan fingerprint_id (gunakan dari excel jika unik, atau fallback ke ID user/siswa)
+            $finalFingerprintId = $fingerprintId;
+            if (!empty($finalFingerprintId) && Siswa::where('fingerprint_id', $finalFingerprintId)->exists()) {
+                $finalFingerprintId = (string) $user->id;
+            } elseif (empty($finalFingerprintId)) {
+                $finalFingerprintId = (string) $user->id;
+            }
+
             $siswa = Siswa::create([
-                'user_id'       => $user->id,
-                'kelas_id'      => $kelasId,
-                'nama'          => $nama,
-                'nis'           => $nis,
-                'nik'           => $nik,
-                'jenis_kelamin' => $jk,
-                'tempat_lahir'  => $tempatLahir,
-                'tanggal_lahir' => $tanggalLahir,
-                'agama'         => $agama,
-                'alamat'        => $alamat,
-                'no_hp'         => $noHp,
-                'status'        => in_array($status, ['aktif', 'lulus', 'keluar']) ? $status : 'aktif',
-                'asal_sekolah'  => $asalSekolah,
-                'is_pushed'     => false,
-                'is_enrolled'   => false,
+                'user_id'        => $user->id,
+                'kelas_id'       => $kelasId,
+                'nama'           => $nama,
+                'nis'            => $nis,
+                'nik'            => $nik,
+                'jenis_kelamin'  => $jk,
+                'tempat_lahir'   => $tempatLahir,
+                'tanggal_lahir'  => $tanggalLahir,
+                'agama'          => $agama,
+                'alamat'         => $alamat,
+                'no_hp'          => $noHp,
+                'status'         => in_array($status, ['aktif', 'lulus', 'keluar']) ? $status : 'aktif',
+                'asal_sekolah'   => $asalSekolah,
+                'fingerprint_id' => $finalFingerprintId,
+                'is_pushed'      => false,
+                'is_enrolled'    => false,
             ]);
 
-            // Auto-assign ID Fingerprint dari ID Siswa
-            $siswa->update(['fingerprint_id' => (string) $siswa->id]);
+            // Pastikan fingerprint_id terisi
+            if (empty($siswa->fingerprint_id)) {
+                $siswa->update(['fingerprint_id' => (string) $siswa->id]);
+            }
 
             // Simpan data orang tua ke parent_profiles jika ada isinya
             $adaDataOrtu = $nikAyah || $namaAyah || $tahunLahirAyah || $pekerjaanAyah
