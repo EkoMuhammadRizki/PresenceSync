@@ -262,12 +262,12 @@
         <div class="login-left">
             <div class="login-left-content">
                 <div class="badge-text"><i data-lucide="fingerprint" style="width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px;"></i> SIAP - Sistem informasi absensi presensi</div>
-                <h2>Absensi Siswa <br>Lebih Mudah & Modern</h2>
+                <h2>Presensi Siswa <br>Lebih Mudah & Modern</h2>
                 <p>Rekam kehadiran secara real-time menggunakan teknologi fingerprint. Cepat, akurat, dan terintegrasi penuh dengan sistem sekolah.</p>
-                <img class="illus-img" src="{{ asset('demo1/media/illustrations/Hero_Visual.png') }}" alt="Fingerprint Absensi Sekolah" />
+                <img class="illus-img" src="{{ asset('demo1/media/illustrations/Hero_Visual.png') }}" alt="Fingerprint Presensi Sekolah" />
                 <div class="feature-pills">
                     <div class="feature-pill"><i data-lucide="fingerprint" style="width: 16px; height: 16px;"></i> Fingerprint Scanner</div>
-                    <div class="feature-pill"><i data-lucide="school" style="width: 16px; height: 16px;"></i> Absensi Sekolah</div>
+                    <div class="feature-pill"><i data-lucide="school" style="width: 16px; height: 16px;"></i> Presensi Sekolah</div>
                     <div class="feature-pill"><i data-lucide="bar-chart-3" style="width: 16px; height: 16px;"></i> Laporan Real-time</div>
                     <div class="feature-pill"><i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> Data Aman</div>
                 </div>
