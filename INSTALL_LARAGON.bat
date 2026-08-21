@@ -5,7 +5,7 @@ chcp 65001 >nul
 :: ============================================================
 ::   PresenceSync - INSTALL KE LARAGON (Server Sekolah)
 ::   Admin hanya perlu:
-::     Buka browser -> https://presencesync.test
+::     Buka browser -> https://presencesync.lokal
 ::   Tidak perlu terminal, npm run dev, atau php artisan serve!
 :: ============================================================
 
@@ -14,7 +14,7 @@ title PRESENCESYNC - Install ke Laragon
 echo.
 echo  ============================================================
 echo   PresenceSync - Install ke Server Sekolah (Laragon)
-echo   Setelah install, akses: https://presencesync.test
+echo   Setelah install, akses: https://presencesync.lokal
 echo  ============================================================
 echo.
 
@@ -155,7 +155,7 @@ if exist "%~dp0.env.production" (
     copy /Y "%~dp0.env.example" "%TARGET_PATH%\.env" >nul
 )
 
-echo  [OK] .env dikonfigurasi (APP_URL=https://presencesync.test).
+echo  [OK] .env dikonfigurasi (APP_URL=https://presencesync.lokal).
 echo.
 
 :: --- PHP Artisan Setup ---
@@ -210,10 +210,10 @@ echo  [OK] Permission storage dan cache diset.
 echo.
 
 :: ============================================================
-:: BAGIAN BARU: Setup Virtual Host + HTTPS presencesync.test
+:: BAGIAN BARU: Setup Virtual Host + HTTPS presencesync.lokal
 :: ============================================================
 echo  ============================================================
-echo   Setup Domain presencesync.test + HTTPS (SSL)
+echo   Setup Domain presencesync.lokal + HTTPS (SSL)
 echo  ============================================================
 echo.
 
@@ -235,9 +235,9 @@ if exist "%APACHE_CONF%" (
     echo  [WARN] httpd.conf tidak ditemukan. Setup manual mungkin diperlukan.
 )
 
-:: --- Buat SSL certificate self-signed untuk presencesync.test ---
+:: --- Buat SSL certificate self-signed untuk presencesync.lokal ---
 echo.
-echo  [INFO] Membuat SSL certificate untuk presencesync.test...
+echo  [INFO] Membuat SSL certificate untuk presencesync.lokal...
 
 :: Cek apakah Laragon sudah punya openssl
 set "LARAGON_OPENSSL="
@@ -257,8 +257,8 @@ if defined LARAGON_OPENSSL (
         "!LARAGON_OPENSSL!" req -x509 -nodes -days 3650 -newkey rsa:2048 ^
             -keyout "%SSL_DIR%\presencesync.key" ^
             -out "%SSL_DIR%\presencesync.crt" ^
-            -subj "/C=ID/ST=Jawa Barat/L=Sekolah/O=PresenceSync/CN=presencesync.test" ^
-            -addext "subjectAltName=DNS:presencesync.test" 2>nul
+            -subj "/C=ID/ST=Jawa Barat/L=Sekolah/O=PresenceSync/CN=presencesync.lokal" ^
+            -addext "subjectAltName=DNS:presencesync.lokal" 2>nul
         echo  [OK] SSL certificate dibuat.
     ) else (
         echo  [WARN] OpenSSL tidak ditemukan. Menggunakan SSL bawaan Laragon jika ada.
@@ -278,7 +278,7 @@ if not exist "%SSL_DIR%\presencesync.crt" (
 
 :: --- Buat Virtual Host config ---
 echo.
-echo  [INFO] Membuat Virtual Host presencesync.test...
+echo  [INFO] Membuat Virtual Host presencesync.lokal...
 
 :: Hapus entry lama kalau ada
 if exist "%VHOST_CONF%" (
@@ -297,7 +297,7 @@ if exist "%VHOST_CONF%" (
 echo.
 echo # BEGIN PresenceSync
 echo ^<VirtualHost *:80^>
-echo     ServerName presencesync.test
+echo     ServerName presencesync.lokal
 echo     DocumentRoot "%TARGET_PATH%\public"
 echo     ^<Directory "%TARGET_PATH%\public"^>
 echo         Options Indexes FollowSymLinks
@@ -311,7 +311,7 @@ echo     RewriteRule ^(.*)$ https://%%{HTTP_HOST}%%{REQUEST_URI} [L,R=301]
 echo ^</VirtualHost^>
 echo.
 echo ^<VirtualHost *:443^>
-echo     ServerName presencesync.test
+echo     ServerName presencesync.lokal
 echo     DocumentRoot "%TARGET_PATH%\public"
 echo     SSLEngine on
 ) >> "%VHOST_CONF%"
@@ -340,18 +340,18 @@ echo ^</VirtualHost^>
 echo # END PresenceSync
 ) >> "%VHOST_CONF%"
 
-echo  [OK] Virtual Host presencesync.test dibuat.
+echo  [OK] Virtual Host presencesync.lokal dibuat.
 
 :: --- Daftarkan ke Windows hosts file ---
 echo.
-echo  [INFO] Mendaftarkan presencesync.test ke hosts file...
+echo  [INFO] Mendaftarkan presencesync.lokal ke hosts file...
 
 :: Hapus entry lama
 powershell -Command "(Get-Content 'C:\Windows\System32\drivers\etc\hosts') | Where-Object { $_ -notmatch 'presencesync\.test' } | Set-Content 'C:\Windows\System32\drivers\etc\hosts'"
 
 :: Tambah entry baru
-echo 127.0.0.1 presencesync.test >> "C:\Windows\System32\drivers\etc\hosts"
-echo  [OK] presencesync.test didaftarkan ke hosts file.
+echo 127.0.0.1 presencesync.lokal >> "C:\Windows\System32\drivers\etc\hosts"
+echo  [OK] presencesync.lokal didaftarkan ke hosts file.
 
 :: --- Buka port 80 dan 443 di Firewall ---
 echo.
@@ -402,7 +402,7 @@ set "SHORTCUT_URL=%DESKTOP%\PresenceSync.url"
 
 (
 echo [InternetShortcut]
-echo URL=https://presencesync.test
+echo URL=https://presencesync.lokal
 echo IconFile=C:\laragon\laragon.exe
 echo IconIndex=0
 ) > "%SHORTCUT_URL%"
@@ -419,7 +419,7 @@ echo  ============================================================
 echo.
 echo  Admin cukup buka browser dan ketik:
 echo.
-echo    https://presencesync.test
+echo    https://presencesync.lokal
 echo.
 echo  ATAU double-klik shortcut "PresenceSync" di Desktop.
 echo.
@@ -431,12 +431,12 @@ echo    Username : admin
 echo    Password : password
 echo.
 echo  Fingerprint ADMS:
-echo    Server  : presencesync.test
+echo    Server  : presencesync.lokal
 echo    Port    : 443 (HTTPS)
 echo    URL     : /api/absensi/sync
 echo.
 echo  CATATAN: Jika browser menampilkan peringatan "Not Secure",
-echo  klik "Advanced" -> "Proceed to presencesync.test (unsafe)"
+echo  klik "Advanced" -> "Proceed to presencesync.lokal (unsafe)"
 echo  Ini normal untuk sertifikat SSL lokal.
 echo.
 echo  ============================================================
@@ -447,5 +447,5 @@ echo.
 echo  Tekan Enter untuk membuka browser...
 pause
 
-start https://presencesync.test
+start https://presencesync.lokal
 endlocal

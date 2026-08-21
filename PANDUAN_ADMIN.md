@@ -5,7 +5,7 @@
 **Cukup buka browser dan ketik:**
 
 ```
-https://presencesync.test
+https://presencesync.lokal
 ```
 
 Atau double-klik shortcut **"PresenceSync"** di Desktop.
@@ -18,7 +18,7 @@ Atau double-klik shortcut **"PresenceSync"** di Desktop.
 
 ✅ Komputer **dinyalakan** (Laragon akan otomatis jalan)
 ✅ **Laragon** berwarna hijau (Apache + MySQL)
-✅ Buka browser → ketik `https://presencesync.test`
+✅ Buka browser → ketik `https://presencesync.lokal`
 
 Jika Laragon belum hijau, buka Laragon → klik **"Start All"**.
 
@@ -34,7 +34,7 @@ Jika Laragon belum hijau, buka Laragon → klik **"Start All"**.
 
 3. Ikuti instruksi di layar
 
-4. Setelah selesai, buka browser → `https://presencesync.test`
+4. Setelah selesai, buka browser → `https://presencesync.lokal`
 
 **Login default:**
 - Username: `admin`
@@ -59,7 +59,7 @@ Ketika developer mengirim update:
 
 Ini normal untuk jaringan lokal. Cara bypass:
 1. Klik **"Advanced"** (atau "Lanjutan")
-2. Klik **"Proceed to presencesync.test (unsafe)"**
+2. Klik **"Proceed to presencesync.lokal (unsafe)"**
 
 Ini hanya perlu dilakukan **sekali** di browser baru.
 
@@ -88,7 +88,7 @@ App\Models\User::find(1)->update(['password' => bcrypt('password_baru')]);
 
 | Item | Detail |
 |------|--------|
-| Alamat sistem | https://presencesync.test |
+| Alamat sistem | https://presencesync.lokal |
 | Database | presencesync (MySQL Laragon) |
 | Server | Apache Laragon |
 | Platform | Laravel + Laragon |

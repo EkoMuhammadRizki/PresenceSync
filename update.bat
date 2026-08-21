@@ -162,10 +162,10 @@ echo.
 echo  Versi terbaru:
 git log --oneline -1
 echo.
-echo  Akses sistem: https://presencesync.test
+echo  Akses sistem: https://presencesync.lokal
 echo.
 echo  Tekan Enter untuk membuka browser...
 pause
 
-start https://presencesync.test
+start https://presencesync.lokal
 endlocal
