@@ -2,10 +2,8 @@
 
 /public/hot
 /public/storage
-/public/css
-/public/js
-/public/media
-/public/plugins
+# public/css, public/js, public/media, public/plugins TIDAK di-ignore
+# agar hasil build bisa langsung dipakai admin tanpa perlu npm run dev
 
 /public/demo1
 /public/demo2

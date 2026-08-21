@@ -4,8 +4,9 @@ chcp 65001 >nul
 
 :: ============================================================
 ::   PresenceSync - INSTALL KE LARAGON (Server Sekolah)
-::   Tidak perlu Node.js, tidak perlu install Composer terpisah
-::   Cukup jalankan script ini sebagai Administrator
+::   Admin hanya perlu:
+::     Buka browser -> https://presencesync.test
+::   Tidak perlu terminal, npm run dev, atau php artisan serve!
 :: ============================================================
 
 title PRESENCESYNC - Install ke Laragon
@@ -13,6 +14,7 @@ title PRESENCESYNC - Install ke Laragon
 echo.
 echo  ============================================================
 echo   PresenceSync - Install ke Server Sekolah (Laragon)
+echo   Setelah install, akses: https://presencesync.test
 echo  ============================================================
 echo.
 
@@ -56,26 +58,6 @@ if not exist "%LARAGON_PHP%" (
 
 echo  [OK] Laragon ditemukan di: %LARAGON_PATH%
 echo  [OK] PHP Laragon: %LARAGON_PHP%
-echo.
-
-:: --- Dapatkan IP server ---
-echo  ============================================================
-echo   Mendeteksi IP Server...
-echo  ============================================================
-echo.
-
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4" ^| findstr /v "127.0.0.1"') do (
-    set "SERVER_IP=%%a"
-    goto :ip_found
-)
-:ip_found
-set "SERVER_IP=%SERVER_IP: =%"
-
-echo  IP Server yang terdeteksi: %SERVER_IP%
-echo.
-set /p "INPUT_IP=  Masukkan IP server (Enter jika sudah benar) [%SERVER_IP%]: "
-if not "!INPUT_IP!"=="" set "SERVER_IP=!INPUT_IP!"
-echo  [OK] IP Server: %SERVER_IP%
 echo.
 
 :: --- Pastikan Laragon jalan ---
@@ -173,13 +155,12 @@ if exist "%~dp0.env.production" (
     copy /Y "%~dp0.env.example" "%TARGET_PATH%\.env" >nul
 )
 
-powershell -Command "(Get-Content '%TARGET_PATH%\.env') -replace '\[IP-SERVER\]', '%SERVER_IP%' | Set-Content '%TARGET_PATH%\.env'"
-echo  [OK] .env dikonfigurasi dengan IP: %SERVER_IP%
+echo  [OK] .env dikonfigurasi (APP_URL=https://presencesync.test).
 echo.
 
 :: --- PHP Artisan Setup ---
 echo  ============================================================
-echo   Setup Aplikasi (tanpa Node.js / npm)
+echo   Setup Aplikasi Laravel
 echo  ============================================================
 echo.
 
@@ -228,63 +209,235 @@ icacls "%TARGET_PATH%\bootstrap\cache" /grant Everyone:F /T >nul 2>&1
 echo  [OK] Permission storage dan cache diset.
 echo.
 
-:: --- Buka port 80 di Firewall ---
+:: ============================================================
+:: BAGIAN BARU: Setup Virtual Host + HTTPS presencesync.test
+:: ============================================================
 echo  ============================================================
-echo   Konfigurasi Windows Firewall
-echo  ============================================================
-echo.
-netsh advfirewall firewall delete rule name="Laragon Apache HTTP" >nul 2>&1
-netsh advfirewall firewall add rule name="Laragon Apache HTTP" dir=in action=allow protocol=TCP localport=80 >nul 2>&1
-echo  [OK] Port 80 dibuka di Windows Firewall untuk akses LAN.
-echo.
-
-:: --- Fix Apache agar listen ke semua IP (bukan hanya localhost) ---
-echo  ============================================================
-echo   Konfigurasi Apache (Akses LAN)
+echo   Setup Domain presencesync.test + HTTPS (SSL)
 echo  ============================================================
 echo.
 
+:: --- Deteksi Apache dir ---
 for /d %%d in ("C:\laragon\bin\apache\httpd-*") do set "APACHE_DIR=%%d"
 set "APACHE_CONF=%APACHE_DIR%\conf\httpd.conf"
+set "VHOST_CONF=%APACHE_DIR%\conf\extra\httpd-vhosts.conf"
+set "SSL_DIR=%LARAGON_PATH%\etc\ssl"
 
+:: --- Aktifkan mod_ssl di Apache ---
 if exist "%APACHE_CONF%" (
+    powershell -Command "(Get-Content '%APACHE_CONF%') -replace '#LoadModule ssl_module', 'LoadModule ssl_module' | Set-Content '%APACHE_CONF%'"
+    powershell -Command "(Get-Content '%APACHE_CONF%') -replace '#LoadModule socache_shmcb_module', 'LoadModule socache_shmcb_module' | Set-Content '%APACHE_CONF%'"
+    powershell -Command "(Get-Content '%APACHE_CONF%') -replace '#Include conf/extra/httpd-ssl.conf', 'Include conf/extra/httpd-ssl.conf' | Set-Content '%APACHE_CONF%'"
+    powershell -Command "(Get-Content '%APACHE_CONF%') -replace '#Include conf/extra/httpd-vhosts.conf', 'Include conf/extra/httpd-vhosts.conf' | Set-Content '%APACHE_CONF%'"
     powershell -Command "(Get-Content '%APACHE_CONF%') -replace 'Listen 127\.0\.0\.1:80', 'Listen 0.0.0.0:80' | Set-Content '%APACHE_CONF%'"
-    echo  [OK] Apache dikonfigurasi untuk akses LAN.
-    echo.
-    echo  [INFO] Restart Apache...
-    net stop apache2.4 >nul 2>&1
-    net stop "Apache2.4" >nul 2>&1
-    timeout /t 2 /nobreak >nul
-    net start apache2.4 >nul 2>&1
-    net start "Apache2.4" >nul 2>&1
-    echo  [OK] Apache direstart.
+    echo  [OK] mod_ssl diaktifkan di Apache.
 ) else (
-    echo  [WARN] httpd.conf tidak ditemukan. Restart Apache manual via Laragon.
+    echo  [WARN] httpd.conf tidak ditemukan. Setup manual mungkin diperlukan.
 )
+
+:: --- Buat SSL certificate self-signed untuk presencesync.test ---
+echo.
+echo  [INFO] Membuat SSL certificate untuk presencesync.test...
+
+:: Cek apakah Laragon sudah punya openssl
+set "LARAGON_OPENSSL="
+for /d %%d in ("C:\laragon\bin\openssl\*") do set "LARAGON_OPENSSL=%%d\openssl.exe"
+if not defined LARAGON_OPENSSL (
+    :: Coba path default Laragon
+    if exist "C:\laragon\bin\apache\httpd-2.4.54-win64-VS16\bin\openssl.exe" (
+        set "LARAGON_OPENSSL=C:\laragon\bin\apache\httpd-2.4.54-win64-VS16\bin\openssl.exe"
+    )
+    for %%d in ("C:\laragon\bin\apache\httpd-*\bin\openssl.exe") do set "LARAGON_OPENSSL=%%d"
+)
+
+if not exist "%SSL_DIR%" mkdir "%SSL_DIR%"
+
+if defined LARAGON_OPENSSL (
+    if exist "!LARAGON_OPENSSL!" (
+        "!LARAGON_OPENSSL!" req -x509 -nodes -days 3650 -newkey rsa:2048 ^
+            -keyout "%SSL_DIR%\presencesync.key" ^
+            -out "%SSL_DIR%\presencesync.crt" ^
+            -subj "/C=ID/ST=Jawa Barat/L=Sekolah/O=PresenceSync/CN=presencesync.test" ^
+            -addext "subjectAltName=DNS:presencesync.test" 2>nul
+        echo  [OK] SSL certificate dibuat.
+    ) else (
+        echo  [WARN] OpenSSL tidak ditemukan. Menggunakan SSL bawaan Laragon jika ada.
+    )
+) else (
+    echo  [WARN] OpenSSL tidak ditemukan. Menggunakan SSL bawaan Laragon jika ada.
+)
+
+:: Fallback: gunakan SSL default Laragon jika ada
+if not exist "%SSL_DIR%\presencesync.crt" (
+    if exist "%LARAGON_PATH%\etc\ssl\laragon.crt" (
+        copy /Y "%LARAGON_PATH%\etc\ssl\laragon.crt" "%SSL_DIR%\presencesync.crt" >nul 2>&1
+        copy /Y "%LARAGON_PATH%\etc\ssl\laragon.key" "%SSL_DIR%\presencesync.key" >nul 2>&1
+        echo  [OK] Menggunakan SSL certificate Laragon bawaan.
+    )
+)
+
+:: --- Buat Virtual Host config ---
+echo.
+echo  [INFO] Membuat Virtual Host presencesync.test...
+
+:: Hapus entry lama kalau ada
+if exist "%VHOST_CONF%" (
+    powershell -Command ^
+        "$content = Get-Content '%VHOST_CONF%' -Raw; " ^
+        "$start = $content.IndexOf('# BEGIN PresenceSync'); " ^
+        "$end = $content.IndexOf('# END PresenceSync'); " ^
+        "if ($start -ge 0 -and $end -ge 0) { " ^
+        "    $content = $content.Substring(0, $start) + $content.Substring($end + '# END PresenceSync'.Length); " ^
+        "    $content | Set-Content '%VHOST_CONF%' -NoNewline; " ^
+        "}"
+)
+
+:: Tambahkan Virtual Host baru
+(
+echo.
+echo # BEGIN PresenceSync
+echo ^<VirtualHost *:80^>
+echo     ServerName presencesync.test
+echo     DocumentRoot "%TARGET_PATH%\public"
+echo     ^<Directory "%TARGET_PATH%\public"^>
+echo         Options Indexes FollowSymLinks
+echo         AllowOverride All
+echo         Require all granted
+echo     ^</Directory^>
+echo     # Redirect HTTP ke HTTPS
+echo     RewriteEngine On
+echo     RewriteCond %%{HTTPS} off
+echo     RewriteRule ^(.*)$ https://%%{HTTP_HOST}%%{REQUEST_URI} [L,R=301]
+echo ^</VirtualHost^>
+echo.
+echo ^<VirtualHost *:443^>
+echo     ServerName presencesync.test
+echo     DocumentRoot "%TARGET_PATH%\public"
+echo     SSLEngine on
+) >> "%VHOST_CONF%"
+
+:: Cek apakah ada SSL cert
+if exist "%SSL_DIR%\presencesync.crt" (
+    (
+    echo     SSLCertificateFile "%SSL_DIR%\presencesync.crt"
+    echo     SSLCertificateKeyFile "%SSL_DIR%\presencesync.key"
+    ) >> "%VHOST_CONF%"
+) else (
+    :: Gunakan Laragon default SSL
+    (
+    echo     SSLCertificateFile "C:/laragon/etc/ssl/laragon.crt"
+    echo     SSLCertificateKeyFile "C:/laragon/etc/ssl/laragon.key"
+    ) >> "%VHOST_CONF%"
+)
+
+(
+echo     ^<Directory "%TARGET_PATH%\public"^>
+echo         Options Indexes FollowSymLinks
+echo         AllowOverride All
+echo         Require all granted
+echo     ^</Directory^>
+echo ^</VirtualHost^>
+echo # END PresenceSync
+) >> "%VHOST_CONF%"
+
+echo  [OK] Virtual Host presencesync.test dibuat.
+
+:: --- Daftarkan ke Windows hosts file ---
+echo.
+echo  [INFO] Mendaftarkan presencesync.test ke hosts file...
+
+:: Hapus entry lama
+powershell -Command "(Get-Content 'C:\Windows\System32\drivers\etc\hosts') | Where-Object { $_ -notmatch 'presencesync\.test' } | Set-Content 'C:\Windows\System32\drivers\etc\hosts'"
+
+:: Tambah entry baru
+echo 127.0.0.1 presencesync.test >> "C:\Windows\System32\drivers\etc\hosts"
+echo  [OK] presencesync.test didaftarkan ke hosts file.
+
+:: --- Buka port 80 dan 443 di Firewall ---
+echo.
+echo  [INFO] Buka port 80 dan 443 di Windows Firewall...
+netsh advfirewall firewall delete rule name="Laragon Apache HTTP" >nul 2>&1
+netsh advfirewall firewall delete rule name="Laragon Apache HTTPS" >nul 2>&1
+netsh advfirewall firewall add rule name="Laragon Apache HTTP" dir=in action=allow protocol=TCP localport=80 >nul 2>&1
+netsh advfirewall firewall add rule name="Laragon Apache HTTPS" dir=in action=allow protocol=TCP localport=443 >nul 2>&1
+echo  [OK] Port 80 dan 443 dibuka.
+
+:: --- Set Laragon auto-start saat Windows Boot ---
+echo.
+echo  ============================================================
+echo   Set Laragon Auto-Start saat Windows Boot
+echo  ============================================================
 echo.
 
-:: --- Selesai ---
+:: Cek lokasi Laragon.exe
+set "LARAGON_EXE=C:\laragon\laragon.exe"
+if exist "%LARAGON_EXE%" (
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "Laragon" /t REG_SZ /d "\"%LARAGON_EXE%\"" /f >nul 2>&1
+    echo  [OK] Laragon akan auto-start saat Windows Boot.
+    echo  [INFO] Pastikan Laragon di-set "Auto Run on Startup" di menu Laragon:
+    echo         Laragon -^> Preferences -^> General -^> Auto Run on Startup: ON
+) else (
+    echo  [WARN] laragon.exe tidak ditemukan, lewati auto-start setup.
+)
+
+:: --- Restart Apache ---
+echo.
+echo  [INFO] Restart Apache untuk menerapkan konfigurasi...
+net stop apache2.4 >nul 2>&1
+net stop "Apache2.4" >nul 2>&1
+timeout /t 2 /nobreak >nul
+net start apache2.4 >nul 2>&1
+net start "Apache2.4" >nul 2>&1
+echo  [OK] Apache direstart.
+
+:: --- Buat shortcut di Desktop ---
+echo.
+echo  ============================================================
+echo   Membuat Shortcut di Desktop
+echo  ============================================================
+echo.
+
+set "DESKTOP=%USERPROFILE%\Desktop"
+set "SHORTCUT_URL=%DESKTOP%\PresenceSync.url"
+
+(
+echo [InternetShortcut]
+echo URL=https://presencesync.test
+echo IconFile=C:\laragon\laragon.exe
+echo IconIndex=0
+) > "%SHORTCUT_URL%"
+
+echo  [OK] Shortcut "PresenceSync" dibuat di Desktop.
+echo  [INFO] Admin cukup double-klik shortcut tersebut untuk buka sistem.
+echo.
+
+:: ============================================================
 echo.
 echo  ============================================================
 echo   [SUKSES] PresenceSync Berhasil Diinstall!
 echo  ============================================================
 echo.
-echo  Akses dari browser:
+echo  Admin cukup buka browser dan ketik:
 echo.
-echo    Komputer ini sendiri:
-echo      http://localhost/presencesync/public
+echo    https://presencesync.test
 echo.
-echo    Komputer lain di jaringan sekolah:
-echo      http://%SERVER_IP%/presencesync/public
+echo  ATAU double-klik shortcut "PresenceSync" di Desktop.
+echo.
+echo  Tidak perlu terminal, npm run dev, atau php artisan serve!
+echo  Sistem berjalan otomatis saat komputer dinyalakan.
 echo.
 echo  Login default:
 echo    Username : admin
 echo    Password : password
 echo.
 echo  Fingerprint ADMS:
-echo    Server  : %SERVER_IP%
-echo    Port    : 80
-echo    URL     : /presencesync/public/api/absensi/sync
+echo    Server  : presencesync.test
+echo    Port    : 443 (HTTPS)
+echo    URL     : /api/absensi/sync
+echo.
+echo  CATATAN: Jika browser menampilkan peringatan "Not Secure",
+echo  klik "Advanced" -> "Proceed to presencesync.test (unsafe)"
+echo  Ini normal untuk sertifikat SSL lokal.
 echo.
 echo  ============================================================
 echo   Sistem berjalan otomatis lewat Laragon.
@@ -294,5 +447,5 @@ echo.
 echo  Tekan Enter untuk membuka browser...
 pause
 
-start http://localhost/presencesync/public
+start https://presencesync.test
 endlocal
