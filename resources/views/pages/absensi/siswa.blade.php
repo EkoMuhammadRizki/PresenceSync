@@ -34,8 +34,10 @@
             <div class="d-flex flex-column flex-grow-1">
                 <h4 class="mb-1 text-primary">Hasil Import Data Siswa</h4>
                 <span class="text-gray-700 fs-6">
-                    Berhasil diimport: <strong class="text-success">{{ session('import_success')['success_count'] }}</strong> siswa | 
-                    Dilewati (sudah ada di database): <strong class="text-warning">{{ session('import_success')['skip_count'] }}</strong> siswa
+                    Berhasil diproses/diimport: <strong class="text-success">{{ session('import_success')['success_count'] }}</strong> siswa
+                    @if(!empty(session('import_success')['skip_count']) && session('import_success')['skip_count'] > 0)
+                        | Dilewati: <strong class="text-warning">{{ session('import_success')['skip_count'] }}</strong> baris
+                    @endif
                 </span>
             </div>
         </div>
