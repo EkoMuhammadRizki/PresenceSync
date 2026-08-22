@@ -101,7 +101,7 @@ class GuruProfileController extends Controller
                 'nama'   => 'required|string|max:150',
                 'no_hp'  => 'nullable|regex:/^[0-9]{8,15}$/',
                 'alamat' => 'nullable|string',
-                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:20480',
             ];
         } else {
             $rules = [
@@ -110,7 +110,7 @@ class GuruProfileController extends Controller
                 'email'  => 'nullable|email|max:150|unique:gurus,email,' . $guru->id . '|unique:users,email,' . ($guru->user_id ?? 0),
                 'no_hp'  => 'nullable|regex:/^[0-9]{8,15}$/',
                 'alamat' => 'nullable|string',
-                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:20480',
             ];
         }
 
@@ -154,10 +154,10 @@ class GuruProfileController extends Controller
 
             if ($request->hasFile('avatar')) {
                 if ($info->avatar) {
-                    Storage::delete($info->avatar);
+                    Storage::disk('public')->delete($info->avatar);
                 }
                 $path = 'avatars/guru/' . $guru->id;
-                $info->avatar = Storage::disk('public')->putFileAs($path, $request->file('avatar'), 'avatar.jpg', 'public');
+                $info->avatar = \App\Services\ImageCompressionService::compressAndSaveAvatar($request->file('avatar'), $path, 'avatar.jpg');
             }
 
             if ($request->boolean('avatar_remove')) {

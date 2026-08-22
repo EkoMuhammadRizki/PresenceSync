@@ -128,7 +128,7 @@ class SiswaProfileController extends Controller
             'no_hp'           => 'nullable|regex:/^[0-9]{8,15}$/',
             'no_hp_orang_tua' => 'nullable|regex:/^[0-9]{8,15}$/',
             'alamat'          => 'nullable|string',
-            'avatar'          => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'avatar'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:20480',
         ];
 
         if ($userRole === 'admin' || $userRole === 'guru' || $userRole === 'kesiswaan' || $canStudentEditClass) {
@@ -201,10 +201,10 @@ class SiswaProfileController extends Controller
 
             if ($request->hasFile('avatar')) {
                 if ($info->avatar) {
-                    Storage::delete($info->avatar);
+                    Storage::disk('public')->delete($info->avatar);
                 }
                 $path = 'avatars/siswa/' . $siswa->id;
-                $info->avatar = Storage::disk('public')->putFileAs($path, $request->file('avatar'), 'avatar.jpg', 'public');
+                $info->avatar = \App\Services\ImageCompressionService::compressAndSaveAvatar($request->file('avatar'), $path, 'avatar.jpg');
             }
 
             if ($request->boolean('avatar_remove')) {

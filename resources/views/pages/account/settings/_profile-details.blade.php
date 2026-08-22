@@ -58,7 +58,7 @@
                         <!--end::Image input-->
 
                         <!--begin::Hint-->
-                        <div class="form-text">Allowed file types: png, jpg, jpeg.</div>
+                        <div class="form-text">Tipe file yang didukung: png, jpg, jpeg (Otomatis terkompresi).</div>
                         <!--end::Hint-->
                     </div>
                     <!--end::Col-->

@@ -171,7 +171,7 @@
                                             <i class="bi bi-x fs-2"></i>
                                         </span>
                                     </div>
-                                    <div class="form-text">Ekstensi file yang diperbolehkan: png, jpg, jpeg. Maksimal 2MB.</div>
+                                    <div class="form-text">Tipe file yang didukung: png, jpg, jpeg (Otomatis terkompresi).</div>
                                 </div>
                             </div>
 

@@ -69,9 +69,10 @@ class AdminProfileController extends Controller
         // Handle avatar upload
         if ($request->hasFile('avatar')) {
             if ($info->avatar) {
-                Storage::delete($info->avatar);
+                Storage::disk('public')->delete($info->avatar);
             }
-            $info->avatar = Storage::disk('public')->putFile('images', $request->file('avatar'), 'public');
+            $path = 'avatars/admin/' . $user->id;
+            $info->avatar = \App\Services\ImageCompressionService::compressAndSaveAvatar($request->file('avatar'), $path, 'avatar.jpg');
         }
 
         if ($request->boolean('avatar_remove')) {
