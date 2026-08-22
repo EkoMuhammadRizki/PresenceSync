@@ -39,8 +39,8 @@
 @endif
 
 @if(session('import_success'))
-    <div class="alert bg-light-primary border border-primary p-5 mb-10">
-        <div class="d-flex align-items-center mb-3">
+    <div class="alert bg-light-primary border border-primary alert-dismissible fade show p-5 mb-10 position-relative">
+        <div class="d-flex align-items-center mb-3 pe-8">
             <span class="svg-icon svg-icon-2hx svg-icon-primary me-4">
                 {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
             </span>
@@ -52,6 +52,7 @@
                 </span>
             </div>
         </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 
         @if(!empty(session('import_success')['imported_names']))
             <div class="mt-4 pt-3 border-top border-primary border-opacity-25">
