@@ -487,106 +487,93 @@
     </div>
 </div>
 
-<!-- Modal Post ke Mesin (Pilih Kelas & Lingkup) -->
+<!-- Modal Post ke Mesin (Pilih Kelas & Lingkup - Compact & No Scroll) -->
 <div class="modal fade" id="modal_post_ke_mesin" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered mw-700px">
-        <div class="modal-content">
-            <div class="modal-header pb-0 border-0 justify-content-end">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered mw-650px">
+        <div class="modal-content shadow-lg border-0">
+            <!-- Modal Header Compact -->
+            <div class="modal-header py-3 px-6 border-bottom">
+                <div class="d-flex align-items-center">
+                    <div class="symbol symbol-35px symbol-circle bg-light-info me-3">
+                        <span class="symbol-label">
+                            <i class="bi bi-send-fill text-info fs-5"></i>
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="modal-title fw-bolder text-gray-900 mb-0 fs-5">Post Data Siswa ke Mesin</h4>
+                        <span class="text-muted fs-8">Pilih target mesin dan rombel kelas siswa yang akan disinkronkan</span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-icon btn-active-color-primary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg fs-6"></i>
+                </button>
             </div>
-            <div class="modal-body scroll-y px-8 px-lg-12 pt-0 pb-10">
+
+            <!-- Modal Body Compact -->
+            <div class="modal-body px-6 py-4">
                 <form id="form_modal_post_ke_mesin" action="{{ route('siswa.push-to-devices') }}" method="POST">
                     @csrf
                     <input type="hidden" name="scope" id="modal_post_scope" value="kelas" />
-                    
-                    <div class="mb-8 text-center">
-                        <div class="symbol symbol-60px symbol-circle bg-light-info mb-3">
-                            <span class="symbol-label">
-                                {!! theme()->getSvgIcon("icons/duotune/arrows/arr078.svg", "svg-icon-2hx svg-icon-info") !!}
-                            </span>
+
+                    <!-- Row 1: Target Mesin & Lingkup Post -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bolder fs-7 text-gray-800 mb-1">Target Mesin Fingerprint</label>
+                            <select name="target_device_id" class="form-select form-select-solid form-select-sm">
+                                <option value="all">⚡ Semua Mesin Aktif ({{ count($devices ?? []) }} Mesin)</option>
+                                @foreach($devices ?? [] as $dev)
+                                    <option value="{{ $dev->id }}">{{ $dev->nama }} ({{ $dev->ip_address }})</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <h2 class="mb-1 fw-bolder text-gray-900">Post Data Siswa ke Mesin</h2>
-                        <div class="text-muted fw-bold fs-7">
-                            Pilih kelas atau lingkup data siswa yang ingin disinkronkan ke mesin fingerprint.
-                        </div>
-                    </div>
-
-                    <!-- Target Mesin Fingerprint -->
-                    <div class="mb-6">
-                        <label class="form-label fw-bolder fs-6 text-gray-800">Target Mesin Fingerprint</label>
-                        <select name="target_device_id" class="form-select form-select-solid">
-                            <option value="all">⚡ Semua Mesin Fingerprint Aktif ({{ count($devices ?? []) }} Mesin)</option>
-                            @foreach($devices ?? [] as $dev)
-                                <option value="{{ $dev->id }}">{{ $dev->nama }} ({{ $dev->ip_address }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Pilihan Lingkup Post -->
-                    <div class="mb-6">
-                        <label class="form-label fw-bolder fs-6 text-gray-800">Pilih Lingkup Siswa</label>
-                        
-                        <div class="row g-3">
-                            <!-- Card Pilihan: Per Kelas -->
-                            <div class="col-6 col-sm-3">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer active" for="scope_kelas">
-                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_kelas" value="kelas" checked onchange="switchPostScope('kelas')">
-                                    <i class="bi bi-diagram-3-fill fs-2x mb-1 text-primary"></i>
-                                    <span class="fs-7 fw-bolder text-gray-800">Pilih Kelas</span>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bolder fs-7 text-gray-800 mb-1">Pilih Lingkup Siswa</label>
+                            <div class="btn-group w-100 btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="scope_radio" id="scope_kelas" value="kelas" checked onchange="switchPostScope('kelas')">
+                                <label class="btn btn-outline btn-outline-primary btn-sm py-2 px-1 fs-8 fw-bold" for="scope_kelas">
+                                    <i class="bi bi-diagram-3 me-1"></i> Kelas
                                 </label>
-                            </div>
 
-                            <!-- Card Pilihan: Per Tingkat -->
-                            <div class="col-6 col-sm-3">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer" for="scope_tingkat">
-                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_tingkat" value="tingkat" onchange="switchPostScope('tingkat')">
-                                    <i class="bi bi-layers-fill fs-2x mb-1 text-info"></i>
-                                    <span class="fs-7 fw-bolder text-gray-800">Per Tingkat</span>
+                                <input type="radio" class="btn-check" name="scope_radio" id="scope_tingkat" value="tingkat" onchange="switchPostScope('tingkat')">
+                                <label class="btn btn-outline btn-outline-info btn-sm py-2 px-1 fs-8 fw-bold" for="scope_tingkat">
+                                    <i class="bi bi-layers me-1"></i> Tingkat
                                 </label>
-                            </div>
 
-                            <!-- Card Pilihan: Perlu Post Saja -->
-                            <div class="col-6 col-sm-3">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer" for="scope_unpushed">
-                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_unpushed" value="unpushed" onchange="switchPostScope('unpushed')">
-                                    <i class="bi bi-clock-history fs-2x mb-1 text-warning"></i>
-                                    <span class="fs-7 fw-bolder text-gray-800">Perlu Post</span>
+                                <input type="radio" class="btn-check" name="scope_radio" id="scope_unpushed" value="unpushed" onchange="switchPostScope('unpushed')">
+                                <label class="btn btn-outline btn-outline-warning btn-sm py-2 px-1 fs-8 fw-bold" for="scope_unpushed" title="{{ $unpushedCount ?? 0 }} siswa perlu post">
+                                    <i class="bi bi-clock-history me-1"></i> Perlu Post
                                 </label>
-                            </div>
 
-                            <!-- Card Pilihan: Seluruh Siswa -->
-                            <div class="col-6 col-sm-3">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer" for="scope_all">
-                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_all" value="all" onchange="switchPostScope('all')">
-                                    <i class="bi bi-people-fill fs-2x mb-1 text-success"></i>
-                                    <span class="fs-7 fw-bolder text-gray-800">Semua Siswa</span>
+                                <input type="radio" class="btn-check" name="scope_radio" id="scope_all" value="all" onchange="switchPostScope('all')">
+                                <label class="btn btn-outline btn-outline-success btn-sm py-2 px-1 fs-8 fw-bold" for="scope_all" title="{{ $totalSiswaAktif ?? 0 }} semua siswa">
+                                    <i class="bi bi-people me-1"></i> Semua
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <!-- Panel Section: Per Kelas (Default) -->
-                    <div id="section_scope_kelas" class="mb-6">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-bolder fs-6 text-gray-800 mb-0">Pilih Satu / Beberapa Rombel Kelas</label>
+                    <div id="section_scope_kelas" class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bolder fs-7 text-gray-800 mb-0">Pilih Rombel Kelas:</label>
                             <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-xs btn-light-primary py-1 px-2" onclick="selectKelasTingkat('10')">Tingkat 10</button>
-                                <button type="button" class="btn btn-xs btn-light-info py-1 px-2" onclick="selectKelasTingkat('11')">Tingkat 11</button>
-                                <button type="button" class="btn btn-xs btn-light-success py-1 px-2" onclick="selectKelasTingkat('12')">Tingkat 12</button>
-                                <button type="button" class="btn btn-xs btn-light-dark py-1 px-2" onclick="toggleAllKelasModal(true)">Semua</button>
-                                <button type="button" class="btn btn-xs btn-light-danger py-1 px-2" onclick="toggleAllKelasModal(false)">Batal</button>
+                                <button type="button" class="btn btn-xs btn-light-primary py-0 px-2 fs-8" onclick="selectKelasTingkat('10')">Kelas 10</button>
+                                <button type="button" class="btn btn-xs btn-light-info py-0 px-2 fs-8" onclick="selectKelasTingkat('11')">Kelas 11</button>
+                                <button type="button" class="btn btn-xs btn-light-success py-0 px-2 fs-8" onclick="selectKelasTingkat('12')">Kelas 12</button>
+                                <button type="button" class="btn btn-xs btn-light-dark py-0 px-2 fs-8" onclick="toggleAllKelasModal(true)">Semua</button>
+                                <button type="button" class="btn btn-xs btn-light-danger py-0 px-2 fs-8" onclick="toggleAllKelasModal(false)">Batal</button>
                             </div>
                         </div>
 
-                        <div class="border border-gray-300 rounded p-3 bg-light-secondary" style="max-height: 200px; overflow-y: auto;">
-                            <div class="row g-2">
+                        <div class="border border-gray-300 rounded p-2 bg-light-secondary" style="max-height: 125px; overflow-y: auto;">
+                            <div class="row g-1">
                                 @foreach($kelas as $k)
-                                    <div class="col-6 col-md-4">
-                                        <div class="form-check form-check-custom form-check-solid form-check-sm">
+                                    <div class="col-4 col-sm-3">
+                                        <div class="form-check form-check-custom form-check-solid form-check-sm py-1">
                                             <input class="form-check-input modal-kelas-checkbox" type="checkbox" name="kelas_ids[]" value="{{ $k->id }}" id="modal_k_{{ $k->id }}" data-count="{{ $k->siswas_count ?? 0 }}" data-tingkat="{{ $k->tingkat }}" onchange="calcModalPostCount()" />
-                                            <label class="form-check-label fs-7 fw-bold text-gray-800 cursor-pointer" for="modal_k_{{ $k->id }}">
+                                            <label class="form-check-label fs-8 fw-bold text-gray-800 cursor-pointer text-truncate" for="modal_k_{{ $k->id }}" title="{{ $k->nama }} ({{ $k->siswas_count ?? 0 }} Siswa)">
                                                 {{ $k->nama }}
-                                                <span class="badge badge-light-primary fs-8 ms-1">{{ $k->siswas_count ?? 0 }}</span>
+                                                <span class="badge badge-light-primary fs-9 ms-0 p-1">{{ $k->siswas_count ?? 0 }}</span>
                                             </label>
                                         </div>
                                     </div>
@@ -596,40 +583,40 @@
                     </div>
 
                     <!-- Panel Section: Per Tingkat -->
-                    <div id="section_scope_tingkat" class="mb-6 d-none">
-                        <label class="form-label fw-bolder fs-6 text-gray-800 mb-2">Pilih Tingkat</label>
-                        <div class="row g-3">
+                    <div id="section_scope_tingkat" class="mb-3 d-none">
+                        <label class="form-label fw-bolder fs-7 text-gray-800 mb-1">Pilih Tingkat</label>
+                        <div class="row g-2">
                             <div class="col-4">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-3 w-100 cursor-pointer" for="tingkat_10">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-2 w-100 cursor-pointer" for="tingkat_10">
                                     <input class="btn-check" type="radio" name="tingkat" id="tingkat_10" value="10" onchange="calcModalPostCount()">
-                                    <span class="fs-5 fw-bolder text-gray-800">Kelas 10</span>
-                                    <span class="badge badge-light-primary mt-1">{{ $tingkatCounts['10'] ?? 0 }} Siswa</span>
+                                    <span class="fs-6 fw-bolder text-gray-800">Kelas 10</span>
+                                    <span class="badge badge-light-primary mt-1 fs-9">{{ $tingkatCounts['10'] ?? 0 }} Siswa</span>
                                 </label>
                             </div>
                             <div class="col-4">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-3 w-100 cursor-pointer" for="tingkat_11">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-2 w-100 cursor-pointer" for="tingkat_11">
                                     <input class="btn-check" type="radio" name="tingkat" id="tingkat_11" value="11" onchange="calcModalPostCount()">
-                                    <span class="fs-5 fw-bolder text-gray-800">Kelas 11</span>
-                                    <span class="badge badge-light-info mt-1">{{ $tingkatCounts['11'] ?? 0 }} Siswa</span>
+                                    <span class="fs-6 fw-bolder text-gray-800">Kelas 11</span>
+                                    <span class="badge badge-light-info mt-1 fs-9">{{ $tingkatCounts['11'] ?? 0 }} Siswa</span>
                                 </label>
                             </div>
                             <div class="col-4">
-                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-3 w-100 cursor-pointer" for="tingkat_12">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-2 w-100 cursor-pointer" for="tingkat_12">
                                     <input class="btn-check" type="radio" name="tingkat" id="tingkat_12" value="12" onchange="calcModalPostCount()">
-                                    <span class="fs-5 fw-bolder text-gray-800">Kelas 12</span>
-                                    <span class="badge badge-light-success mt-1">{{ $tingkatCounts['12'] ?? 0 }} Siswa</span>
+                                    <span class="fs-6 fw-bolder text-gray-800">Kelas 12</span>
+                                    <span class="badge badge-light-success mt-1 fs-9">{{ $tingkatCounts['12'] ?? 0 }} Siswa</span>
                                 </label>
                             </div>
                         </div>
                     </div>
 
                     <!-- Panel Section: Perlu Post -->
-                    <div id="section_scope_unpushed" class="mb-6 d-none">
-                        <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed p-4">
-                            <i class="bi bi-clock-history fs-2tx text-warning me-3"></i>
+                    <div id="section_scope_unpushed" class="mb-3 d-none">
+                        <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed p-3">
+                            <i class="bi bi-clock-history fs-2 text-warning me-2"></i>
                             <div>
-                                <h6 class="text-gray-900 fw-bolder mb-1">Hanya Siswa yang Perlu Post</h6>
-                                <div class="fs-7 text-gray-700">
+                                <h6 class="text-gray-900 fw-bolder mb-0 fs-7">Siswa Perlu Post</h6>
+                                <div class="fs-8 text-gray-700">
                                     Akan mem-post sebanyak <strong>{{ $unpushedCount ?? 0 }} data siswa</strong> yang belum tersinkronisasi.
                                 </div>
                             </div>
@@ -637,33 +624,33 @@
                     </div>
 
                     <!-- Panel Section: Semua Siswa -->
-                    <div id="section_scope_all" class="mb-6 d-none">
-                        <div class="notice d-flex bg-light-danger rounded border-danger border border-dashed p-4">
-                            <i class="bi bi-people-fill fs-2tx text-danger me-3"></i>
+                    <div id="section_scope_all" class="mb-3 d-none">
+                        <div class="notice d-flex bg-light-danger rounded border-danger border border-dashed p-3">
+                            <i class="bi bi-people-fill fs-2 text-danger me-2"></i>
                             <div>
-                                <h6 class="text-gray-900 fw-bolder mb-1">Sinkronisasi Penuh (Seluruh Siswa)</h6>
-                                <div class="fs-7 text-gray-700">
+                                <h6 class="text-gray-900 fw-bolder mb-0 fs-7">Sinkronisasi Seluruh Siswa</h6>
+                                <div class="fs-8 text-gray-700">
                                     Akan mem-post seluruh <strong>{{ $totalSiswaAktif ?? 0 }} siswa aktif</strong>.
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Ringkasan & Submit -->
-                    <div class="d-flex align-items-center justify-content-between bg-light-primary rounded p-3 mb-6 border border-primary border-opacity-25">
+                    <!-- Ringkasan & Status -->
+                    <div class="d-flex align-items-center justify-content-between bg-light-primary rounded px-3 py-2 mb-4 border border-primary border-opacity-25">
                         <div class="d-flex align-items-center">
-                            <i class="bi bi-person-check-fill fs-2x text-primary me-3"></i>
-                            <div>
-                                <span class="fs-8 text-muted d-block">Estimasi Siswa yang Dipost:</span>
-                                <span class="fs-5 fw-bolder text-primary" id="modal_post_summary_count">0 Siswa</span>
-                            </div>
+                            <i class="bi bi-person-check-fill fs-4 text-primary me-2"></i>
+                            <span class="fs-7 fw-bolder text-gray-800">
+                                Estimasi Siswa: <span class="text-primary fw-bolder fs-6 ms-1" id="modal_post_summary_count">0 Siswa</span>
+                            </span>
                         </div>
-                        <span class="badge badge-light-success fs-8 fw-bold">Siap Sinkron</span>
+                        <span class="badge badge-light-success fs-9 fw-bold">Siap Sinkron</span>
                     </div>
 
-                    <div class="text-center pt-2">
-                        <button type="button" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-info fw-bolder px-6" id="btn_submit_post_modal">
+                    <!-- Tombol Aksi Compact -->
+                    <div class="d-flex justify-content-end gap-2 pt-1 border-top">
+                        <button type="button" class="btn btn-sm btn-light fw-bold px-5" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-sm btn-info fw-bolder px-6" id="btn_submit_post_modal">
                             <i class="bi bi-send-fill me-1"></i> Post ke Mesin Sekarang
                         </button>
                     </div>
