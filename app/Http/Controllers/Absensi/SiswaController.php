@@ -19,7 +19,7 @@ class SiswaController extends Controller
 {
     public function index()
     {
-        $siswas = Siswa::with(['kelas', 'user'])->orderBy('nama', 'asc')->get();
+        $siswas = Siswa::with(['kelas', 'user.info'])->orderBy('nama', 'asc')->get();
         $kelas  = Kelas::where('status', 'aktif')->orderBy('tingkat')->get();
         
         // Dapatkan user yang belum dikaitkan dengan data siswa manapun

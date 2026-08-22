@@ -17,7 +17,7 @@ class GuruController extends Controller
 {
     public function index()
     {
-        $gurus = Guru::with(['kelas'])->withCount(['kelas', 'mataPelajarans'])->orderBy('nama', 'asc')->get();
+        $gurus = Guru::with(['kelas', 'user.info'])->withCount(['kelas', 'mataPelajarans'])->orderBy('nama', 'asc')->get();
         return view('pages.absensi.guru', compact('gurus'));
     }
 

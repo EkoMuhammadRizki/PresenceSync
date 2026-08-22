@@ -215,10 +215,19 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="symbol symbol-circle symbol-40px overflow-hidden me-3">
-                                    <div class="symbol-label fs-4 bg-light-primary text-primary fw-bolder">
-                                        {{ substr($item->nama, 0, 1) }}
-                                    </div>
+                                @php
+                                    $itemAvatar = ($item->user && $item->user->info && !empty($item->user->info->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($item->user->info->avatar))
+                                        ? asset('storage/' . ltrim($item->user->info->avatar, '/'))
+                                        : null;
+                                @endphp
+                                <div class="symbol symbol-circle symbol-40px overflow-hidden me-3 flex-shrink-0">
+                                    @if($itemAvatar)
+                                        <div class="symbol-label" style="background-image:url('{{ $itemAvatar }}'); background-size: cover; background-position: center;"></div>
+                                    @else
+                                        <div class="symbol-label fs-4 bg-light-primary text-primary fw-bolder">
+                                            {{ substr($item->nama, 0, 1) }}
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="d-flex flex-column">
                                     <a href="{{ theme()->getPageUrl('absensi/profil-guru') }}?id={{ $item->id }}" class="text-gray-800 text-hover-primary fw-bolder">{{ $item->nama }}</a>
