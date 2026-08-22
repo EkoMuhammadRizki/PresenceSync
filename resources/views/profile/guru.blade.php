@@ -5,6 +5,12 @@
     @endphp
     <!--begin::Toolbar-->
     @include('pages.absensi._partials.toolbar', [
+        'customBreadcrumbs' => [
+            ['title' => 'Home', 'path' => 'index', 'active' => false],
+            ['title' => 'Master Data', 'path' => '', 'active' => false],
+            ['title' => 'Guru', 'path' => 'absensi/master/guru', 'active' => false],
+            ['title' => $guru ? $guru->nama : ($user->name ?? 'Profil Guru'), 'path' => '', 'active' => true],
+        ],
         'toolbarActions' => '
             <a href="' . $backUrl . '" class="btn btn-sm btn-light me-2">
                 ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' ' . $backText . '

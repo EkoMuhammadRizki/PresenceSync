@@ -1,5 +1,5 @@
 @php
-    $breadcrumb = bootstrap()->getBreadcrumb();
+    $breadcrumb = (!empty($customBreadcrumbs ?? null)) ? $customBreadcrumbs : bootstrap()->getBreadcrumb();
     $pageTitle  = theme()->getPageTitle();
 @endphp
 
@@ -11,12 +11,12 @@
             <ul class="breadcrumb breadcrumb-separatorless fw-bold fs-7 my-1">
                 @foreach ($breadcrumb as $item)
                     @if ($item['active'] === true)
-                        <li class="breadcrumb-item text-dark">{{ $item['title'] }}</li>
+                        <li class="breadcrumb-item text-dark fw-bolder">{{ $item['title'] }}</li>
                     @else
                         <li class="breadcrumb-item text-muted">
                             @if (!empty($item['path']))
                                 @php
-                                    $url = ($item['path'] === 'index' || strtolower($item['title']) === 'home') ? 'javascript:location.reload()' : theme()->getPageUrl($item['path']);
+                                    $url = ($item['path'] === 'index' || strtolower($item['title']) === 'home') ? theme()->getPageUrl('index') : theme()->getPageUrl($item['path']);
                                 @endphp
                                 <a href="{{ $url }}" class="text-muted text-hover-primary">{{ $item['title'] }}</a>
                             @else
@@ -24,8 +24,8 @@
                             @endif
                         </li>
                     @endif
-                    @if (next($breadcrumb))
-                        <li class="breadcrumb-item"><span class="bullet bg-gray-200 w-5px h-2px ms-2 me-2"></span></li>
+                    @if (!$loop->last)
+                        <li class="breadcrumb-item"><span class="bullet bg-gray-300 w-5px h-2px ms-2 me-2"></span></li>
                     @endif
                 @endforeach
             </ul>

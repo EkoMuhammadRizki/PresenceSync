@@ -1,8 +1,14 @@
 <x-base-layout>
 @include('pages.absensi._partials.toolbar', [
+    'customBreadcrumbs' => [
+        ['title' => 'Home', 'path' => 'index', 'active' => false],
+        ['title' => 'Master Data', 'path' => '', 'active' => false],
+        ['title' => 'Siswa', 'path' => 'absensi/master/siswa', 'active' => false],
+        ['title' => $siswa ? $siswa->nama : 'Profil Siswa', 'path' => '', 'active' => true],
+    ],
     'toolbarActions' => '
         <a href="' . theme()->getPageUrl('absensi/master/siswa') . '" class="btn btn-sm btn-light me-2">
-            ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' Kembali
+            ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' Kembali ke Data Siswa
         </a>'
 ])
 

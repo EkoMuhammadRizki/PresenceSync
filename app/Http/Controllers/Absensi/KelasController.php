@@ -19,7 +19,7 @@ class KelasController extends Controller
 
     public function show(Kelas $kelas)
     {
-        $kelas->load(['guru', 'siswas', 'jadwalPelajarans.kelas']);
+        $kelas->load(['guru', 'siswas.user.info', 'jadwalPelajarans.mataPelajaran.guru']);
         $kelas->loadCount('siswas');
 
         return view('pages.absensi.profil-kelas', compact('kelas'));

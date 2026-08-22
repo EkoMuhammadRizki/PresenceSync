@@ -580,11 +580,32 @@ class SiswaController extends Controller
                     $jk = 'L';
                 }
 
-                // Cari kelas berdasarkan lookup array
+                // Cari kelas berdasarkan lookup array (atau auto-create jika belum ada)
                 $kelasId = null;
                 if ($kelasName) {
-                    $kKey = trim(strtolower($kelasName));
-                    $kelasId = $kelasMap[$kKey] ?? ($kelasMap[trim($kelasName)] ?? null);
+                    $cleanKelasName = trim($kelasName);
+                    $kKey = strtolower($cleanKelasName);
+                    if (isset($kelasMap[$kKey])) {
+                        $kelasId = $kelasMap[$kKey];
+                    } elseif (isset($kelasMap[$cleanKelasName])) {
+                        $kelasId = $kelasMap[$cleanKelasName];
+                    } else {
+                        // Tentukan tingkat kelas otomatis (10, 11, 12)
+                        $tingkat = '10';
+                        if (preg_match('/^(xii|12)/i', $cleanKelasName)) {
+                            $tingkat = '12';
+                        } elseif (preg_match('/^(xi|11)/i', $cleanKelasName)) {
+                            $tingkat = '11';
+                        }
+                        $newKelas = Kelas::create([
+                            'nama'    => $cleanKelasName,
+                            'tingkat' => $tingkat,
+                            'status'  => 'aktif',
+                        ]);
+                        $kelasId = $newKelas->id;
+                        $kelasMap[$kKey] = $kelasId;
+                        $kelasMap[$cleanKelasName] = $kelasId;
+                    }
                 }
 
                 // Pengecekan duplikat berdasarkan NIS (in-memory lookup)
