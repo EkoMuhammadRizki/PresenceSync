@@ -218,8 +218,14 @@
                             @endif
                         </td>
                         <td>
-                            @if($item->kelas_count > 0)
-                                <span class="badge badge-light-success fw-bolder">{{ $item->kelas_count }} Kelas</span>
+                            @if($item->kelas && $item->kelas->count() > 0)
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($item->kelas as $k)
+                                        <a href="{{ route('kelas.show', $k->id) }}" class="badge badge-light-primary fw-bolder text-hover-primary" title="Lihat Kelas {{ $k->nama }}">
+                                            {{ $k->nama }}
+                                        </a>
+                                    @endforeach
+                                </div>
                             @else
                                 <span class="badge badge-light-secondary text-muted fw-bold">Bukan Wali</span>
                             @endif
