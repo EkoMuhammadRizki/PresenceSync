@@ -72,9 +72,15 @@
                                 {!! theme()->getSvgIcon("icons/duotune/general/gen018.svg", "svg-icon-4 me-1") !!}
                                 {{ $guru->alamat ?? ($siswa->alamat ?? 'Sekolah Presensi') }}
                             </a>
+                            @php
+                                $displayEmail = $guru->email ?? ($siswa->user->email ?? ($user->email ?? null));
+                                if ($displayEmail && (str_ends_with($displayEmail, '@guru.internal') || str_ends_with($displayEmail, '@siswa.internal'))) {
+                                    $displayEmail = null;
+                                }
+                            @endphp
                             <a href="#" class="d-flex align-items-center text-gray-400 text-hover-primary mb-2">
                                 {!! theme()->getSvgIcon("icons/duotune/communication/com011.svg", "svg-icon-4 me-1") !!}
-                                {{ $guru->email ?? ($siswa->user->email ?? $user->email) }}
+                                {{ $displayEmail ?: '-' }}
                             </a>
                         </div>
                         <!--end::Info-->

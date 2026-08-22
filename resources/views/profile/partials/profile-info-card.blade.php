@@ -17,7 +17,7 @@
 <div class="row g-5 g-xxl-8">
     <!--begin::Col - Personal Info-->
     <div class="col-xl-6">
-        <div class="card card-xl-stretch mb-xl-8">
+        <div class="card card-xl-stretch mb-5 mb-xxl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
                     <span class="card-label fw-bolder fs-3 text-dark">Informasi Pribadi</span>
@@ -92,42 +92,6 @@
                     </div>
                 @endif
 
-                @if($guru)
-                    <!-- NIK, NUPTK, NPWP -->
-                    @if($guru->nik || $guru->nuptk || $guru->npwp)
-                        <div class="d-flex align-items-center mb-7">
-                            <div class="flex-grow-1">
-                                <span class="text-muted fw-bold d-block fs-7">Identitas Pegawai (NIK / NUPTK / NPWP)</span>
-                                <span class="text-gray-800 fw-bolder fs-6">
-                                    NIK: {{ $guru->nik ?? '-' }} • NUPTK: {{ $guru->nuptk ?? '-' }} • NPWP: {{ $guru->npwp ?? '-' }}
-                                </span>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Status Kepegawaian & Pangkat Golongan -->
-                    @if($guru->status_kepegawaian || $guru->pangkat_golongan)
-                        <div class="d-flex align-items-center mb-7">
-                            <div class="flex-grow-1">
-                                <span class="text-muted fw-bold d-block fs-7">Status Kepegawaian & Golongan</span>
-                                <span class="text-gray-800 fw-bolder fs-6">
-                                    {{ $guru->status_kepegawaian ?? '-' }} {{ $guru->pangkat_golongan ? '(' . $guru->pangkat_golongan . ')' : '' }}
-                                </span>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Tugas Tambahan -->
-                    @if($guru->tugas_tambahan)
-                        <div class="d-flex align-items-center mb-7">
-                            <div class="flex-grow-1">
-                                <span class="text-muted fw-bold d-block fs-7">Tugas Tambahan</span>
-                                <span class="text-gray-800 fw-bolder fs-6">{{ $guru->tugas_tambahan }}</span>
-                            </div>
-                        </div>
-                    @endif
-                @endif
-
                 <!-- Alamat -->
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
@@ -174,7 +138,7 @@
     </div>
     <!--end::Col-->
 
-    <!--begin::Col - Contact & Account Info-->
+    <!--begin::Col - Contact, Kepegawaian & Account Info-->
     <div class="col-xl-6">
         <!--begin::Contact Info-->
         <div class="card mb-5 mb-xxl-8">
@@ -185,13 +149,25 @@
                 </h3>
             </div>
             <div class="card-body pt-3 pb-5">
-
-
                 <!-- Nomor HP -->
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center mb-7">
                     <div class="flex-grow-1">
                         <span class="text-muted fw-bold d-block fs-7">Nomor HP / Telepon</span>
                         <span class="text-gray-800 fw-bolder fs-6">{{ $guru->no_hp ?? ($siswa->no_hp ?? '-') }}</span>
+                    </div>
+                </div>
+
+                <!-- Email / Gmail -->
+                @php
+                    $contactEmail = $guru->email ?? ($siswa->user->email ?? ($user->email ?? null));
+                    if ($contactEmail && (str_ends_with($contactEmail, '@guru.internal') || str_ends_with($contactEmail, '@siswa.internal'))) {
+                        $contactEmail = null;
+                    }
+                @endphp
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Email / Gmail</span>
+                        <span class="text-gray-800 fw-bolder fs-6">{{ $contactEmail ?: '-' }}</span>
                     </div>
                 </div>
                 
@@ -213,6 +189,66 @@
             </div>
         </div>
         <!--end::Contact Info-->
+
+        @if($guru)
+        <!--begin::Kepegawaian Info-->
+        <div class="card mb-5 mb-xxl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bolder fs-3 text-dark">Informasi Kepegawaian</span>
+                    <span class="text-muted mt-1 fw-bold fs-7">Data status kepegawaian dan legalitas</span>
+                </h3>
+            </div>
+            <div class="card-body pt-3 pb-5">
+                <!-- Status Kepegawaian & Pangkat Golongan -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Status Kepegawaian & Golongan</span>
+                        <span class="text-gray-800 fw-bolder fs-6">
+                            {{ $guru->status_kepegawaian ?? '-' }} {{ $guru->pangkat_golongan ? '(' . $guru->pangkat_golongan . ')' : '' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- NIK, NUPTK, NPWP -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Identitas Pegawai (NIK / NUPTK / NPWP)</span>
+                        <span class="text-gray-800 fw-bolder fs-6">
+                            NIK: {{ $guru->nik ?? '-' }} • NUPTK: {{ $guru->nuptk ?? '-' }} • NPWP: {{ $guru->npwp ?? '-' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Tugas Tambahan -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Tugas Tambahan</span>
+                        <span class="text-gray-800 fw-bolder fs-6">{{ $guru->tugas_tambahan ?: '-' }}</span>
+                    </div>
+                </div>
+
+                <!-- SK Pengangkatan -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">SK Pengangkatan</span>
+                        <span class="text-gray-800 fw-bolder fs-6">{{ $guru->sk_pengangkatan ?: '-' }}</span>
+                    </div>
+                </div>
+
+                <!-- TMT Pengangkatan -->
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">TMT Pengangkatan</span>
+                        <span class="text-gray-800 fw-bolder fs-6">
+                            {{ $guru->tmt_pengangkatan ? $guru->tmt_pengangkatan->format('d F Y') : '-' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--end::Kepegawaian Info-->
+        @endif
 
         <!--begin::Account Info-->
         <div class="card mb-5 mb-xxl-8">

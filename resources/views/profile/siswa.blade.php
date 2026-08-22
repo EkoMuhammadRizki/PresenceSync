@@ -151,10 +151,24 @@
 
 
                             <!-- Nomor HP -->
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center mb-7">
                                 <div class="flex-grow-1">
                                     <span class="text-muted fw-bold d-block fs-7">Nomor HP / Telepon</span>
                                     <span class="text-gray-800 fw-bolder fs-6">{{ $siswa->no_hp ?? '-' }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Email / Gmail -->
+                            @php
+                                $siswaEmail = $siswa->email ?? ($siswa->user->email ?? null);
+                                if ($siswaEmail && (str_ends_with($siswaEmail, '@guru.internal') || str_ends_with($siswaEmail, '@siswa.internal'))) {
+                                    $siswaEmail = null;
+                                }
+                            @endphp
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <span class="text-muted fw-bold d-block fs-7">Email / Gmail</span>
+                                    <span class="text-gray-800 fw-bolder fs-6">{{ $siswaEmail ?: '-' }}</span>
                                 </div>
                             </div>
                             
