@@ -11,7 +11,7 @@ class KelasController extends Controller
 {
     public function index()
     {
-        $kelas    = Kelas::with(['guru'])->withCount('siswas')->latest()->get();
+        $kelas    = Kelas::with(['guru'])->withCount('siswas')->orderBy('tingkat', 'asc')->orderByRaw("CAST(nama AS UNSIGNED) ASC, nama ASC")->get();
         $gurus    = Guru::orderBy('nama')->get();
 
         return view('pages.absensi.kelas-data', compact('kelas', 'gurus'));

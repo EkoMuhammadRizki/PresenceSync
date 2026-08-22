@@ -17,8 +17,8 @@ class PembagianKelasController extends Controller
         $kelas = Kelas::with(['guru'])
             ->withCount('siswas')
             ->where('status', 'aktif')
-            ->orderBy('tingkat')
-            ->orderBy('nama')
+            ->orderBy('tingkat', 'asc')
+            ->orderByRaw("CAST(nama AS UNSIGNED) ASC, nama ASC")
             ->get();
 
         return view('pages.absensi.pembagian-kelas', compact('kelas'));

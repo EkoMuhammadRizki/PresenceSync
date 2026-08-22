@@ -16,7 +16,7 @@ class GuruController extends Controller
 {
     public function index()
     {
-        $gurus = Guru::withCount(['kelas', 'mataPelajarans'])->latest()->get();
+        $gurus = Guru::withCount(['kelas', 'mataPelajarans'])->orderBy('nama', 'asc')->get();
         return view('pages.absensi.guru', compact('gurus'));
     }
 
@@ -387,8 +387,10 @@ class GuruController extends Controller
             return null;
         };
 
-        $successCount = 0;
-        $skipCount    = 0;
+        $successCount  = 0;
+        $skipCount     = 0;
+        $importedNames = [];
+        $skippedNames  = [];
 
         foreach ($rows as $row) {
             // Ambil nama
@@ -421,6 +423,11 @@ class GuruController extends Controller
             // NIP wajib ada
             if (empty($nip)) {
                 $skipCount++;
+                $skippedNames[] = [
+                    'nama'   => $nama,
+                    'nip'    => '-',
+                    'alasan' => 'Kolom NIP kosong',
+                ];
                 continue;
             }
 
@@ -432,6 +439,11 @@ class GuruController extends Controller
             // Pengecekan duplikat berdasarkan NIP saja
             if (Guru::where('nip', $nip)->exists()) {
                 $skipCount++;
+                $skippedNames[] = [
+                    'nama'   => $nama,
+                    'nip'    => $nip,
+                    'alasan' => 'NIP sudah terdaftar di sistem',
+                ];
                 continue;
             }
 
@@ -484,6 +496,10 @@ class GuruController extends Controller
                 'pangkat_golongan'     => $pangkatGolongan,
             ]);
 
+            $importedNames[] = [
+                'nama' => $nama,
+                'nip'  => $nip,
+            ];
             $successCount++;
         }
 
@@ -493,8 +509,10 @@ class GuruController extends Controller
 
         return redirect()->route('guru.index')
             ->with('import_success', [
-                'success_count' => $successCount,
-                'skip_count'    => $skipCount,
+                'success_count'  => $successCount,
+                'skip_count'     => $skipCount,
+                'imported_names' => $importedNames,
+                'skipped_names'  => $skippedNames,
             ]);
     }
 }

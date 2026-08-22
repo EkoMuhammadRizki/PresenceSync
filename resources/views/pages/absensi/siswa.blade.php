@@ -26,17 +26,64 @@
 @endif
 
 @if(session('import_success'))
-    <div class="alert bg-light-primary border border-primary d-flex align-items-center p-5 mb-10">
-        <span class="svg-icon svg-icon-2hx svg-icon-primary me-4">
-            {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
-        </span>
-        <div class="d-flex flex-column">
-            <h4 class="mb-1 text-primary">Informasi Import Data Siswa</h4>
-            <span class="text-primary">
-                Berhasil diimport: <strong>{{ session('import_success')['success_count'] }}</strong> siswa.<br>
-                Tidak diimport (sudah ada di database): <strong>{{ session('import_success')['skip_count'] }}</strong> siswa.
+    <div class="alert bg-light-primary border border-primary p-5 mb-10">
+        <div class="d-flex align-items-center mb-3">
+            <span class="svg-icon svg-icon-2hx svg-icon-primary me-4">
+                {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
             </span>
+            <div class="d-flex flex-column flex-grow-1">
+                <h4 class="mb-1 text-primary">Hasil Import Data Siswa</h4>
+                <span class="text-gray-700 fs-6">
+                    Berhasil diimport: <strong class="text-success">{{ session('import_success')['success_count'] }}</strong> siswa | 
+                    Dilewati (sudah ada di database): <strong class="text-warning">{{ session('import_success')['skip_count'] }}</strong> siswa
+                </span>
+            </div>
         </div>
+
+        @if(!empty(session('import_success')['imported_names']))
+            <div class="mt-4 pt-3 border-top border-primary border-opacity-25">
+                <a class="btn btn-sm btn-light-success fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseSiswaImported" role="button" aria-expanded="false">
+                    <i class="bi bi-check-circle me-1"></i> Lihat {{ count(session('import_success')['imported_names']) }} Siswa yang Berhasil Diimport
+                </a>
+                <div class="collapse show" id="collapseSiswaImported">
+                    <div class="card card-body bg-white border border-success border-opacity-25 py-3 px-4 mt-2" style="max-height: 200px; overflow-y: auto;">
+                        <ul class="list-unstyled mb-0">
+                            @foreach(session('import_success')['imported_names'] as $idx => $s)
+                                <li class="py-1 border-bottom border-gray-200 d-flex justify-content-between align-items-center fs-7">
+                                    <span class="text-gray-800 fw-bold">{{ $idx + 1 }}. {{ $s['nama'] }}</span>
+                                    <div>
+                                        <span class="badge badge-light-primary me-1">NIS: {{ $s['nis'] }}</span>
+                                        @if(!empty($s['kelas']) && $s['kelas'] !== '-')
+                                            <span class="badge badge-light-info">Kelas: {{ $s['kelas'] }}</span>
+                                        @endif
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if(!empty(session('import_success')['skipped_names']))
+            <div class="mt-3">
+                <a class="btn btn-sm btn-light-warning fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseSiswaSkipped" role="button" aria-expanded="false">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Lihat {{ count(session('import_success')['skipped_names']) }} Data yang Dilewati
+                </a>
+                <div class="collapse" id="collapseSiswaSkipped">
+                    <div class="card card-body bg-white border border-warning border-opacity-25 py-3 px-4 mt-2" style="max-height: 180px; overflow-y: auto;">
+                        <ul class="list-unstyled mb-0">
+                            @foreach(session('import_success')['skipped_names'] as $idx => $s)
+                                <li class="py-1 border-bottom border-gray-200 d-flex justify-content-between align-items-center fs-7">
+                                    <span class="text-gray-800">{{ $idx + 1 }}. {{ $s['nama'] }} (NIS: {{ $s['nis'] }})</span>
+                                    <span class="badge badge-light-danger">{{ $s['alasan'] }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 @endif
 
@@ -341,7 +388,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body mx-5 my-7">
-                <form class="form" action="{{ route('siswa.import') }}" method="POST" enctype="multipart/form-data">
+                <form id="form_import_siswa" class="form" action="{{ route('siswa.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-6 mb-9">
                         <span class="svg-icon svg-icon-2tx svg-icon-primary me-4">
@@ -370,7 +417,10 @@
 
                     <div class="text-center pt-5">
                         <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-success">Mulai Import</button>
+                        <button type="submit" class="btn btn-success" id="btn_submit_import_siswa">
+                            {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
+                            Mulai Import
+                        </button>
                     </div>
                 </form>
             </div>
@@ -467,8 +517,9 @@ $(document).ready(function() {
     var table = $('#kt_table_siswa').DataTable({ 
         dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', 
         info:true, 
-        order:[], 
-        pageLength:5, 
+        order:[[2, 'asc']], 
+        pageLength:20, 
+        lengthMenu:[[10, 20, 50, 100, -1], [10, 20, 50, 100, "Semua"]],
         lengthChange:true, 
         columnDefs:[{orderable:false,targets:[0,7]}]  // kolom 0=checkbox, 7=aksi (status ada di 6)
     });
@@ -595,6 +646,29 @@ $(document).ready(function() {
         window.showStep(1);
         return false;
     };
+
+    // ─── Loading Bar saat Import Siswa ────────────────────────────────────────
+    $('#form_import_siswa').on('submit', function(e) {
+        var fileInput = $(this).find('input[type="file"]')[0];
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            return;
+        }
+        
+        var fileName = fileInput.files[0].name;
+        $('#btn_submit_import_siswa').prop('disabled', true).html('<span class="spinner-border spinner-border-sm align-middle me-2"></span> Mengunggah...');
+        
+        Swal.fire({
+            title: 'Mengimpor Data Siswa...',
+            html: '<div class="mb-3 text-gray-700 fs-6">Sistem sedang membaca file <strong>' + fileName + '</strong> dan memproses data akun & siswa...</div>' +
+                  '<div class="progress h-20px w-100 bg-light-primary mb-2">' +
+                  '  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Memproses Excel...</div>' +
+                  '</div>' +
+                  '<div class="text-muted fs-7">Mohon tidak menutup atau merefresh halaman ini.</div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false
+        });
+    });
 
     $(document).on('click', '#tambah_siswa_btn_next', function(e) {
         e.preventDefault();

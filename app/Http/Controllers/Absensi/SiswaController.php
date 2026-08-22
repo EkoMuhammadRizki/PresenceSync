@@ -18,7 +18,7 @@ class SiswaController extends Controller
 {
     public function index()
     {
-        $siswas = Siswa::with(['kelas', 'user'])->latest()->get();
+        $siswas = Siswa::with(['kelas', 'user'])->orderBy('nama', 'asc')->get();
         $kelas  = Kelas::where('status', 'aktif')->orderBy('tingkat')->get();
         
         // Dapatkan user yang belum dikaitkan dengan data siswa manapun
@@ -492,8 +492,10 @@ class SiswaController extends Controller
             return null;
         };
 
-        $successCount = 0;
-        $skipCount = 0;
+        $successCount  = 0;
+        $skipCount     = 0;
+        $importedNames = [];
+        $skippedNames  = [];
 
         foreach ($rows as $row) {
             // Ambil data siswa
@@ -540,6 +542,11 @@ class SiswaController extends Controller
             // NIS wajib ada
             if (empty($nis)) {
                 $skipCount++;
+                $skippedNames[] = [
+                    'nama'   => $nama,
+                    'nis'    => '-',
+                    'alasan' => 'Kolom NIS kosong',
+                ];
                 continue;
             }
 
@@ -560,6 +567,11 @@ class SiswaController extends Controller
             // Pengecekan duplikat berdasarkan NIS
             if (Siswa::where('nis', $nis)->exists()) {
                 $skipCount++;
+                $skippedNames[] = [
+                    'nama'   => $nama,
+                    'nis'    => $nis,
+                    'alasan' => 'NIS sudah terdaftar di sistem',
+                ];
                 continue;
             }
 
@@ -685,6 +697,11 @@ class SiswaController extends Controller
                 }
             }
 
+            $importedNames[] = [
+                'nama'  => $nama,
+                'nis'   => $nis,
+                'kelas' => $kelasName ?? '-',
+            ];
             $successCount++;
         }
 
@@ -694,8 +711,10 @@ class SiswaController extends Controller
 
         return redirect()->route('siswa.index')
             ->with('import_success', [
-                'success_count' => $successCount,
-                'skip_count' => $skipCount,
+                'success_count'  => $successCount,
+                'skip_count'     => $skipCount,
+                'imported_names' => $importedNames,
+                'skipped_names'  => $skippedNames,
             ]);
     }
 

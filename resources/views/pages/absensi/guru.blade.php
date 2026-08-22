@@ -39,17 +39,59 @@
 @endif
 
 @if(session('import_success'))
-    <div class="alert bg-light-primary border border-primary d-flex align-items-center p-5 mb-10">
-        <span class="svg-icon svg-icon-2hx svg-icon-primary me-4">
-            {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
-        </span>
-        <div class="d-flex flex-column">
-            <h4 class="mb-1 text-primary">Informasi Import Data Guru</h4>
-            <span class="text-primary">
-                Berhasil diimport: <strong>{{ session('import_success')['success_count'] }}</strong> guru.<br>
-                Tidak diimport (sudah ada / dilewati): <strong>{{ session('import_success')['skip_count'] }}</strong> guru.
+    <div class="alert bg-light-primary border border-primary p-5 mb-10">
+        <div class="d-flex align-items-center mb-3">
+            <span class="svg-icon svg-icon-2hx svg-icon-primary me-4">
+                {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg") !!}
             </span>
+            <div class="d-flex flex-column flex-grow-1">
+                <h4 class="mb-1 text-primary">Hasil Import Data Guru</h4>
+                <span class="text-gray-700 fs-6">
+                    Berhasil diimport: <strong class="text-success">{{ session('import_success')['success_count'] }}</strong> guru | 
+                    Dilewati (sudah ada / tidak valid): <strong class="text-warning">{{ session('import_success')['skip_count'] }}</strong> guru
+                </span>
+            </div>
         </div>
+
+        @if(!empty(session('import_success')['imported_names']))
+            <div class="mt-4 pt-3 border-top border-primary border-opacity-25">
+                <a class="btn btn-sm btn-light-success fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseGuruImported" role="button" aria-expanded="false">
+                    <i class="bi bi-check-circle me-1"></i> Lihat {{ count(session('import_success')['imported_names']) }} Guru yang Berhasil Diimport
+                </a>
+                <div class="collapse show" id="collapseGuruImported">
+                    <div class="card card-body bg-white border border-success border-opacity-25 py-3 px-4 mt-2" style="max-height: 200px; overflow-y: auto;">
+                        <ul class="list-unstyled mb-0">
+                            @foreach(session('import_success')['imported_names'] as $idx => $g)
+                                <li class="py-1 border-bottom border-gray-200 d-flex justify-content-between align-items-center fs-7">
+                                    <span class="text-gray-800 fw-bold">{{ $idx + 1 }}. {{ $g['nama'] }}</span>
+                                    <span class="badge badge-light-primary">NIP: {{ $g['nip'] }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if(!empty(session('import_success')['skipped_names']))
+            <div class="mt-3">
+                <a class="btn btn-sm btn-light-warning fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseGuruSkipped" role="button" aria-expanded="false">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Lihat {{ count(session('import_success')['skipped_names']) }} Data yang Dilewati
+                </a>
+                <div class="collapse" id="collapseGuruSkipped">
+                    <div class="card card-body bg-white border border-warning border-opacity-25 py-3 px-4 mt-2" style="max-height: 180px; overflow-y: auto;">
+                        <ul class="list-unstyled mb-0">
+                            @foreach(session('import_success')['skipped_names'] as $idx => $s)
+                                <li class="py-1 border-bottom border-gray-200 d-flex justify-content-between align-items-center fs-7">
+                                    <span class="text-gray-800">{{ $idx + 1 }}. {{ $s['nama'] }} (NIP: {{ $s['nip'] }})</span>
+                                    <span class="badge badge-light-danger">{{ $s['alasan'] }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 @endif
 
@@ -277,21 +319,29 @@
                     <div id="tambah_guru_step_1">
                         <div class="fv-row mb-7">
                             <label class="required fw-bold fs-6 mb-2">NIP (Nomor Induk Pegawai)</label>
-                            <input type="text" name="nip" class="form-control form-control-solid" placeholder="Contoh: 198501152010011002" required />
-                            <div class="form-text text-muted">NIP digunakan sebagai identitas login utama guru.</div>
+                            <input type="text" id="input_nip" name="nip"
+                                class="form-control form-control-solid"
+                                placeholder="Contoh: 198501152010011002"
+                                inputmode="numeric" pattern="[0-9]*"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                required />
+                            <div class="form-text text-muted">NIP hanya berisi angka dan digunakan sebagai identitas login utama guru.</div>
                         </div>
                         <div class="fv-row mb-7">
                             <label class="required fw-bold fs-6 mb-2">Password</label>
                             <div class="position-relative">
-                                <input type="password" name="password" class="form-control form-control-solid pe-12" placeholder="Minimal 6 karakter" required />
+                                <input type="password" id="input_password" name="password"
+                                    class="form-control form-control-solid pe-12"
+                                    placeholder="Minimal 6 karakter" minlength="6" required />
                                 <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-1 toggle-password" style="cursor: pointer;">
                                     <i class="bi bi-eye-slash fs-2"></i>
                                 </span>
                             </div>
+                            <div class="form-text text-muted">Password minimal <strong>6 karakter</strong>.</div>
                         </div>
                         <div class="fv-row mb-7">
-                            <label class="fw-bold fs-6 mb-2">Email</label>
-                            <input type="email" name="email" class="form-control form-control-solid" placeholder="Contoh: guru@sekolah.sch.id (opsional)" />
+                            <label class="fw-bold fs-6 mb-2">Email <span class="text-muted fs-7">(opsional)</span></label>
+                            <input type="email" name="email" class="form-control form-control-solid" placeholder="Contoh: guru@sekolah.sch.id" />
                         </div>
                     </div>
 
@@ -349,7 +399,26 @@
                         <div class="row g-9 mb-7">
                             <div class="col-md-6 fv-row">
                                 <label class="fw-bold fs-6 mb-2">Status Kepegawaian</label>
-                                <input type="text" name="status_kepegawaian" class="form-control form-control-solid" placeholder="Contoh: PNS / PPPK / Guru Tetap Yayasan" />
+                                <!-- Hidden input yang dikirim ke server -->
+                                <input type="hidden" name="status_kepegawaian" id="hidden_status_kepegawaian" />
+                                <!-- Select2 searchable dropdown -->
+                                <select id="select_status_kepegawaian" class="form-select form-control-solid" style="width: 100%;">
+                                    <option value="">-- Pilih Status --</option>
+                                    <option value="PNS">PNS (Pegawai Negeri Sipil)</option>
+                                    <option value="PPPK">PPPK (Pegawai Pemerintah dengan Perjanjian Kerja)</option>
+                                    <option value="Guru Honor Sekolah">Guru Honor Sekolah</option>
+                                    <option value="Guru Honor Daerah Provinsi">Guru Honor Daerah Provinsi</option>
+                                    <option value="__custom__">➕ Pilihan Lainnya (ketik sendiri)...</option>
+                                </select>
+                                <!-- Input muncul jika pilih Pilihan Lainnya -->
+                                <div id="custom_status_wrapper" class="mt-3 d-none">
+                                    <input type="text" id="input_custom_status" class="form-control form-control-solid"
+                                        placeholder="Ketik status kepegawaian lainnya, lalu tekan Enter atau klik Tambahkan" />
+                                    <button type="button" id="btn_add_custom_status" class="btn btn-sm btn-light-primary mt-2">
+                                        <i class="bi bi-plus-circle me-1"></i> Tambahkan Status Ini
+                                    </button>
+                                    <div class="form-text text-muted mt-1">Tekan tombol di atas untuk menyimpan status baru ke pilihan dropdown.</div>
+                                </div>
                             </div>
                             <div class="col-md-6 fv-row">
                                 <label class="fw-bold fs-6 mb-2">Pangkat / Golongan</label>
@@ -360,31 +429,50 @@
                         <div class="row g-9 mb-7">
                             <div class="col-md-4 fv-row">
                                 <label class="fw-bold fs-6 mb-2">NUPTK</label>
-                                <input type="text" name="nuptk" class="form-control form-control-solid" placeholder="Nomor NUPTK" />
+                                <input type="text" id="input_nuptk" name="nuptk"
+                                    class="form-control form-control-solid"
+                                    placeholder="Nomor NUPTK (angka)"
+                                    inputmode="numeric"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                             </div>
                             <div class="col-md-4 fv-row">
                                 <label class="fw-bold fs-6 mb-2">NIK</label>
-                                <input type="text" name="nik" class="form-control form-control-solid" placeholder="16 digit NIK" />
+                                <input type="text" id="input_nik" name="nik"
+                                    class="form-control form-control-solid"
+                                    placeholder="16 digit NIK"
+                                    inputmode="numeric"
+                                    maxlength="16"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16)" />
+                                <div class="form-text text-muted">NIK harus tepat <strong>16 digit</strong> angka.</div>
                             </div>
                             <div class="col-md-4 fv-row">
                                 <label class="fw-bold fs-6 mb-2">NPWP</label>
-                                <input type="text" name="npwp" class="form-control form-control-solid" placeholder="Nomor NPWP" />
+                                <input type="text" id="input_npwp" name="npwp"
+                                    class="form-control form-control-solid"
+                                    placeholder="Nomor NPWP (angka)"
+                                    inputmode="numeric"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                             </div>
                         </div>
 
                         <div class="fv-row mb-7">
-                            <label class="fw-bold fs-6 mb-2">Tugas Tambahan</label>
+                            <label class="fw-bold fs-6 mb-2">Tugas Tambahan <span class="text-muted fs-7">(opsional)</span></label>
                             <input type="text" name="tugas_tambahan" class="form-control form-control-solid" placeholder="Contoh: Wali Kelas / Kepala Perpustakaan / Pembina OSIS" />
                         </div>
 
                         <div class="row g-9 mb-7">
                             <div class="col-md-6 fv-row">
                                 <label class="fw-bold fs-6 mb-2">SK Pengangkatan</label>
-                                <input type="text" name="sk_pengangkatan" class="form-control form-control-solid" placeholder="Nomor SK Pengangkatan" />
+                                <input type="text" id="input_sk" name="sk_pengangkatan"
+                                    class="form-control form-control-solid"
+                                    placeholder="Nomor SK Pengangkatan (angka)"
+                                    inputmode="numeric"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
                             </div>
                             <div class="col-md-6 fv-row">
                                 <label class="fw-bold fs-6 mb-2">TMT Pengangkatan</label>
-                                <input type="date" name="tmt_pengangkatan" class="form-control form-control-solid" />
+                                <input type="date" id="input_tmt" name="tmt_pengangkatan" class="form-control form-control-solid" />
+                                <div class="form-text text-muted">Tanggal pengangkatan tidak boleh melebihi hari ini.</div>
                             </div>
                         </div>
                     </div>
@@ -429,7 +517,7 @@
                         </div>
                     </div>
                 </div>
-                <form action="{{ route('guru.import') }}" method="POST" enctype="multipart/form-data">
+                <form id="form_import_guru" action="{{ route('guru.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="fv-row mb-7">
                         <label class="required fw-bold fs-6 mb-2">Pilih File Excel (.xlsx / .xls)</label>
@@ -440,7 +528,7 @@
                     </div>
                     <div class="text-center pt-5">
                         <button type="reset" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btn_submit_import_guru">
                             {!! theme()->getSvgIcon("icons/duotune/files/fil022.svg", "svg-icon-2") !!}
                             Upload & Import Data Guru
                         </button>
@@ -575,16 +663,52 @@
     .w-fit {
         width: fit-content !important;
     }
+    /* Select2 override to match Metronic form-control-solid */
+    .select2-container--default .select2-selection--single {
+        height: calc(1.5em + 1.65rem + 2px);
+        background-color: #f9f9f9;
+        border: 1px solid #f9f9f9;
+        border-radius: 0.475rem;
+        display: flex;
+        align-items: center;
+        padding: 0 0.75rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5;
+        color: #5e6278;
+        padding-left: 0;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 1.65rem + 2px);
+    }
+    .select2-dropdown {
+        border-radius: 0.475rem;
+        border-color: #e4e6ef;
+        box-shadow: 0px 0px 50px 0px rgba(82,63,105,0.15);
+        z-index: 9999;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #e4e6ef;
+        border-radius: 0.475rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .select2-results__option--highlighted {
+        background-color: #3e97ff !important;
+    }
 </style>
 
 @section('scripts')
+<!-- Select2 CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
     var table = $('#kt_table_guru').DataTable({ 
         dom:'<\'table-responsive\'tr><\'row\'<\'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start\'li><\'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end\'p>>', 
         info:true, 
-        order:[], 
-        pageLength:5, 
+        order:[[2, 'asc']], 
+        pageLength:20, 
+        lengthMenu:[[10, 20, 50, 100, -1], [10, 20, 50, 100, "Semua"]],
         lengthChange:true, 
         columnDefs:[{orderable:false,targets:[0,8]}] 
     });
@@ -594,7 +718,6 @@ $(document).ready(function() {
         var targetTd = $(e.target).closest('td');
         if (targetTd.length === 0) return;
         var idx = targetTd.index();
-        // Skip first column (checkbox) and last column (actions dropdown)
         if (idx === 0 || idx === 8 || $(e.target).closest('.menu').length || $(e.target).closest('[data-kt-menu-trigger]').length) {
             return;
         }
@@ -608,14 +731,94 @@ $(document).ready(function() {
         table.search(this.value).draw(); 
     });
 
-    // Re-init Metronic menu instances on table redraw (pagination, search, sort)
+    // Re-init Metronic menu instances on table redraw
     table.on('draw', function() {
         if (window.KTMenu) {
             KTMenu.createInstances();
         }
     });
 
-    // Stepper navigation in modal_tambah_guru
+    // ─── TMT max = kemarin (tidak boleh pilih hari ini atau setelahnya) ────────
+    function setTmtMaxDate() {
+        var yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        var yyyy = yesterday.getFullYear();
+        var mm   = String(yesterday.getMonth() + 1).padStart(2, '0');
+        var dd   = String(yesterday.getDate()).padStart(2, '0');
+        $('#input_tmt').attr('max', yyyy + '-' + mm + '-' + dd);
+    }
+    setTmtMaxDate();
+
+    // ─── Select2: Status Kepegawaian ──────────────────────────────────────────
+    $('#select_status_kepegawaian').select2({
+        dropdownParent: $('#modal_tambah_guru'),
+        placeholder: '-- Pilih atau cari status --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // ─── FIX: Cegah modal tertutup saat klik dropdown Select2 ────────────────
+    // Bootstrap 5 menutup modal jika mendeteksi klik di luar .modal-dialog.
+    // Select2 men-render dropdown di dalam modal (karena dropdownParent), tapi
+    // event mousedown pada dropdown bisa mengaktifkan backdrop-dismiss Bootstrap.
+    // Solusi: cegah modal 'hide' jika Select2 sedang terbuka.
+    $('#modal_tambah_guru').on('hide.bs.modal', function(e) {
+        if ($('.select2-container--open').length > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    });
+    // Juga stop propagasi mousedown dari dropdown Select2 agar tidak dianggap backdrop click
+    $(document).on('mousedown', '.select2-container, .select2-dropdown, .select2-results, .select2-search, .select2-results__option', function(e) {
+        e.stopPropagation();
+    });
+
+    // Ketika dipilih "Pilihan Lainnya" (__custom__)
+    $('#select_status_kepegawaian').on('change', function() {
+        var val = $(this).val();
+        if (val === '__custom__') {
+            $('#custom_status_wrapper').removeClass('d-none');
+            $('#input_custom_status').focus();
+            $('#hidden_status_kepegawaian').val('');
+        } else {
+            $('#custom_status_wrapper').addClass('d-none');
+            $('#input_custom_status').val('');
+            $('#hidden_status_kepegawaian').val(val || '');
+        }
+    });
+
+    // Tambahkan status custom ke dropdown, lalu pilih otomatis
+    function addCustomStatus() {
+        var customVal = $.trim($('#input_custom_status').val());
+        if (!customVal) {
+            $('#input_custom_status').addClass('border-danger').css('border-width','2px').css('border-style','solid');
+            setTimeout(function() { $('#input_custom_status').removeClass('border-danger').css('border-width','').css('border-style',''); }, 1500);
+            return;
+        }
+        // Cek apakah sudah ada di opsi
+        var exists = false;
+        $('#select_status_kepegawaian option').each(function() {
+            if ($(this).val() === customVal) { exists = true; return false; }
+        });
+        if (!exists) {
+            // Sisipkan sebelum opsi "Pilihan Lainnya"
+            $('#select_status_kepegawaian option[value="__custom__"]').before(
+                $('<option>', { value: customVal, text: customVal })
+            );
+        }
+        // Pilih opsi custom tersebut
+        $('#select_status_kepegawaian').val(customVal).trigger('change');
+        $('#hidden_status_kepegawaian').val(customVal);
+        $('#custom_status_wrapper').addClass('d-none');
+        $('#input_custom_status').val('');
+    }
+
+    $('#btn_add_custom_status').on('click', addCustomStatus);
+    $('#input_custom_status').on('keypress', function(e) {
+        if (e.which === 13) { e.preventDefault(); addCustomStatus(); }
+    });
+
+    // ─── Stepper navigation ───────────────────────────────────────────────────
     var currentStep = 1;
 
     function showStep(step) {
@@ -643,9 +846,9 @@ $(document).ready(function() {
         for (var s = 1; s <= 3; s++) {
             var $item = $('#tambah_guru_stepper [data-step="' + s + '"] .stepper-number');
             if (s === step) {
-                $item.removeClass('bg-light-primary text-primary').addClass('bg-primary text-white');
+                $item.removeClass('bg-light-primary text-primary bg-light-success text-success').addClass('bg-primary text-white');
             } else if (s < step) {
-                $item.removeClass('bg-primary text-white').addClass('bg-light-success text-success');
+                $item.removeClass('bg-primary text-white bg-light-primary text-primary').addClass('bg-light-success text-success');
             } else {
                 $item.removeClass('bg-primary text-white bg-light-success text-success').addClass('bg-light-primary text-primary');
             }
@@ -653,43 +856,34 @@ $(document).ready(function() {
         currentStep = step;
     }
 
+    // ─── Validasi per step ────────────────────────────────────────────────────
     $('#tambah_guru_btn_next').on('click', function() {
         if (currentStep === 1) {
-            var nip = $('#modal_tambah_guru input[name="nip"]').val();
-            var password = $('#modal_tambah_guru input[name="password"]').val();
+            var nip      = $.trim($('#input_nip').val());
+            var password = $('#input_password').val();
 
-            if (!nip || !password) {
-                Swal.fire({
-                    text: 'Silakan isi NIP dan password terlebih dahulu.',
-                    icon: 'error',
-                    buttonsStyling: false,
-                    confirmButtonText: 'Oke, mengerti!',
-                    customClass: { confirmButton: 'btn btn-primary' }
-                });
+            if (!nip) {
+                Swal.fire({ text: 'NIP wajib diisi.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
                 return;
             }
-
+            if (!/^[0-9]+$/.test(nip)) {
+                Swal.fire({ text: 'NIP hanya boleh berisi angka, tidak boleh huruf atau simbol.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
+                return;
+            }
+            if (!password) {
+                Swal.fire({ text: 'Password wajib diisi.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
+                return;
+            }
             if (password.length < 6) {
-                Swal.fire({
-                    text: 'Password minimal harus 6 karakter.',
-                    icon: 'error',
-                    buttonsStyling: false,
-                    confirmButtonText: 'Oke, mengerti!',
-                    customClass: { confirmButton: 'btn btn-primary' }
-                });
+                Swal.fire({ text: 'Password minimal harus 6 karakter.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
                 return;
             }
             showStep(2);
+
         } else if (currentStep === 2) {
-            var nama = $('#modal_tambah_guru input[name="nama"]').val();
+            var nama = $.trim($('#modal_tambah_guru input[name="nama"]').val());
             if (!nama) {
-                Swal.fire({
-                    text: 'Silakan isi nama lengkap guru terlebih dahulu.',
-                    icon: 'error',
-                    buttonsStyling: false,
-                    confirmButtonText: 'Oke, mengerti!',
-                    customClass: { confirmButton: 'btn btn-primary' }
-                });
+                Swal.fire({ text: 'Nama lengkap wajib diisi.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
                 return;
             }
             showStep(3);
@@ -700,14 +894,43 @@ $(document).ready(function() {
         showStep(currentStep - 1);
     });
 
-    // When modal is shown
+    // Validasi step 3 sebelum submit (NIK 16 digit, TMT tidak boleh > hari ini)
+    $('#modal_tambah_guru form').on('submit', function(e) {
+        var nik = $.trim($('#input_nik').val());
+        if (nik !== '' && nik.length !== 16) {
+            e.preventDefault();
+            Swal.fire({ text: 'NIK harus tepat 16 digit angka. Saat ini ' + nik.length + ' digit.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
+            return;
+        }
+        var tmt = $('#input_tmt').val();
+        if (tmt) {
+            var yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(23,59,59,999);
+            if (new Date(tmt) > yesterday) {
+                e.preventDefault();
+                Swal.fire({ text: 'TMT Pengangkatan tidak boleh hari ini atau lebih dari hari ini.', icon: 'error', buttonsStyling: false, confirmButtonText: 'Oke', customClass: { confirmButton: 'btn btn-primary' } });
+                return;
+            }
+        }
+        // Pastikan hidden status kepegawaian terisi dari select jika bukan __custom__
+        var selectVal = $('#select_status_kepegawaian').val();
+        if (selectVal && selectVal !== '__custom__') {
+            $('#hidden_status_kepegawaian').val(selectVal);
+        }
+    });
+
+    // Reset modal saat dibuka
     $('#modal_tambah_guru').on('show.bs.modal', function () {
         var form = $(this).find('form')[0];
         if (form) form.reset();
+        $('#select_status_kepegawaian').val('').trigger('change');
+        $('#hidden_status_kepegawaian').val('');
+        $('#custom_status_wrapper').addClass('d-none');
+        $('#input_custom_status').val('');
+        setTmtMaxDate();
         showStep(1);
     });
 
-    // Use event delegation so edit button works on all pages and after searching/sorting
+    // ─── Edit Guru modal population ───────────────────────────────────────────
     $(document).on('click', '.btn-edit', function(e) {
         e.preventDefault();
         var $btn = $(this);
@@ -734,7 +957,30 @@ $(document).ready(function() {
         $('#modal_ubah_guru').modal('show');
     });
 
-    // Toggle Password Visibility
+    // ─── Loading Bar saat Import Guru ─────────────────────────────────────────
+    $('#form_import_guru').on('submit', function(e) {
+        var fileInput = $(this).find('input[type="file"]')[0];
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            return;
+        }
+        
+        var fileName = fileInput.files[0].name;
+        $('#btn_submit_import_guru').prop('disabled', true).html('<span class="spinner-border spinner-border-sm align-middle me-2"></span> Mengunggah...');
+        
+        Swal.fire({
+            title: 'Mengimpor Data Guru...',
+            html: '<div class="mb-3 text-gray-700 fs-6">Sistem sedang membaca file <strong>' + fileName + '</strong> dan memproses data akun & guru...</div>' +
+                  '<div class="progress h-20px w-100 bg-light-primary mb-2">' +
+                  '  <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary fw-bold" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Memproses Excel...</div>' +
+                  '</div>' +
+                  '<div class="text-muted fs-7">Mohon tidak menutup atau merefresh halaman ini.</div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false
+        });
+    });
+
+    // ─── Toggle Password Visibility ───────────────────────────────────────────
     $(document).on('click', '.toggle-password', function(e) {
         e.preventDefault();
         var input = $(this).siblings('input');
