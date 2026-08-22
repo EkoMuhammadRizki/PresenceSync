@@ -88,6 +88,11 @@
                         </ul>
                     </div>
                 </div>
+            </div>
+        @endif
+    </div>
+@endif
+
 @if(session('delete_success'))
     <div class="alert bg-light-danger border border-danger alert-dismissible fade show p-5 mb-10 position-relative">
         <div class="d-flex align-items-center mb-3 pe-8">
