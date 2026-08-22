@@ -14,11 +14,13 @@ if ($zip->open($destZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
 $baseDir = 'c:/File Eko/PresenceSync/';
 
 $files = [
+    'app/Http/Controllers/Absensi/BulkDeleteController.php',
     'app/Http/Controllers/Absensi/GuruController.php',
     'app/Http/Controllers/Absensi/KelasController.php',
     'app/Http/Controllers/Absensi/PembagianKelasController.php',
     'app/Http/Controllers/Absensi/SiswaController.php',
     'app/Models/Guru.php',
+    'resources/views/base/base.blade.php',
     'resources/views/pages/absensi/guru.blade.php',
     'resources/views/pages/absensi/kelas-data.blade.php',
     'resources/views/pages/absensi/pembagian-kelas.blade.php',

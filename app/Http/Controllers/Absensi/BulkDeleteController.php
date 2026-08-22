@@ -46,13 +46,23 @@ class BulkDeleteController extends Controller
             return response()->json(['success' => false, 'message' => 'Tipe data tidak valid.'], 400);
         }
 
+        $deletedCount = 0;
+        $deletedItems = [];
+
         try {
             if ($type === 'siswa') {
                 $siswas = Siswa::whereIn('id', $ids)->with('user')->get();
+                $deletedCount = $siswas->count();
                 // Kumpulkan fingerprint IDs sebelum delete
                 $fingerprintIds = $siswas->pluck('fingerprint_id')->filter()->values()->toArray();
 
                 foreach ($siswas as $siswa) {
+                    if (count($deletedItems) < 100) {
+                        $deletedItems[] = [
+                            'nama' => $siswa->nama,
+                            'code' => 'NIS: ' . ($siswa->nis ?: '-'),
+                        ];
+                    }
                     $user = $siswa->user;
                     $siswa->delete();
                     if ($user) {
@@ -81,12 +91,19 @@ class BulkDeleteController extends Controller
                 }
             } elseif ($type === 'pengguna') {
                 $users = User::whereIn('id', $ids)->with(['siswa', 'guru'])->get();
+                $deletedCount = $users->count();
                 foreach ($users as $user) {
                     if ($user->id === auth()->id()) {
                         return response()->json([
                             'success' => false,
                             'message' => 'Gagal menghapus data: Anda tidak dapat menghapus akun Anda sendiri.'
                         ], 400);
+                    }
+                    if (count($deletedItems) < 100) {
+                        $deletedItems[] = [
+                            'nama' => $user->first_name . ' ' . $user->last_name,
+                            'code' => $user->email,
+                        ];
                     }
                     if ($user->guru) {
                         $user->guru->delete();
@@ -98,7 +115,14 @@ class BulkDeleteController extends Controller
                 }
             } elseif ($type === 'guru') {
                 $gurus = Guru::whereIn('id', $ids)->get();
+                $deletedCount = $gurus->count();
                 foreach ($gurus as $guru) {
+                    if (count($deletedItems) < 100) {
+                        $deletedItems[] = [
+                            'nama' => $guru->nama,
+                            'code' => 'NIP: ' . ($guru->nip ?: '-'),
+                        ];
+                    }
                     $user = $guru->user;
                     $guru->delete();
                     if ($user) {
@@ -107,19 +131,45 @@ class BulkDeleteController extends Controller
                 }
             } elseif ($type === 'kelas') {
                 $classes = Kelas::whereIn('id', $ids)->get();
+                $deletedCount = $classes->count();
                 foreach ($classes as $kelas) {
+                    if (count($deletedItems) < 100) {
+                        $deletedItems[] = [
+                            'nama' => $kelas->nama,
+                            'code' => 'Tingkat ' . $kelas->tingkat,
+                        ];
+                    }
                     $kelas->delete();
                 }
             } elseif ($type === 'mata-pelajaran') {
                 $subjects = MataPelajaran::whereIn('id', $ids)->get();
+                $deletedCount = $subjects->count();
                 foreach ($subjects as $mp) {
+                    if (count($deletedItems) < 100) {
+                        $deletedItems[] = [
+                            'nama' => $mp->nama,
+                            'code' => 'Kode: ' . ($mp->kode ?? '-'),
+                        ];
+                    }
                     $mp->delete();
                 }
             } else {
+                $deletedCount = count($ids);
                 $modelClass::whereIn('id', $ids)->delete();
             }
 
-            return response()->json(['success' => true, 'message' => 'Data terpilih berhasil dihapus.']);
+            session()->flash('delete_success', [
+                'type'  => $type,
+                'count' => $deletedCount,
+                'items' => $deletedItems,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Sebanyak {$deletedCount} data berhasil dihapus.",
+                'deleted_count' => $deletedCount,
+                'deleted_items' => $deletedItems,
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

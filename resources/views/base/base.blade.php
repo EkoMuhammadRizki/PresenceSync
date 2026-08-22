@@ -1065,10 +1065,23 @@ License: {{ theme()->getOption('product', 'license') }}
 
         konfirmasiHapus({ 
             title: 'Hapus Terpilih?', 
-            text: 'Data terpilih akan dihapus permanen dari database!',
+            text: 'Data terpilih (' + ids.length + ' data) akan dihapus permanen dari database!',
             confirmButtonText: 'Ya, Hapus!'
         }).then(function(result) {
             if (result.isConfirmed) {
+                // Tampilkan Loading Bar Animasi
+                Swal.fire({
+                    title: 'Menghapus Data Terpilih...',
+                    html: '<div class="mb-3 text-gray-700 fs-6">Sistem sedang menghapus <strong>' + ids.length + ' data</strong> dari database...</div>' +
+                          '<div class="progress h-20px w-100 bg-light-danger mb-2">' +
+                          '  <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger fw-bold" role="progressbar" style="width: 100%;">Memproses Penghapusan...</div>' +
+                          '</div>' +
+                          '<div class="text-muted fs-7">Mohon tidak menutup atau merefresh halaman ini.</div>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+
                 $.ajax({
                     url: '{{ route("bulk-delete") }}',
                     method: 'POST',
@@ -1079,9 +1092,7 @@ License: {{ theme()->getOption('product', 'license') }}
                     },
                     success: function(response) {
                         if (response.success) {
-                            SwalSuccess.fire({ title: 'Berhasil!', text: response.message }).then(function() {
-                                window.location.reload();
-                            });
+                            window.location.reload();
                         } else {
                             SwalError.fire({ title: 'Gagal!', html: response.message || 'Terjadi kesalahan.' });
                         }
