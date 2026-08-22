@@ -213,7 +213,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td>
+                        <td data-order="{{ $item->nama }}">
                             <div class="d-flex align-items-center">
                                 @php
                                     $itemAvatar = ($item->user && $item->user->info && !empty($item->user->info->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($item->user->info->avatar))

@@ -233,7 +233,7 @@
                         <td>
                             <span class="text-gray-800">{{ $item->nis ?? '-' }}</span>
                         </td>
-                        <td class="d-flex align-items-center">
+                        <td class="d-flex align-items-center" data-order="{{ $item->nama }}">
                             @php
                                 $itemAvatar = ($item->user && $item->user->info && !empty($item->user->info->avatar) && \Illuminate\Support\Facades\Storage::disk('public')->exists($item->user->info->avatar))
                                     ? asset('storage/' . ltrim($item->user->info->avatar, '/'))
