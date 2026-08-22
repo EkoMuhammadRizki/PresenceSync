@@ -15,16 +15,17 @@
     }
 @endphp
 <div class="row g-5 g-xxl-8">
-    <!--begin::Col - Personal Info-->
+    <!--begin::Col Kiri - Personal, Kelas yang Diwali & Account Info-->
     <div class="col-xl-6">
-        <div class="card card-xl-stretch mb-5 mb-xxl-8">
+        <!--begin::Card 1: Informasi Pribadi-->
+        <div class="card mb-5 mb-xxl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
                     <span class="card-label fw-bolder fs-3 text-dark">Informasi Pribadi</span>
                     <span class="text-muted mt-1 fw-bold fs-7">Biodata dasar pengguna</span>
                 </h3>
             </div>
-            <div class="card-body pt-3">
+            <div class="card-body pt-3 pb-5">
                 <!-- Nama -->
                 <div class="d-flex align-items-center mb-7">
                     <div class="flex-grow-1">
@@ -101,9 +102,10 @@
                 </div>
             </div>
         </div>
+        <!--end::Card 1: Informasi Pribadi-->
 
         @if(isset($kelasDiwali))
-            <!-- Card - Kelas yang Diwali -->
+            <!--begin::Card 2: Kelas yang Diwali-->
             <div class="card mb-5 mb-xxl-8">
                 <div class="card-header border-0 pt-5">
                     <h3 class="card-title align-items-start flex-column">
@@ -134,13 +136,58 @@
                     @endforelse
                 </div>
             </div>
+            <!--end::Card 2: Kelas yang Diwali-->
         @endif
-    </div>
-    <!--end::Col-->
 
-    <!--begin::Col - Contact, Kepegawaian & Account Info-->
+        <!--begin::Card 3: Informasi Akun-->
+        <div class="card mb-5 mb-xxl-8">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bolder fs-3 text-dark">Informasi Akun</span>
+                    <span class="text-muted mt-1 fw-bold fs-7">Status keanggotaan dan log aktivitas</span>
+                </h3>
+            </div>
+            <div class="card-body pt-3 pb-5">
+                <!-- Status -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Status Akun</span>
+                        @php
+                            $statusVal = ($siswa && isset($siswa->status)) ? $siswa->status : ($user->status ?? 'aktif');
+                            $statusClass = $statusVal === 'aktif' ? 'badge-light-success' : 'badge-light-danger';
+                        @endphp
+                        <span class="badge {{ $statusClass }} fw-bolder fs-7">{{ ucfirst($statusVal) }}</span>
+                    </div>
+                </div>
+
+                <!-- Terakhir Login -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Terakhir Kali Login</span>
+                        <span class="text-gray-800 fw-bolder fs-6">
+                            {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d M Y, H:i') : '-' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Tanggal Terdaftar -->
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">Tanggal Terdaftar</span>
+                        <span class="text-gray-800 fw-bolder fs-6">
+                            {{ $user->created_at ? $user->created_at->format('d F Y, H:i') : '-' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--end::Card 3: Informasi Akun-->
+    </div>
+    <!--end::Col Kiri-->
+
+    <!--begin::Col Kanan - Contact & Kepegawaian Info-->
     <div class="col-xl-6">
-        <!--begin::Contact Info-->
+        <!--begin::Card 1: Informasi Kontak-->
         <div class="card mb-5 mb-xxl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
@@ -188,10 +235,10 @@
                 @endif
             </div>
         </div>
-        <!--end::Contact Info-->
+        <!--end::Card 1: Informasi Kontak-->
 
         @if($guru)
-        <!--begin::Kepegawaian Info-->
+        <!--begin::Card 2: Kepegawaian Info-->
         <div class="card mb-5 mb-xxl-8">
             <div class="card-header border-0 pt-5">
                 <h3 class="card-title align-items-start flex-column">
@@ -269,52 +316,8 @@
                 </div>
             </div>
         </div>
-        <!--end::Kepegawaian Info-->
+        <!--end::Card 2: Kepegawaian Info-->
         @endif
-
-        <!--begin::Account Info-->
-        <div class="card mb-5 mb-xxl-8">
-            <div class="card-header border-0 pt-5">
-                <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bolder fs-3 text-dark">Informasi Akun</span>
-                    <span class="text-muted mt-1 fw-bold fs-7">Status keanggotaan dan log aktivitas</span>
-                </h3>
-            </div>
-            <div class="card-body pt-3 pb-5">
-                <!-- Status -->
-                <div class="d-flex align-items-center mb-7">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-bold d-block fs-7">Status Akun</span>
-                        @php
-                            $statusVal = ($siswa && isset($siswa->status)) ? $siswa->status : ($user->status ?? 'aktif');
-                            $statusClass = $statusVal === 'aktif' ? 'badge-light-success' : 'badge-light-danger';
-                        @endphp
-                        <span class="badge {{ $statusClass }} fw-bolder fs-7">{{ ucfirst($statusVal) }}</span>
-                    </div>
-                </div>
-
-                <!-- Terakhir Login -->
-                <div class="d-flex align-items-center mb-7">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-bold d-block fs-7">Terakhir Kali Login</span>
-                        <span class="text-gray-800 fw-bolder fs-6">
-                            {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d M Y, H:i') : '-' }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Tanggal Terdaftar -->
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-bold d-block fs-7">Tanggal Terdaftar</span>
-                        <span class="text-gray-800 fw-bolder fs-6">
-                            {{ $user->created_at ? $user->created_at->format('d F Y, H:i') : '-' }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--end::Account Info-->
     </div>
-    <!--end::Col-->
+    <!--end::Col Kanan-->
 </div>
