@@ -287,6 +287,10 @@ class GuruController extends Controller
 
     public function import(Request $request)
     {
+        @ini_set('max_execution_time', '600');
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(600);
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls',
         ], [
@@ -392,115 +396,147 @@ class GuruController extends Controller
         $importedNames = [];
         $skippedNames  = [];
 
-        foreach ($rows as $row) {
-            // Ambil nama
-            $nama = $getVal($row, 'nama');
-            if (empty($nama)) {
-                continue;
-            }
+        $existingNip = Guru::pluck('nip', 'nip')->all();
+        $existingEmails = User::pluck('email', 'email')->all();
 
-            $nip                 = $getVal($row, 'nip');
-            $jk                  = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
-            $tempatLahir         = $getVal($row, 'tempat_lahir');
-            $tanggalLahirRaw     = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
-            $agama               = $getVal($row, 'agama');
-            $alamat              = $getVal($row, 'alamat');
-            $noHp                = substr($getVal($row, 'no_telepon', 'no_hp', 'telepon', 'nohp') ?? '', 0, 30) ?: null;
-            $emailInput          = $getVal($row, 'email');
-            $status              = strtolower($getVal($row, 'status') ?? 'aktif');
-            $nik                 = substr($getVal($row, 'nik') ?? '', 0, 20) ?: null;
-            $npwp                = substr($getVal($row, 'npwp') ?? '', 0, 30) ?: null;
-            $nuptk               = substr($getVal($row, 'nuptk') ?? '', 0, 30) ?: null;
-            $statusKepegawaian   = substr($getVal($row, 'status_kepegawaian') ?? '', 0, 100) ?: null;
-            $tugasTambahan       = substr($getVal($row, 'tugas_tambahan') ?? '', 0, 150) ?: null;
-            $skCpns              = substr($getVal($row, 'sk_cpns') ?? '', 0, 100) ?: null;
-            $tanggalCpnsRaw      = $getVal($row, 'tanggal_cpns', 'tgl_cpns');
-            $skPengangkatan      = substr($getVal($row, 'sk_pengangkatan') ?? '', 0, 100) ?: null;
-            $tmtPengangkatanRaw  = $getVal($row, 'tmt_pengangkatan', 'tmt');
-            $lembagaPengangkatan = substr($getVal($row, 'lembaga_pengangkatan') ?? '', 0, 150) ?: null;
-            $pangkatGolongan     = substr($getVal($row, 'pangkat_golongan', 'pangkat', 'golongan') ?? '', 0, 50) ?: null;
+        $batchSize = 100;
+        $currentBatch = 0;
 
-            // NIP wajib ada
-            if (empty($nip)) {
-                $skipCount++;
-                $skippedNames[] = [
-                    'nama'   => $nama,
-                    'nip'    => '-',
-                    'alasan' => 'Kolom NIP kosong',
-                ];
-                continue;
-            }
+        DB::beginTransaction();
 
-            // Normalisasi jenis kelamin
-            if ($jk !== 'P') {
-                $jk = 'L';
-            }
+        try {
+            foreach ($rows as $row) {
+                // Ambil nama
+                $nama = $getVal($row, 'nama');
+                if (empty($nama)) {
+                    continue;
+                }
 
-            // Pengecekan duplikat berdasarkan NIP saja
-            if (Guru::where('nip', $nip)->exists()) {
-                $skipCount++;
-                $skippedNames[] = [
-                    'nama'   => $nama,
-                    'nip'    => $nip,
-                    'alasan' => 'NIP sudah terdaftar di sistem',
-                ];
-                continue;
-            }
+                $nip                 = $getVal($row, 'nip');
+                $jk                  = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
+                $tempatLahir         = $getVal($row, 'tempat_lahir');
+                $tanggalLahirRaw     = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
+                $agama               = $getVal($row, 'agama');
+                $alamat              = $getVal($row, 'alamat');
+                $noHp                = substr($getVal($row, 'no_telepon', 'no_hp', 'telepon', 'nohp') ?? '', 0, 30) ?: null;
+                $emailInput          = $getVal($row, 'email');
+                $status              = strtolower($getVal($row, 'status') ?? 'aktif');
+                $nik                 = substr($getVal($row, 'nik') ?? '', 0, 20) ?: null;
+                $npwp                = substr($getVal($row, 'npwp') ?? '', 0, 30) ?: null;
+                $nuptk               = substr($getVal($row, 'nuptk') ?? '', 0, 30) ?: null;
+                $statusKepegawaian   = substr($getVal($row, 'status_kepegawaian') ?? '', 0, 100) ?: null;
+                $tugasTambahan       = substr($getVal($row, 'tugas_tambahan') ?? '', 0, 150) ?: null;
+                $skCpns              = substr($getVal($row, 'sk_cpns') ?? '', 0, 100) ?: null;
+                $tanggalCpnsRaw      = $getVal($row, 'tanggal_cpns', 'tgl_cpns');
+                $skPengangkatan      = substr($getVal($row, 'sk_pengangkatan') ?? '', 0, 100) ?: null;
+                $tmtPengangkatanRaw  = $getVal($row, 'tmt_pengangkatan', 'tmt');
+                $lembagaPengangkatan = substr($getVal($row, 'lembaga_pengangkatan') ?? '', 0, 150) ?: null;
+                $pangkatGolongan     = substr($getVal($row, 'pangkat_golongan', 'pangkat', 'golongan') ?? '', 0, 50) ?: null;
 
-            // Generate email jika tidak diinput
-            $email = $emailInput;
-            if (empty($email)) {
-                $email = $nip . '@guru.internal';
-                $counter = 1;
-                while (User::where('email', $email)->exists()) {
-                    $email = $nip . $counter . '@guru.internal';
-                    $counter++;
+                // NIP wajib ada
+                if (empty($nip)) {
+                    $skipCount++;
+                    if (count($skippedNames) < 100) {
+                        $skippedNames[] = [
+                            'nama'   => $nama,
+                            'nip'    => '-',
+                            'alasan' => 'Kolom NIP kosong',
+                        ];
+                    }
+                    continue;
+                }
+
+                // Normalisasi jenis kelamin
+                if ($jk !== 'P') {
+                    $jk = 'L';
+                }
+
+                // Pengecekan duplikat berdasarkan NIP (in-memory lookup)
+                if (isset($existingNip[$nip])) {
+                    $skipCount++;
+                    if (count($skippedNames) < 100) {
+                        $skippedNames[] = [
+                            'nama'   => $nama,
+                            'nip'    => $nip,
+                            'alasan' => 'NIP sudah terdaftar di sistem',
+                        ];
+                    }
+                    continue;
+                }
+
+                // Generate email jika tidak diinput
+                $email = $emailInput;
+                if (empty($email)) {
+                    $email = $nip . '@guru.internal';
+                    $counter = 1;
+                    while (isset($existingEmails[$email])) {
+                        $email = $nip . $counter . '@guru.internal';
+                        $counter++;
+                    }
+                }
+
+                $password = $nip; // Default password disamakan dengan NIP
+
+                $nameParts = explode(' ', trim($nama), 2);
+                $firstName = $nameParts[0];
+                $lastName  = $nameParts[1] ?? $nameParts[0];
+
+                $user = User::create([
+                    'first_name' => $firstName,
+                    'last_name'  => $lastName,
+                    'email'      => $email,
+                    'password'   => Hash::make($password, ['rounds' => 6]),
+                ]);
+
+                $existingEmails[$email] = $email;
+
+                Guru::create([
+                    'user_id'              => $user->id,
+                    'nama'                 => $nama,
+                    'nip'                  => $nip,
+                    'jenis_kelamin'        => $jk,
+                    'tempat_lahir'         => $tempatLahir,
+                    'tanggal_lahir'        => $parseDate($tanggalLahirRaw),
+                    'agama'                => $agama,
+                    'alamat'               => $alamat,
+                    'no_hp'                => $noHp,
+                    'email'                => $email,
+                    'status'               => in_array($status, ['aktif', 'nonaktif', 'cuti']) ? $status : 'aktif',
+                    'nik'                  => $nik,
+                    'npwp'                 => $npwp,
+                    'nuptk'                => $nuptk,
+                    'status_kepegawaian'   => $statusKepegawaian,
+                    'tugas_tambahan'       => $tugasTambahan,
+                    'sk_cpns'              => $skCpns,
+                    'tanggal_cpns'         => $parseDate($tanggalCpnsRaw),
+                    'sk_pengangkatan'      => $skPengangkatan,
+                    'tmt_pengangkatan'     => $parseDate($tmtPengangkatanRaw),
+                    'lembaga_pengangkatan' => $lembagaPengangkatan,
+                    'pangkat_golongan'     => $pangkatGolongan,
+                ]);
+
+                $existingNip[$nip] = $nip;
+
+                if (count($importedNames) < 100) {
+                    $importedNames[] = [
+                        'nama' => $nama,
+                        'nip'  => $nip,
+                    ];
+                }
+                $successCount++;
+                $currentBatch++;
+
+                if ($currentBatch >= $batchSize) {
+                    DB::commit();
+                    DB::beginTransaction();
+                    $currentBatch = 0;
                 }
             }
 
-            $password = $nip; // Default password disamakan dengan NIP
-
-            $nameParts = explode(' ', trim($nama), 2);
-            $firstName = $nameParts[0];
-            $lastName  = $nameParts[1] ?? $nameParts[0];
-
-            $user = User::create([
-                'first_name' => $firstName,
-                'last_name'  => $lastName,
-                'email'      => $email,
-                'password'   => Hash::make($password),
-            ]);
-
-            Guru::create([
-                'user_id'              => $user->id,
-                'nama'                 => $nama,
-                'nip'                  => $nip,
-                'jenis_kelamin'        => $jk,
-                'tempat_lahir'         => $tempatLahir,
-                'tanggal_lahir'        => $parseDate($tanggalLahirRaw),
-                'agama'                => $agama,
-                'alamat'               => $alamat,
-                'no_hp'                => $noHp,
-                'email'                => $email,
-                'status'               => in_array($status, ['aktif', 'nonaktif', 'cuti']) ? $status : 'aktif',
-                'nik'                  => $nik,
-                'npwp'                 => $npwp,
-                'nuptk'                => $nuptk,
-                'status_kepegawaian'   => $statusKepegawaian,
-                'tugas_tambahan'       => $tugasTambahan,
-                'sk_cpns'              => $skCpns,
-                'tanggal_cpns'         => $parseDate($tanggalCpnsRaw),
-                'sk_pengangkatan'      => $skPengangkatan,
-                'tmt_pengangkatan'     => $parseDate($tmtPengangkatanRaw),
-                'lembaga_pengangkatan' => $lembagaPengangkatan,
-                'pangkat_golongan'     => $pangkatGolongan,
-            ]);
-
-            $importedNames[] = [
-                'nama' => $nama,
-                'nip'  => $nip,
-            ];
-            $successCount++;
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat memproses data guru: ' . $e->getMessage()]);
         }
 
         if (auth()->check() && $successCount > 0) {

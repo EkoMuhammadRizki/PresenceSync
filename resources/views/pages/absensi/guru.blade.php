@@ -57,7 +57,7 @@
         @if(!empty(session('import_success')['imported_names']))
             <div class="mt-4 pt-3 border-top border-primary border-opacity-25">
                 <a class="btn btn-sm btn-light-success fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseGuruImported" role="button" aria-expanded="false">
-                    <i class="bi bi-check-circle me-1"></i> Lihat {{ count(session('import_success')['imported_names']) }} Guru yang Berhasil Diimport
+                    <i class="bi bi-check-circle me-1"></i> Lihat Daftar Guru yang Berhasil Diimport ({{ session('import_success')['success_count'] }} Guru)
                 </a>
                 <div class="collapse show" id="collapseGuruImported">
                     <div class="card card-body bg-white border border-success border-opacity-25 py-3 px-4 mt-2" style="max-height: 200px; overflow-y: auto;">
@@ -69,6 +69,11 @@
                                 </li>
                             @endforeach
                         </ul>
+                        @if(session('import_success')['success_count'] > count(session('import_success')['imported_names']))
+                            <div class="text-center text-muted fs-8 pt-2">
+                                ... dan <strong>{{ session('import_success')['success_count'] - count(session('import_success')['imported_names']) }}</strong> guru lainnya berhasil diimport.
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

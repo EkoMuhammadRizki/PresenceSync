@@ -44,7 +44,7 @@
         @if(!empty(session('import_success')['imported_names']))
             <div class="mt-4 pt-3 border-top border-primary border-opacity-25">
                 <a class="btn btn-sm btn-light-success fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseSiswaImported" role="button" aria-expanded="false">
-                    <i class="bi bi-check-circle me-1"></i> Lihat {{ count(session('import_success')['imported_names']) }} Siswa yang Berhasil Diimport
+                    <i class="bi bi-check-circle me-1"></i> Lihat Daftar Siswa yang Berhasil Diimport ({{ session('import_success')['success_count'] }} Siswa)
                 </a>
                 <div class="collapse show" id="collapseSiswaImported">
                     <div class="card card-body bg-white border border-success border-opacity-25 py-3 px-4 mt-2" style="max-height: 200px; overflow-y: auto;">
@@ -61,6 +61,11 @@
                                 </li>
                             @endforeach
                         </ul>
+                        @if(session('import_success')['success_count'] > count(session('import_success')['imported_names']))
+                            <div class="text-center text-muted fs-8 pt-2">
+                                ... dan <strong>{{ session('import_success')['success_count'] - count(session('import_success')['imported_names']) }}</strong> siswa lainnya berhasil diimport.
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

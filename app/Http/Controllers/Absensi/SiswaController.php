@@ -416,6 +416,10 @@ class SiswaController extends Controller
 
     public function import(Request $request)
     {
+        @ini_set('max_execution_time', '600');
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(600);
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls',
         ], [
@@ -497,212 +501,248 @@ class SiswaController extends Controller
         $importedNames = [];
         $skippedNames  = [];
 
-        foreach ($rows as $row) {
-            // Ambil data siswa
-            $nama = $getVal($row, 'nama');
-            if (empty($nama)) {
-                continue;
-            }
+        // Preload cache di memori untuk performa tinggi O(1)
+        $kelasMap = [];
+        foreach (Kelas::all() as $k) {
+            $kelasMap[trim(strtolower($k->nama))] = $k->id;
+            $kelasMap[trim($k->nama)] = $k->id;
+        }
 
-            $nis          = $getVal($row, 'nis');
-            $jk           = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
-            $kelasName    = $getVal($row, 'kelas', 'nama_kelas');
-            $fingerprintId = substr($getVal($row, 'id_fingerprint', 'fingerprint_id', 'id_finger', 'fingerprint', 'pin') ?? '', 0, 50) ?: null;
-            $nik          = substr($getVal($row, 'nik', 'nik_siswa') ?? '', 0, 20) ?: null;
-            $tempatLahir  = $getVal($row, 'tempat_lahir');
-            $tanggalLahirRaw = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
-            $agama        = $getVal($row, 'agama');
-            $alamat       = $getVal($row, 'alamat', 'alamat_siswa');
-            $noHp         = substr($getVal($row, 'no_hp', 'no_telepon', 'nohp') ?? '', 0, 30) ?: null;
-            $status       = strtolower($getVal($row, 'status') ?? 'aktif');
-            $asalSekolah  = $getVal($row, 'asal_sekolah', 'sekolah_asal');
+        $existingNis = Siswa::pluck('nis', 'nis')->all();
+        $existingEmails = User::pluck('email', 'email')->all();
+        $existingFingerprints = Siswa::whereNotNull('fingerprint_id')->pluck('fingerprint_id', 'fingerprint_id')->all();
 
-            // Ambil data Ayah
-            $nikAyah          = substr($getVal($row, 'nik_ayah', 'nik_bapak') ?? '', 0, 20) ?: null;
-            $namaAyah         = substr($getVal($row, 'nama_ayah', 'nama_lengkap_ayah', 'nama_bapak') ?? '', 0, 255) ?: null;
-            $tahunLahirAyah   = substr($getVal($row, 'tahun_lahir_ayah', 'thn_lahir_ayah', 'tahun_ayah') ?? '', 0, 20) ?: null;
-            $pekerjaanAyah    = substr($getVal($row, 'pekerjaan_ayah', 'pekerjaan_bapak') ?? '', 0, 100) ?: null;
-            $ketPekerjaanAyah = substr($getVal($row, 'ket_pekerjaan_ayah', 'keterangan_pekerjaan_ayah', 'ket_pekerjaan', 'keterangan_pekerjaan') ?? '', 0, 255) ?: null;
-            $pendidikanAyah   = substr($getVal($row, 'pendidikan_ayah', 'pendidikan_terakhir_ayah', 'pendidikan_bapak') ?? '', 0, 100) ?: null;
-            $alamatAyah       = $getVal($row, 'alamat_ayah', 'alamat_tinggal_ayah', 'alamat_bapak');
-            $noHpAyah         = substr($getVal($row, 'no_hp_ayah', 'nomor_hp_ayah', 'no_telepon_ayah', 'nohp_ayah', 'hp_ayah') ?? '', 0, 30) ?: null;
-            $penghasilanAyah  = substr($getVal($row, 'penghasilan_ayah', 'penghasilan_per_bulan_ayah', 'gaji_ayah') ?? '', 0, 100) ?: null;
+        // Gunakan batch transaction per 100 baris agar commit cepat dan tidak membebani memori
+        $batchSize = 100;
+        $currentBatch = 0;
 
-            // Ambil data Ibu
-            $nikIbu           = substr($getVal($row, 'nik_ibu') ?? '', 0, 20) ?: null;
-            $namaIbu          = substr($getVal($row, 'nama_ibu', 'nama_lengkap_ibu') ?? '', 0, 255) ?: null;
-            $tahunLahirIbu    = substr($getVal($row, 'tahun_lahir_ibu', 'thn_lahir_ibu', 'tahun_ibu') ?? '', 0, 20) ?: null;
-            $pekerjaanIbu     = substr($getVal($row, 'pekerjaan_ibu') ?? '', 0, 100) ?: null;
-            $ketPekerjaanIbu  = substr($getVal($row, 'ket_pekerjaan_ibu', 'keterangan_pekerjaan_ibu') ?? '', 0, 255) ?: null;
-            $pendidikanIbu    = substr($getVal($row, 'pendidikan_ibu', 'pendidikan_terakhir_ibu') ?? '', 0, 100) ?: null;
-            $alamatIbu        = $getVal($row, 'alamat_ibu', 'alamat_tinggal_ibu');
-            $noHpIbu          = substr($getVal($row, 'no_hp_ibu', 'nomor_hp_ibu', 'no_telepon_ibu', 'nohp_ibu', 'hp_ibu') ?? '', 0, 30) ?: null;
-            $penghasilanIbu   = substr($getVal($row, 'penghasilan_ibu', 'penghasilan_per_bulan_ibu', 'gaji_ibu') ?? '', 0, 100) ?: null;
+        DB::beginTransaction();
 
-            // NIS wajib ada
-            if (empty($nis)) {
-                $skipCount++;
-                $skippedNames[] = [
-                    'nama'   => $nama,
-                    'nis'    => '-',
-                    'alasan' => 'Kolom NIS kosong',
-                ];
-                continue;
-            }
-
-            // Normalisasi jenis kelamin
-            if ($jk !== 'P') {
-                $jk = 'L';
-            }
-
-            // Cari kelas berdasarkan nama kelas
-            $kelasId = null;
-            if ($kelasName) {
-                $kelas = Kelas::where('nama', $kelasName)->first();
-                if ($kelas) {
-                    $kelasId = $kelas->id;
+        try {
+            foreach ($rows as $row) {
+                // Ambil data siswa
+                $nama = $getVal($row, 'nama');
+                if (empty($nama)) {
+                    continue;
                 }
-            }
 
-            // Pengecekan duplikat berdasarkan NIS
-            if (Siswa::where('nis', $nis)->exists()) {
-                $skipCount++;
-                $skippedNames[] = [
-                    'nama'   => $nama,
-                    'nis'    => $nis,
-                    'alasan' => 'NIS sudah terdaftar di sistem',
-                ];
-                continue;
-            }
+                $nis          = $getVal($row, 'nis');
+                $jk           = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
+                $kelasName    = $getVal($row, 'kelas', 'nama_kelas');
+                $fingerprintId = substr($getVal($row, 'id_fingerprint', 'fingerprint_id', 'id_finger', 'fingerprint', 'pin') ?? '', 0, 50) ?: null;
+                $nik          = substr($getVal($row, 'nik', 'nik_siswa') ?? '', 0, 20) ?: null;
+                $tempatLahir  = $getVal($row, 'tempat_lahir');
+                $tanggalLahirRaw = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
+                $agama        = $getVal($row, 'agama');
+                $alamat       = $getVal($row, 'alamat', 'alamat_siswa');
+                $noHp         = substr($getVal($row, 'no_hp', 'no_telepon', 'nohp') ?? '', 0, 30) ?: null;
+                $status       = strtolower($getVal($row, 'status') ?? 'aktif');
+                $asalSekolah  = $getVal($row, 'asal_sekolah', 'sekolah_asal');
 
-            // Generate email internal dari NIS
-            $email = $nis . '@siswa.internal';
-            $counter = 1;
-            while (User::where('email', $email)->exists()) {
-                $email = $nis . $counter . '@siswa.internal';
-                $counter++;
-            }
+                // Ambil data Ayah
+                $nikAyah          = substr($getVal($row, 'nik_ayah', 'nik_bapak') ?? '', 0, 20) ?: null;
+                $namaAyah         = substr($getVal($row, 'nama_ayah', 'nama_lengkap_ayah', 'nama_bapak') ?? '', 0, 255) ?: null;
+                $tahunLahirAyah   = substr($getVal($row, 'tahun_lahir_ayah', 'thn_lahir_ayah', 'tahun_ayah') ?? '', 0, 20) ?: null;
+                $pekerjaanAyah    = substr($getVal($row, 'pekerjaan_ayah', 'pekerjaan_bapak') ?? '', 0, 100) ?: null;
+                $ketPekerjaanAyah = substr($getVal($row, 'ket_pekerjaan_ayah', 'keterangan_pekerjaan_ayah', 'ket_pekerjaan', 'keterangan_pekerjaan') ?? '', 0, 255) ?: null;
+                $pendidikanAyah   = substr($getVal($row, 'pendidikan_ayah', 'pendidikan_terakhir_ayah', 'pendidikan_bapak') ?? '', 0, 100) ?: null;
+                $alamatAyah       = $getVal($row, 'alamat_ayah', 'alamat_tinggal_ayah', 'alamat_bapak');
+                $noHpAyah         = substr($getVal($row, 'no_hp_ayah', 'nomor_hp_ayah', 'no_telepon_ayah', 'nohp_ayah', 'hp_ayah') ?? '', 0, 30) ?: null;
+                $penghasilanAyah  = substr($getVal($row, 'penghasilan_ayah', 'penghasilan_per_bulan_ayah', 'gaji_ayah') ?? '', 0, 100) ?: null;
 
-            // Parse tanggal lahir
-            $tanggalLahir = null;
-            if ($tanggalLahirRaw) {
-                if (is_numeric($tanggalLahirRaw) && $tanggalLahirRaw > 20000) {
-                    try {
-                        $tanggalLahir = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($tanggalLahirRaw)->format('Y-m-d');
-                    } catch (\Exception $e) {
-                        $tanggalLahir = null;
+                // Ambil data Ibu
+                $nikIbu           = substr($getVal($row, 'nik_ibu') ?? '', 0, 20) ?: null;
+                $namaIbu          = substr($getVal($row, 'nama_ibu', 'nama_lengkap_ibu') ?? '', 0, 255) ?: null;
+                $tahunLahirIbu    = substr($getVal($row, 'tahun_lahir_ibu', 'thn_lahir_ibu', 'tahun_ibu') ?? '', 0, 20) ?: null;
+                $pekerjaanIbu     = substr($getVal($row, 'pekerjaan_ibu') ?? '', 0, 100) ?: null;
+                $ketPekerjaanIbu  = substr($getVal($row, 'ket_pekerjaan_ibu', 'keterangan_pekerjaan_ibu') ?? '', 0, 255) ?: null;
+                $pendidikanIbu    = substr($getVal($row, 'pendidikan_ibu', 'pendidikan_terakhir_ibu') ?? '', 0, 100) ?: null;
+                $alamatIbu        = $getVal($row, 'alamat_ibu', 'alamat_tinggal_ibu');
+                $noHpIbu          = substr($getVal($row, 'no_hp_ibu', 'nomor_hp_ibu', 'no_telepon_ibu', 'nohp_ibu', 'hp_ibu') ?? '', 0, 30) ?: null;
+                $penghasilanIbu   = substr($getVal($row, 'penghasilan_ibu', 'penghasilan_per_bulan_ibu', 'gaji_ibu') ?? '', 0, 100) ?: null;
+
+                // NIS wajib ada
+                if (empty($nis)) {
+                    $skipCount++;
+                    if (count($skippedNames) < 100) {
+                        $skippedNames[] = [
+                            'nama'   => $nama,
+                            'nis'    => '-',
+                            'alasan' => 'Kolom NIS kosong',
+                        ];
                     }
-                } else {
-                    try {
-                        $parsedDate = date('Y-m-d', strtotime(str_replace('/', '-', $tanggalLahirRaw)));
-                        if ($parsedDate && $parsedDate !== '1970-01-01') {
-                            $tanggalLahir = $parsedDate;
+                    continue;
+                }
+
+                // Normalisasi jenis kelamin
+                if ($jk !== 'P') {
+                    $jk = 'L';
+                }
+
+                // Cari kelas berdasarkan lookup array
+                $kelasId = null;
+                if ($kelasName) {
+                    $kKey = trim(strtolower($kelasName));
+                    $kelasId = $kelasMap[$kKey] ?? ($kelasMap[trim($kelasName)] ?? null);
+                }
+
+                // Pengecekan duplikat berdasarkan NIS (in-memory lookup)
+                if (isset($existingNis[$nis])) {
+                    $skipCount++;
+                    if (count($skippedNames) < 100) {
+                        $skippedNames[] = [
+                            'nama'   => $nama,
+                            'nis'    => $nis,
+                            'alasan' => 'NIS sudah terdaftar di sistem',
+                        ];
+                    }
+                    continue;
+                }
+
+                // Generate email internal dari NIS
+                $email = $nis . '@siswa.internal';
+                $counter = 1;
+                while (isset($existingEmails[$email])) {
+                    $email = $nis . $counter . '@siswa.internal';
+                    $counter++;
+                }
+
+                // Parse tanggal lahir
+                $tanggalLahir = null;
+                if ($tanggalLahirRaw) {
+                    if (is_numeric($tanggalLahirRaw) && $tanggalLahirRaw > 20000) {
+                        try {
+                            $tanggalLahir = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($tanggalLahirRaw)->format('Y-m-d');
+                        } catch (\Exception $e) {
+                            $tanggalLahir = null;
                         }
-                    } catch (\Exception $e) {
-                        $tanggalLahir = null;
+                    } else {
+                        try {
+                            $parsedDate = date('Y-m-d', strtotime(str_replace('/', '-', $tanggalLahirRaw)));
+                            if ($parsedDate && $parsedDate !== '1970-01-01') {
+                                $tanggalLahir = $parsedDate;
+                            }
+                        } catch (\Exception $e) {
+                            $tanggalLahir = null;
+                        }
                     }
                 }
-            }
 
-            $password = $nis; // Default password = NIS
+                $password = $nis; // Default password = NIS
 
-            $nameParts = explode(' ', trim($nama), 2);
-            $firstName = $nameParts[0];
-            $lastName  = $nameParts[1] ?? $nameParts[0];
+                $nameParts = explode(' ', trim($nama), 2);
+                $firstName = $nameParts[0];
+                $lastName  = $nameParts[1] ?? $nameParts[0];
 
-            $user = User::create([
-                'first_name' => $firstName,
-                'last_name'  => $lastName,
-                'email'      => $email,
-                'password'   => Hash::make($password),
-            ]);
+                $user = User::create([
+                    'first_name' => $firstName,
+                    'last_name'  => $lastName,
+                    'email'      => $email,
+                    'password'   => Hash::make($password, ['rounds' => 6]),
+                ]);
 
-            // Tentukan fingerprint_id (gunakan dari excel jika unik, atau fallback ke ID user/siswa)
-            $finalFingerprintId = $fingerprintId;
-            if (!empty($finalFingerprintId) && Siswa::where('fingerprint_id', $finalFingerprintId)->exists()) {
-                $finalFingerprintId = (string) $user->id;
-            } elseif (empty($finalFingerprintId)) {
-                $finalFingerprintId = (string) $user->id;
-            }
+                // Track email baru di cache
+                $existingEmails[$email] = $email;
 
-            $siswa = Siswa::create([
-                'user_id'        => $user->id,
-                'kelas_id'       => $kelasId,
-                'nama'           => $nama,
-                'nis'            => $nis,
-                'nik'            => $nik,
-                'jenis_kelamin'  => $jk,
-                'tempat_lahir'   => $tempatLahir,
-                'tanggal_lahir'  => $tanggalLahir,
-                'agama'          => $agama,
-                'alamat'         => $alamat,
-                'no_hp'          => $noHp,
-                'status'         => in_array($status, ['aktif', 'lulus', 'keluar']) ? $status : 'aktif',
-                'asal_sekolah'   => $asalSekolah,
-                'fingerprint_id' => $finalFingerprintId,
-                'is_pushed'      => false,
-                'is_enrolled'    => false,
-            ]);
-
-            // Pastikan fingerprint_id terisi
-            if (empty($siswa->fingerprint_id)) {
-                $siswa->update(['fingerprint_id' => (string) $siswa->id]);
-            }
-
-            // Simpan data orang tua ke parent_profiles jika ada isinya
-            $adaDataOrtu = $nikAyah || $namaAyah || $tahunLahirAyah || $pekerjaanAyah
-                        || $ketPekerjaanAyah || $pendidikanAyah || $alamatAyah || $noHpAyah || $penghasilanAyah
-                        || $nikIbu || $namaIbu || $tahunLahirIbu || $pekerjaanIbu
-                        || $ketPekerjaanIbu || $pendidikanIbu || $alamatIbu || $noHpIbu || $penghasilanIbu;
-
-            if ($adaDataOrtu) {
-                // Gunakan user_id siswa sebagai parent_user_id (konsisten dengan fallback di SiswaDashboardController)
-                \App\Models\ParentProfile::updateOrCreate(
-                    ['parent_user_id' => $user->id],
-                    [
-                        'nik_ayah'           => $nikAyah,
-                        'nama_ayah'          => $namaAyah,
-                        'tahun_lahir_ayah'   => $tahunLahirAyah,
-                        'pekerjaan_ayah'     => $pekerjaanAyah,
-                        'ket_pekerjaan_ayah' => $ketPekerjaanAyah,
-                        'pendidikan_ayah'    => $pendidikanAyah,
-                        'alamat_ayah'        => $alamatAyah,
-                        'no_hp_ayah'         => $noHpAyah,
-                        'penghasilan_ayah'   => $penghasilanAyah,
-
-                        'nik_ibu'            => $nikIbu,
-                        'nama_ibu'           => $namaIbu,
-                        'tahun_lahir_ibu'    => $tahunLahirIbu,
-                        'pekerjaan_ibu'      => $pekerjaanIbu,
-                        'ket_pekerjaan_ibu'  => $ketPekerjaanIbu,
-                        'pendidikan_ibu'     => $pendidikanIbu,
-                        'alamat_ibu'         => $alamatIbu,
-                        'no_hp_ibu'          => $noHpIbu,
-                        'penghasilan_ibu'    => $penghasilanIbu,
-                    ]
-                );
-
-                // Sync nama_orang_tua & no_hp_orang_tua ke kolom siswas untuk kompatibilitas
-                $namaOrtu = $namaAyah ?: $namaIbu;
-                $noHpOrtu = $noHpAyah ?: $noHpIbu;
-                $siswaUpdates = [];
-                if ($namaOrtu) {
-                    $siswaUpdates['nama_orang_tua'] = $namaOrtu;
+                // Tentukan fingerprint_id
+                $finalFingerprintId = $fingerprintId;
+                if (!empty($finalFingerprintId) && isset($existingFingerprints[$finalFingerprintId])) {
+                    $finalFingerprintId = (string) $user->id;
+                } elseif (empty($finalFingerprintId)) {
+                    $finalFingerprintId = (string) $user->id;
                 }
-                if ($noHpOrtu) {
-                    $siswaUpdates['no_hp_orang_tua'] = $noHpOrtu;
+
+                $siswa = Siswa::create([
+                    'user_id'        => $user->id,
+                    'kelas_id'       => $kelasId,
+                    'nama'           => $nama,
+                    'nis'            => $nis,
+                    'nik'            => $nik,
+                    'jenis_kelamin'  => $jk,
+                    'tempat_lahir'   => $tempatLahir,
+                    'tanggal_lahir'  => $tanggalLahir,
+                    'agama'          => $agama,
+                    'alamat'         => $alamat,
+                    'no_hp'          => $noHp,
+                    'status'         => in_array($status, ['aktif', 'lulus', 'keluar']) ? $status : 'aktif',
+                    'asal_sekolah'   => $asalSekolah,
+                    'fingerprint_id' => $finalFingerprintId,
+                    'is_pushed'      => false,
+                    'is_enrolled'    => false,
+                ]);
+
+                // Track NIS dan fingerprint baru di cache
+                $existingNis[$nis] = $nis;
+                $existingFingerprints[$finalFingerprintId] = $finalFingerprintId;
+
+                // Simpan data orang tua ke parent_profiles jika ada isinya
+                $adaDataOrtu = $nikAyah || $namaAyah || $tahunLahirAyah || $pekerjaanAyah
+                            || $ketPekerjaanAyah || $pendidikanAyah || $alamatAyah || $noHpAyah || $penghasilanAyah
+                            || $nikIbu || $namaIbu || $tahunLahirIbu || $pekerjaanIbu
+                            || $ketPekerjaanIbu || $pendidikanIbu || $alamatIbu || $noHpIbu || $penghasilanIbu;
+
+                if ($adaDataOrtu) {
+                    \App\Models\ParentProfile::updateOrCreate(
+                        ['parent_user_id' => $user->id],
+                        [
+                            'nik_ayah'           => $nikAyah,
+                            'nama_ayah'          => $namaAyah,
+                            'tahun_lahir_ayah'   => $tahunLahirAyah,
+                            'pekerjaan_ayah'     => $pekerjaanAyah,
+                            'ket_pekerjaan_ayah' => $ketPekerjaanAyah,
+                            'pendidikan_ayah'    => $pendidikanAyah,
+                            'alamat_ayah'        => $alamatAyah,
+                            'no_hp_ayah'         => $noHpAyah,
+                            'penghasilan_ayah'   => $penghasilanAyah,
+
+                            'nik_ibu'            => $nikIbu,
+                            'nama_ibu'           => $namaIbu,
+                            'tahun_lahir_ibu'    => $tahunLahirIbu,
+                            'pekerjaan_ibu'      => $pekerjaanIbu,
+                            'ket_pekerjaan_ibu'  => $ketPekerjaanIbu,
+                            'pendidikan_ibu'     => $pendidikanIbu,
+                            'alamat_ibu'         => $alamatIbu,
+                            'no_hp_ibu'          => $noHpIbu,
+                            'penghasilan_ibu'    => $penghasilanIbu,
+                        ]
+                    );
+
+                    $namaOrtu = $namaAyah ?: $namaIbu;
+                    $noHpOrtu = $noHpAyah ?: $noHpIbu;
+                    $siswaUpdates = [];
+                    if ($namaOrtu) {
+                        $siswaUpdates['nama_orang_tua'] = $namaOrtu;
+                    }
+                    if ($noHpOrtu) {
+                        $siswaUpdates['no_hp_orang_tua'] = $noHpOrtu;
+                    }
+                    if (!empty($siswaUpdates)) {
+                        $siswa->update($siswaUpdates);
+                    }
                 }
-                if (!empty($siswaUpdates)) {
-                    $siswa->update($siswaUpdates);
+
+                if (count($importedNames) < 100) {
+                    $importedNames[] = [
+                        'nama'  => $nama,
+                        'nis'   => $nis,
+                        'kelas' => $kelasName ?? '-',
+                    ];
+                }
+                $successCount++;
+                $currentBatch++;
+
+                // Commit parsial per batch agar transaksi database cepat
+                if ($currentBatch >= $batchSize) {
+                    DB::commit();
+                    DB::beginTransaction();
+                    $currentBatch = 0;
                 }
             }
 
-            $importedNames[] = [
-                'nama'  => $nama,
-                'nis'   => $nis,
-                'kelas' => $kelasName ?? '-',
-            ];
-            $successCount++;
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat memproses data siswa: ' . $e->getMessage()]);
         }
 
         if (auth()->check() && $successCount > 0) {
