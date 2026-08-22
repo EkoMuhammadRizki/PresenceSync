@@ -19,16 +19,16 @@ class UserInfo extends Model
      */
     public function getAvatarUrlAttribute()
     {
-        // if file avatar exist in storage folder
-        $avatar = public_path(Storage::url($this->avatar));
-        if (is_file($avatar) && file_exists($avatar)) {
-            // get avatar url from storage
-            return Storage::url($this->avatar);
-        }
+        if (!empty($this->avatar)) {
+            // Check if file avatar exists in public storage
+            if (Storage::disk('public')->exists($this->avatar)) {
+                return asset('storage/' . ltrim($this->avatar, '/'));
+            }
 
-        // check if the avatar is an external url, eg. image from google
-        if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
-            return $this->avatar;
+            // check if the avatar is an external url, eg. image from google
+            if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
+                return $this->avatar;
+            }
         }
 
         // no avatar, return blank avatar

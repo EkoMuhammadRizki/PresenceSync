@@ -63,15 +63,21 @@ class SettingsController extends Controller
 
         // include to save avatar
         if ($request->hasFile('avatar')) {
-            if ($info->avatar) {
-                Storage::disk('public')->delete($info->avatar);
-            }
-            $path = 'avatars/admin/' . auth()->id();
-            $info->avatar = \App\Services\ImageCompressionService::compressAndSaveAvatar($request->file('avatar'), $path, 'avatar.jpg');
+            $oldAvatar = $info->avatar;
+            $identifier = 'user_' . auth()->id();
+            $info->avatar = \App\Services\ImageCompressionService::compressAndSaveNamedAvatar(
+                $request->file('avatar'),
+                'admin',
+                $identifier,
+                auth()->user()->name,
+                $oldAvatar
+            );
         }
 
         if ($request->boolean('avatar_remove')) {
-            Storage::delete($info->avatar);
+            if ($info->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($info->avatar)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($info->avatar);
+            }
             $info->avatar = null;
         }
 

@@ -4,26 +4,46 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ImageCompressionService
 {
     /**
-     * Kompresi dan simpan foto avatar menjadi ukuran kecil (puluhan KB) dengan kualitas tinggi.
+     * Kompresi dan simpan foto avatar menjadi ukuran kecil (puluhan KB) dengan nama file yang rapi & informatif.
      *
      * @param UploadedFile $file
-     * @param string $directory (contoh: 'avatars/siswa/123')
-     * @param string $filename (default: 'avatar.jpg')
+     * @param string $category ('siswa', 'guru', 'admin')
+     * @param string $identifier (NIS siswa, NIP guru, atau ID)
+     * @param string $name (Nama lengkap pemilik profil)
+     * @param string|null $oldAvatarPath (Path foto lama untuk dihapus otomatis)
      * @param int $maxDimension (default: 600px)
      * @param int $quality (default: 75%)
-     * @return string Relative storage path
+     * @return string Relative storage path (contoh: 'avatars/siswa/262710138_zavira-ilhami-maolida_1724328900.jpg')
      */
-    public static function compressAndSaveAvatar(
+    public static function compressAndSaveNamedAvatar(
         UploadedFile $file,
-        string $directory,
-        string $filename = 'avatar.jpg',
+        string $category,
+        string $identifier,
+        string $name,
+        ?string $oldAvatarPath = null,
         int $maxDimension = 600,
         int $quality = 75
     ): string {
+        // Bersihkan foto lama jika ada di storage
+        if ($oldAvatarPath && Storage::disk('public')->exists($oldAvatarPath)) {
+            Storage::disk('public')->delete($oldAvatarPath);
+        }
+
+        // Susun nama file yang bersih, rapi, dan mudah dicari admin
+        $cleanIdentifier = preg_replace('/[^A-Za-z0-9_\-]/', '', trim($identifier ?: 'user'));
+        $slugName = Str::slug($name, '-');
+        if (empty($slugName)) {
+            $slugName = 'avatar';
+        }
+        $timestamp = time();
+        $filename = "{$cleanIdentifier}_{$slugName}_{$timestamp}.jpg";
+        $directory = "avatars/{$category}";
+
         $realPath = $file->getRealPath();
         if (empty($realPath) || !file_exists($realPath)) {
             $realPath = $file->getPathname();
@@ -35,7 +55,6 @@ class ImageCompressionService
         }
 
         if (!$imageData) {
-            // Fallback jika path tidak terbaca langsung
             $tempStream = $file->openFile('r');
             $imageData = $tempStream->fread($tempStream->getSize());
         }
@@ -68,7 +87,7 @@ class ImageCompressionService
             $origWidth = imagesx($srcImage);
             $origHeight = imagesy($srcImage);
 
-            // Resize proporsional jika dimensi melebihi batas
+            // Resize proporsional ke resolusi ideal avatar (maks 600px)
             $width = $origWidth;
             $height = $origHeight;
 
@@ -81,7 +100,7 @@ class ImageCompressionService
             // Buat canvas baru truecolor
             $targetImage = imagecreatetruecolor($width, $height);
 
-            // Background putih bersih untuk gambar dengan transparansi (PNG/WebP)
+            // Background putih bersih jika input memiliki transparansi
             $white = imagecolorallocate($targetImage, 255, 255, 255);
             imagefill($targetImage, 0, 0, $white);
 
@@ -96,7 +115,7 @@ class ImageCompressionService
                 $origHeight
             );
 
-            // Kompresi ke JPEG dengan kualitas optimal (~30KB - 70KB)
+            // Kompresi ke JPEG kualitas optimal (hanya puluhan KB)
             ob_start();
             imagejpeg($targetImage, null, $quality);
             $compressedData = ob_get_clean();
@@ -104,15 +123,15 @@ class ImageCompressionService
             imagedestroy($srcImage);
             imagedestroy($targetImage);
 
-            $storagePath = trim($directory, '/') . '/' . $filename;
+            $storagePath = "{$directory}/{$filename}";
             Storage::disk('public')->put($storagePath, $compressedData, 'public');
 
             return $storagePath;
         }
 
-        // Fallback jika bukan image yang dikenali GD
-        $storagePath = trim($directory, '/') . '/' . $filename;
-        Storage::disk('public')->putFileAs(trim($directory, '/'), $file, $filename, 'public');
+        // Fallback jika bukan image GD
+        $storagePath = "{$directory}/{$filename}";
+        Storage::disk('public')->putFileAs($directory, $file, $filename, 'public');
         return $storagePath;
     }
 }

@@ -25,6 +25,8 @@ $files = [
     'app/Http/Controllers/Absensi/AdminProfileController.php',
     'app/Http/Controllers/Account/SettingsController.php',
     'app/Models/Guru.php',
+    'app/Models/User.php',
+    'app/Models/UserInfo.php',
     'resources/views/base/base.blade.php',
     'resources/views/pages/absensi/guru.blade.php',
     'resources/views/pages/absensi/kelas-data.blade.php',

@@ -153,16 +153,20 @@ class GuruProfileController extends Controller
             $info->phone = $request->no_hp;
 
             if ($request->hasFile('avatar')) {
-                if ($info->avatar) {
-                    Storage::disk('public')->delete($info->avatar);
-                }
-                $path = 'avatars/guru/' . $guru->id;
-                $info->avatar = \App\Services\ImageCompressionService::compressAndSaveAvatar($request->file('avatar'), $path, 'avatar.jpg');
+                $oldAvatar = $info->avatar;
+                $identifier = $guru->nip ?: 'guru_' . $guru->id;
+                $info->avatar = \App\Services\ImageCompressionService::compressAndSaveNamedAvatar(
+                    $request->file('avatar'),
+                    'guru',
+                    $identifier,
+                    $guru->nama,
+                    $oldAvatar
+                );
             }
 
             if ($request->boolean('avatar_remove')) {
-                if ($info->avatar) {
-                    Storage::delete($info->avatar);
+                if ($info->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($info->avatar)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($info->avatar);
                 }
                 $info->avatar = null;
             }
