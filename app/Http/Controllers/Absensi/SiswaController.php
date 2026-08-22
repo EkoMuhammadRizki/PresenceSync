@@ -527,8 +527,41 @@ class SiswaController extends Controller
                     continue;
                 }
 
-                $nis          = $getVal($row, 'nis');
-                $jk           = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
+                // Ambil & Normalisasi Jenis Kelamin secara komprehensif
+                $rawJk = $getVal($row, 'jenis_kelamin', 'jk', 'l_p', 'lp', 'gender', 'jeniskelamin', 'sex', 'j_k', 'l_perempuan', 'l_p_');
+                $jk = 'L';
+                if ($rawJk !== null && trim((string)$rawJk) !== '') {
+                    $cleanJk = strtoupper(trim((string)$rawJk));
+                    if (
+                        $cleanJk === 'P' ||
+                        $cleanJk === 'PEREMPUAN' ||
+                        $cleanJk === 'WANITA' ||
+                        $cleanJk === 'FEMALE' ||
+                        $cleanJk === 'F' ||
+                        $cleanJk === '2' ||
+                        str_starts_with($cleanJk, 'PEREMP') ||
+                        str_starts_with($cleanJk, 'WANIT') ||
+                        str_starts_with($cleanJk, 'FEM') ||
+                        str_contains($cleanJk, 'PEREMPUAN') ||
+                        str_contains($cleanJk, 'WANITA')
+                    ) {
+                        $jk = 'P';
+                    } elseif (
+                        $cleanJk === 'PRIA' ||
+                        $cleanJk === 'L' ||
+                        $cleanJk === 'LAKI-LAKI' ||
+                        $cleanJk === 'LAKI - LAKI' ||
+                        $cleanJk === 'LAKI_LAKI' ||
+                        $cleanJk === 'LAKI' ||
+                        $cleanJk === 'MALE' ||
+                        $cleanJk === 'M' ||
+                        $cleanJk === '1' ||
+                        str_starts_with($cleanJk, 'LAKI')
+                    ) {
+                        $jk = 'L';
+                    }
+                }
+
                 $kelasName    = $getVal($row, 'kelas', 'nama_kelas');
                 $fingerprintId = substr($getVal($row, 'id_fingerprint', 'fingerprint_id', 'id_finger', 'fingerprint', 'pin') ?? '', 0, 50) ?: null;
                 $nik          = substr($getVal($row, 'nik', 'nik_siswa') ?? '', 0, 20) ?: null;
@@ -575,11 +608,6 @@ class SiswaController extends Controller
                     continue;
                 }
 
-                // Normalisasi jenis kelamin
-                if ($jk !== 'P') {
-                    $jk = 'L';
-                }
-
                 // Cari kelas berdasarkan lookup array (atau auto-create jika belum ada)
                 $kelasId = null;
                 if ($kelasName) {
@@ -608,15 +636,27 @@ class SiswaController extends Controller
                     }
                 }
 
-                // Pengecekan duplikat berdasarkan NIS (in-memory lookup)
+                // Jika NIS sudah ada di sistem, update datanya agar Jenis Kelamin & Kelas tersinkron
                 if (isset($existingNis[$nis])) {
-                    $skipCount++;
-                    if (count($skippedNames) < 100) {
-                        $skippedNames[] = [
-                            'nama'   => $nama,
-                            'nis'    => $nis,
-                            'alasan' => 'NIS sudah terdaftar di sistem',
-                        ];
+                    $existingSiswa = Siswa::where('nis', $nis)->first();
+                    if ($existingSiswa) {
+                        $updateData = ['jenis_kelamin' => $jk];
+                        if ($kelasId) $updateData['kelas_id'] = $kelasId;
+                        if ($nama) $updateData['nama'] = $nama;
+                        if ($noHp) $updateData['no_hp'] = $noHp;
+                        if ($nik) $updateData['nik'] = $nik;
+                        if ($tempatLahir) $updateData['tempat_lahir'] = $tempatLahir;
+                        if ($agama) $updateData['agama'] = $agama;
+                        if ($alamat) $updateData['alamat'] = $alamat;
+                        $existingSiswa->update($updateData);
+                        $successCount++;
+                        if (count($importedNames) < 100) {
+                            $importedNames[] = [
+                                'nama' => $nama,
+                                'nis'  => $nis,
+                                'kelas'=> $kelasName ?? '-',
+                            ];
+                        }
                     }
                     continue;
                 }

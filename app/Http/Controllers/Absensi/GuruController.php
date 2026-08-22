@@ -414,7 +414,41 @@ class GuruController extends Controller
                 }
 
                 $nip                 = $getVal($row, 'nip');
-                $jk                  = strtoupper($getVal($row, 'jenis_kelamin', 'jk') ?? 'L');
+                // Ambil & Normalisasi Jenis Kelamin secara komprehensif
+                $rawJk = $getVal($row, 'jenis_kelamin', 'jk', 'l_p', 'lp', 'gender', 'jeniskelamin', 'sex', 'j_k', 'l_perempuan', 'l_p_');
+                $jk = 'L';
+                if ($rawJk !== null && trim((string)$rawJk) !== '') {
+                    $cleanJk = strtoupper(trim((string)$rawJk));
+                    if (
+                        $cleanJk === 'P' ||
+                        $cleanJk === 'PEREMPUAN' ||
+                        $cleanJk === 'WANITA' ||
+                        $cleanJk === 'FEMALE' ||
+                        $cleanJk === 'F' ||
+                        $cleanJk === '2' ||
+                        str_starts_with($cleanJk, 'PEREMP') ||
+                        str_starts_with($cleanJk, 'WANIT') ||
+                        str_starts_with($cleanJk, 'FEM') ||
+                        str_contains($cleanJk, 'PEREMPUAN') ||
+                        str_contains($cleanJk, 'WANITA')
+                    ) {
+                        $jk = 'P';
+                    } elseif (
+                        $cleanJk === 'PRIA' ||
+                        $cleanJk === 'L' ||
+                        $cleanJk === 'LAKI-LAKI' ||
+                        $cleanJk === 'LAKI - LAKI' ||
+                        $cleanJk === 'LAKI_LAKI' ||
+                        $cleanJk === 'LAKI' ||
+                        $cleanJk === 'MALE' ||
+                        $cleanJk === 'M' ||
+                        $cleanJk === '1' ||
+                        str_starts_with($cleanJk, 'LAKI')
+                    ) {
+                        $jk = 'L';
+                    }
+                }
+
                 $tempatLahir         = $getVal($row, 'tempat_lahir');
                 $tanggalLahirRaw     = $getVal($row, 'tanggal_lahir', 'tgl_lahir');
                 $agama               = $getVal($row, 'agama');
@@ -447,20 +481,30 @@ class GuruController extends Controller
                     continue;
                 }
 
-                // Normalisasi jenis kelamin
-                if ($jk !== 'P') {
-                    $jk = 'L';
-                }
-
-                // Pengecekan duplikat berdasarkan NIP (in-memory lookup)
+                // Jika NIP sudah ada di sistem, update datanya agar Jenis Kelamin tersinkron
                 if (isset($existingNip[$nip])) {
-                    $skipCount++;
-                    if (count($skippedNames) < 100) {
-                        $skippedNames[] = [
-                            'nama'   => $nama,
-                            'nip'    => $nip,
-                            'alasan' => 'NIP sudah terdaftar di sistem',
-                        ];
+                    $existingGuru = Guru::where('nip', $nip)->first();
+                    if ($existingGuru) {
+                        $updateData = ['jenis_kelamin' => $jk];
+                        if ($nama) $updateData['nama'] = $nama;
+                        if ($noHp) $updateData['no_hp'] = $noHp;
+                        if ($emailInput) $updateData['email'] = $emailInput;
+                        if ($nik) $updateData['nik'] = $nik;
+                        if ($nuptk) $updateData['nuptk'] = $nuptk;
+                        if ($npwp) $updateData['npwp'] = $npwp;
+                        if ($tempatLahir) $updateData['tempat_lahir'] = $tempatLahir;
+                        if ($agama) $updateData['agama'] = $agama;
+                        if ($alamat) $updateData['alamat'] = $alamat;
+                        if ($statusKepegawaian) $updateData['status_kepegawaian'] = $statusKepegawaian;
+                        if ($pangkatGolongan) $updateData['pangkat_golongan'] = $pangkatGolongan;
+                        $existingGuru->update($updateData);
+                        $successCount++;
+                        if (count($importedNames) < 100) {
+                            $importedNames[] = [
+                                'nama' => $nama,
+                                'nip'  => $nip,
+                            ];
+                        }
                     }
                     continue;
                 }
