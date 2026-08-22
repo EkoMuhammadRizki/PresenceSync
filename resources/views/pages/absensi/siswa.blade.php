@@ -487,6 +487,192 @@
     </div>
 </div>
 
+<!-- Modal Post ke Mesin (Pilih Kelas & Lingkup) -->
+<div class="modal fade" id="modal_post_ke_mesin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mw-700px">
+        <div class="modal-content">
+            <div class="modal-header pb-0 border-0 justify-content-end">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body scroll-y px-8 px-lg-12 pt-0 pb-10">
+                <form id="form_modal_post_ke_mesin" action="{{ route('siswa.push-to-devices') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="scope" id="modal_post_scope" value="kelas" />
+                    
+                    <div class="mb-8 text-center">
+                        <div class="symbol symbol-60px symbol-circle bg-light-info mb-3">
+                            <span class="symbol-label">
+                                {!! theme()->getSvgIcon("icons/duotune/arrows/arr078.svg", "svg-icon-2hx svg-icon-info") !!}
+                            </span>
+                        </div>
+                        <h2 class="mb-1 fw-bolder text-gray-900">Post Data Siswa ke Mesin</h2>
+                        <div class="text-muted fw-bold fs-7">
+                            Pilih kelas atau lingkup data siswa yang ingin disinkronkan ke mesin fingerprint.
+                        </div>
+                    </div>
+
+                    <!-- Target Mesin Fingerprint -->
+                    <div class="mb-6">
+                        <label class="form-label fw-bolder fs-6 text-gray-800">Target Mesin Fingerprint</label>
+                        <select name="target_device_id" class="form-select form-select-solid">
+                            <option value="all">⚡ Semua Mesin Fingerprint Aktif ({{ count($devices ?? []) }} Mesin)</option>
+                            @foreach($devices ?? [] as $dev)
+                                <option value="{{ $dev->id }}">{{ $dev->nama }} ({{ $dev->ip_address }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Pilihan Lingkup Post -->
+                    <div class="mb-6">
+                        <label class="form-label fw-bolder fs-6 text-gray-800">Pilih Lingkup Siswa</label>
+                        
+                        <div class="row g-3">
+                            <!-- Card Pilihan: Per Kelas -->
+                            <div class="col-6 col-sm-3">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer active" for="scope_kelas">
+                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_kelas" value="kelas" checked onchange="switchPostScope('kelas')">
+                                    <i class="bi bi-diagram-3-fill fs-2x mb-1 text-primary"></i>
+                                    <span class="fs-7 fw-bolder text-gray-800">Pilih Kelas</span>
+                                </label>
+                            </div>
+
+                            <!-- Card Pilihan: Per Tingkat -->
+                            <div class="col-6 col-sm-3">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer" for="scope_tingkat">
+                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_tingkat" value="tingkat" onchange="switchPostScope('tingkat')">
+                                    <i class="bi bi-layers-fill fs-2x mb-1 text-info"></i>
+                                    <span class="fs-7 fw-bolder text-gray-800">Per Tingkat</span>
+                                </label>
+                            </div>
+
+                            <!-- Card Pilihan: Perlu Post Saja -->
+                            <div class="col-6 col-sm-3">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer" for="scope_unpushed">
+                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_unpushed" value="unpushed" onchange="switchPostScope('unpushed')">
+                                    <i class="bi bi-clock-history fs-2x mb-1 text-warning"></i>
+                                    <span class="fs-7 fw-bolder text-gray-800">Perlu Post</span>
+                                </label>
+                            </div>
+
+                            <!-- Card Pilihan: Seluruh Siswa -->
+                            <div class="col-6 col-sm-3">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center justify-content-center p-3 w-100 cursor-pointer" for="scope_all">
+                                    <input class="btn-check" type="radio" name="scope_radio" id="scope_all" value="all" onchange="switchPostScope('all')">
+                                    <i class="bi bi-people-fill fs-2x mb-1 text-success"></i>
+                                    <span class="fs-7 fw-bolder text-gray-800">Semua Siswa</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Section: Per Kelas (Default) -->
+                    <div id="section_scope_kelas" class="mb-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bolder fs-6 text-gray-800 mb-0">Pilih Satu / Beberapa Rombel Kelas</label>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-xs btn-light-primary py-1 px-2" onclick="selectKelasTingkat('10')">Tingkat 10</button>
+                                <button type="button" class="btn btn-xs btn-light-info py-1 px-2" onclick="selectKelasTingkat('11')">Tingkat 11</button>
+                                <button type="button" class="btn btn-xs btn-light-success py-1 px-2" onclick="selectKelasTingkat('12')">Tingkat 12</button>
+                                <button type="button" class="btn btn-xs btn-light-dark py-1 px-2" onclick="toggleAllKelasModal(true)">Semua</button>
+                                <button type="button" class="btn btn-xs btn-light-danger py-1 px-2" onclick="toggleAllKelasModal(false)">Batal</button>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-300 rounded p-3 bg-light-secondary" style="max-height: 200px; overflow-y: auto;">
+                            <div class="row g-2">
+                                @foreach($kelas as $k)
+                                    <div class="col-6 col-md-4">
+                                        <div class="form-check form-check-custom form-check-solid form-check-sm">
+                                            <input class="form-check-input modal-kelas-checkbox" type="checkbox" name="kelas_ids[]" value="{{ $k->id }}" id="modal_k_{{ $k->id }}" data-count="{{ $k->siswas_count ?? 0 }}" data-tingkat="{{ $k->tingkat }}" onchange="calcModalPostCount()" />
+                                            <label class="form-check-label fs-7 fw-bold text-gray-800 cursor-pointer" for="modal_k_{{ $k->id }}">
+                                                {{ $k->nama }}
+                                                <span class="badge badge-light-primary fs-8 ms-1">{{ $k->siswas_count ?? 0 }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Section: Per Tingkat -->
+                    <div id="section_scope_tingkat" class="mb-6 d-none">
+                        <label class="form-label fw-bolder fs-6 text-gray-800 mb-2">Pilih Tingkat</label>
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-3 w-100 cursor-pointer" for="tingkat_10">
+                                    <input class="btn-check" type="radio" name="tingkat" id="tingkat_10" value="10" onchange="calcModalPostCount()">
+                                    <span class="fs-5 fw-bolder text-gray-800">Kelas 10</span>
+                                    <span class="badge badge-light-primary mt-1">{{ $tingkatCounts['10'] ?? 0 }} Siswa</span>
+                                </label>
+                            </div>
+                            <div class="col-4">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-3 w-100 cursor-pointer" for="tingkat_11">
+                                    <input class="btn-check" type="radio" name="tingkat" id="tingkat_11" value="11" onchange="calcModalPostCount()">
+                                    <span class="fs-5 fw-bolder text-gray-800">Kelas 11</span>
+                                    <span class="badge badge-light-info mt-1">{{ $tingkatCounts['11'] ?? 0 }} Siswa</span>
+                                </label>
+                            </div>
+                            <div class="col-4">
+                                <label class="btn btn-outline btn-outline-dashed btn-active-light-primary d-flex flex-column align-items-center p-3 w-100 cursor-pointer" for="tingkat_12">
+                                    <input class="btn-check" type="radio" name="tingkat" id="tingkat_12" value="12" onchange="calcModalPostCount()">
+                                    <span class="fs-5 fw-bolder text-gray-800">Kelas 12</span>
+                                    <span class="badge badge-light-success mt-1">{{ $tingkatCounts['12'] ?? 0 }} Siswa</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Section: Perlu Post -->
+                    <div id="section_scope_unpushed" class="mb-6 d-none">
+                        <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed p-4">
+                            <i class="bi bi-clock-history fs-2tx text-warning me-3"></i>
+                            <div>
+                                <h6 class="text-gray-900 fw-bolder mb-1">Hanya Siswa yang Perlu Post</h6>
+                                <div class="fs-7 text-gray-700">
+                                    Akan mem-post sebanyak <strong>{{ $unpushedCount ?? 0 }} data siswa</strong> yang belum tersinkronisasi.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Section: Semua Siswa -->
+                    <div id="section_scope_all" class="mb-6 d-none">
+                        <div class="notice d-flex bg-light-danger rounded border-danger border border-dashed p-4">
+                            <i class="bi bi-people-fill fs-2tx text-danger me-3"></i>
+                            <div>
+                                <h6 class="text-gray-900 fw-bolder mb-1">Sinkronisasi Penuh (Seluruh Siswa)</h6>
+                                <div class="fs-7 text-gray-700">
+                                    Akan mem-post seluruh <strong>{{ $totalSiswaAktif ?? 0 }} siswa aktif</strong>.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan & Submit -->
+                    <div class="d-flex align-items-center justify-content-between bg-light-primary rounded p-3 mb-6 border border-primary border-opacity-25">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-check-fill fs-2x text-primary me-3"></i>
+                            <div>
+                                <span class="fs-8 text-muted d-block">Estimasi Siswa yang Dipost:</span>
+                                <span class="fs-5 fw-bolder text-primary" id="modal_post_summary_count">0 Siswa</span>
+                            </div>
+                        </div>
+                        <span class="badge badge-light-success fs-8 fw-bold">Siap Sinkron</span>
+                    </div>
+
+                    <div class="text-center pt-2">
+                        <button type="button" class="btn btn-light me-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-info fw-bolder px-6" id="btn_submit_post_modal">
+                            <i class="bi bi-send-fill me-1"></i> Post ke Mesin Sekarang
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ubah Siswa -->
 <div class="modal fade" id="modal_ubah_siswa" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered mw-650px">
@@ -924,36 +1110,103 @@ function confirmPostKeMesin() {
         selectedIds.push($(this).val());
     });
 
+    // Jika ada siswa yang dipilih secara manual via checkbox di tabel, tampilkan konfirmasi khusus terpilih
     if (selectedIds.length > 0) {
         $('#post_selected_ids').val(JSON.stringify(selectedIds));
-        var titleText = 'Post ' + selectedIds.length + ' Siswa Terpilih ke Mesin?';
-        var htmlText = 'Hanya <b>' + selectedIds.length + ' siswa terpilih</b> yang akan di-upload dan disinkronkan ke seluruh mesin fingerprint yang aktif.';
-        var btnText = '<i class="bi bi-send me-1"></i> Ya, Post ' + selectedIds.length + ' Siswa';
+        Swal.fire({
+            title: 'Post ' + selectedIds.length + ' Siswa Terpilih ke Mesin?',
+            html: 'Hanya <b>' + selectedIds.length + ' siswa terpilih</b> yang akan di-upload dan disinkronkan ke seluruh mesin fingerprint yang aktif.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-send me-1"></i> Ya, Post ' + selectedIds.length + ' Siswa',
+            cancelButtonText: 'Batal',
+            customClass: {
+                confirmButton: 'btn btn-info fw-bold px-6',
+                cancelButton: 'btn btn-light fw-bold px-6 me-3'
+            },
+            buttonsStyling: false,
+            reverseButtons: true
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                document.getElementById('form_post_ke_mesin').submit();
+            }
+        });
     } else {
-        $('#post_selected_ids').val('');
-        var titleText = 'Post Seluruh Data Siswa ke Mesin?';
-        var htmlText = 'Seluruh nama & ID siswa akan di-upload dan disinkronkan ke seluruh mesin fingerprint yang aktif.';
-        var btnText = '<i class="bi bi-send me-1"></i> Ya, Post Semua Siswa';
+        // Jika tidak ada checkbox yang dicentang, buka Modal Pop-up Filter Kelas & Lingkup
+        $('#modal_post_ke_mesin').modal('show');
+        calcModalPostCount();
     }
+}
 
-    Swal.fire({
-        title: titleText,
-        html: htmlText,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: btnText,
-        cancelButtonText: 'Batal',
-        customClass: {
-            confirmButton: 'btn btn-info fw-bold px-6',
-            cancelButton: 'btn btn-light fw-bold px-6 me-3'
-        },
-        buttonsStyling: false,
-        reverseButtons: true
-    }).then(function(result) {
-        if (result.isConfirmed) {
-            document.getElementById('form_post_ke_mesin').submit();
+function switchPostScope(scope) {
+    $('#modal_post_scope').val(scope);
+    $('#section_scope_kelas').addClass('d-none');
+    $('#section_scope_tingkat').addClass('d-none');
+    $('#section_scope_unpushed').addClass('d-none');
+    $('#section_scope_all').addClass('d-none');
+
+    if (scope === 'kelas') {
+        $('#section_scope_kelas').removeClass('d-none');
+    } else if (scope === 'tingkat') {
+        $('#section_scope_tingkat').removeClass('d-none');
+    } else if (scope === 'unpushed') {
+        $('#section_scope_unpushed').removeClass('d-none');
+    } else if (scope === 'all') {
+        $('#section_scope_all').removeClass('d-none');
+    }
+    calcModalPostCount();
+}
+
+function selectKelasTingkat(tingkat) {
+    $('.modal-kelas-checkbox').each(function() {
+        if ($(this).data('tingkat') == tingkat) {
+            $(this).prop('checked', true);
         }
     });
+    calcModalPostCount();
+}
+
+function toggleAllKelasModal(checked) {
+    $('.modal-kelas-checkbox').prop('checked', checked);
+    calcModalPostCount();
+}
+
+function calcModalPostCount() {
+    var scope = $('#modal_post_scope').val();
+    var total = 0;
+
+    if (scope === 'kelas') {
+        var checkedKelas = $('.modal-kelas-checkbox:checked');
+        checkedKelas.each(function() {
+            total += parseInt($(this).data('count') || 0);
+        });
+        if (checkedKelas.length === 0) {
+            $('#modal_post_summary_count').text('Pilih minimal 1 kelas');
+            $('#btn_submit_post_modal').prop('disabled', true);
+            return;
+        }
+    } else if (scope === 'tingkat') {
+        var selectedTingkat = $('input[name="tingkat"]:checked').val();
+        var tingkatCounts = {
+            '10': {{ $tingkatCounts['10'] ?? 0 }},
+            '11': {{ $tingkatCounts['11'] ?? 0 }},
+            '12': {{ $tingkatCounts['12'] ?? 0 }}
+        };
+        if (selectedTingkat && tingkatCounts[selectedTingkat] !== undefined) {
+            total = tingkatCounts[selectedTingkat];
+        } else {
+            $('#modal_post_summary_count').text('Pilih tingkat kelas');
+            $('#btn_submit_post_modal').prop('disabled', true);
+            return;
+        }
+    } else if (scope === 'unpushed') {
+        total = {{ $unpushedCount ?? 0 }};
+    } else if (scope === 'all') {
+        total = {{ $totalSiswaAktif ?? 0 }};
+    }
+
+    $('#btn_submit_post_modal').prop('disabled', false);
+    $('#modal_post_summary_count').text(total + ' Siswa');
 }
 
 function confirmPostSingleSiswa(siswaId, siswaNama) {

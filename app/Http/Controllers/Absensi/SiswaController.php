@@ -20,15 +20,25 @@ class SiswaController extends Controller
     public function index()
     {
         $siswas = Siswa::with(['kelas', 'user.info'])->orderBy('nama', 'asc')->get();
-        $kelas  = Kelas::where('status', 'aktif')->orderBy('tingkat')->get();
+        $kelas  = Kelas::where('status', 'aktif')->withCount(['siswas' => function($q) {
+            $q->where('status', 'aktif');
+        }])->orderBy('tingkat')->orderByRaw("CAST(SUBSTRING_INDEX(nama, '-', -1) AS UNSIGNED) ASC, nama ASC")->get();
         
         // Dapatkan user yang belum dikaitkan dengan data siswa manapun
         $siswaUserIds = Siswa::pluck('user_id')->filter()->toArray();
         $users = User::whereNotIn('id', $siswaUserIds)->orderBy('email')->get();
         
         $unpushedCount = Siswa::where('is_pushed', false)->where('status', 'aktif')->count();
+        $totalSiswaAktif = Siswa::where('status', 'aktif')->count();
+        $devices = FingerprintDevice::where('is_aktif', true)->orderBy('nama')->get();
 
-        return view('pages.absensi.siswa', compact('siswas', 'kelas', 'users', 'unpushedCount'));
+        $tingkatCounts = [
+            '10' => Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', '10'))->where('status', 'aktif')->count(),
+            '11' => Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', '11'))->where('status', 'aktif')->count(),
+            '12' => Siswa::whereHas('kelas', fn($q) => $q->where('tingkat', '12'))->where('status', 'aktif')->count(),
+        ];
+
+        return view('pages.absensi.siswa', compact('siswas', 'kelas', 'users', 'unpushedCount', 'totalSiswaAktif', 'devices', 'tingkatCounts'));
     }
 
     public function store(Request $request)
@@ -886,12 +896,18 @@ class SiswaController extends Controller
     {
         set_time_limit(0); // Prevent timeout when pushing to multiple devices
 
-        $devices = FingerprintDevice::where('is_aktif', true)->get();
-
-        if ($devices->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada perangkat mesin fingerprint yang aktif saat ini.');
+        $targetDeviceId = $request->input('target_device_id', 'all');
+        if ($targetDeviceId !== 'all' && !empty($targetDeviceId) && is_numeric($targetDeviceId)) {
+            $devices = FingerprintDevice::where('id', $targetDeviceId)->where('is_aktif', true)->get();
+        } else {
+            $devices = FingerprintDevice::where('is_aktif', true)->get();
         }
 
+        if ($devices->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada perangkat mesin fingerprint yang aktif atau ditemukan.');
+        }
+
+        $scope = $request->input('scope', 'selected');
         $selectedIds = $request->input('selected_ids');
         if (is_string($selectedIds) && !empty($selectedIds)) {
             $selectedIds = json_decode($selectedIds, true) ?? explode(',', $selectedIds);
@@ -903,12 +919,28 @@ class SiswaController extends Controller
 
         if (!empty($selectedIds) && is_array($selectedIds)) {
             $query->whereIn('id', $selectedIds);
+        } elseif ($scope === 'kelas') {
+            $kelasIds = $request->input('kelas_ids', []);
+            if (!empty($kelasIds)) {
+                $query->whereIn('kelas_id', (array)$kelasIds);
+            }
+        } elseif ($scope === 'tingkat') {
+            $tingkat = $request->input('tingkat');
+            if (!empty($tingkat)) {
+                $query->whereHas('kelas', function ($q) use ($tingkat) {
+                    $q->where('tingkat', $tingkat);
+                });
+            }
+        } elseif ($scope === 'unpushed') {
+            $query->where('is_pushed', false);
+        } elseif ($scope === 'all') {
+            // Seluruh siswa aktif
         }
 
         $siswas = $query->get();
 
         if ($siswas->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada data siswa terpilih yang memiliki ID Fingerprint untuk dikirim ke mesin.');
+            return redirect()->back()->with('error', 'Tidak ada data siswa yang cocok dengan filter atau yang memiliki ID Fingerprint untuk dikirim ke mesin.');
         }
 
         $service = app(\App\Services\FingerprintService::class);
