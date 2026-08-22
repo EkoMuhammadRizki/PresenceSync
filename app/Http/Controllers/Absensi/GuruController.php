@@ -23,12 +23,28 @@ class GuruController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nip'      => 'required|string|max:30|unique:gurus,nip',
-            'password' => 'required|string|min:6',
-            'nama'     => 'required|string|max:150',
-            'email'    => 'nullable|email|max:150|unique:users,email|unique:gurus,email',
-            'no_hp'    => 'nullable|string|max:20',
-            'alamat'   => 'nullable|string',
+            'nip'                => 'required|string|max:30|unique:gurus,nip',
+            'password'           => 'required|string|min:6',
+            'nama'               => 'required|string|max:150',
+            'email'              => 'nullable|email|max:150|unique:users,email|unique:gurus,email',
+            'jenis_kelamin'      => 'nullable|in:L,P',
+            'tempat_lahir'       => 'nullable|string|max:100',
+            'tanggal_lahir'      => 'nullable|date',
+            'agama'              => 'nullable|string|max:50',
+            'no_hp'              => 'nullable|string|max:20',
+            'alamat'             => 'nullable|string',
+            'status'             => 'nullable|string|max:50',
+            'nik'                => 'nullable|string|max:20',
+            'npwp'               => 'nullable|string|max:30',
+            'nuptk'              => 'nullable|string|max:30',
+            'status_kepegawaian' => 'nullable|string|max:100',
+            'tugas_tambahan'     => 'nullable|string|max:150',
+            'sk_cpns'            => 'nullable|string|max:100',
+            'tanggal_cpns'       => 'nullable|date',
+            'sk_pengangkatan'    => 'nullable|string|max:100',
+            'tmt_pengangkatan'   => 'nullable|date',
+            'lembaga_pengangkatan' => 'nullable|string|max:150',
+            'pangkat_golongan'   => 'nullable|string|max:50',
         ], [
             'nip.required'      => 'NIP wajib diisi karena digunakan untuk login.',
             'nip.unique'        => 'NIP sudah terdaftar.',
@@ -62,12 +78,28 @@ class GuruController extends Controller
         ]);
 
         Guru::create([
-            'user_id' => $user->id,
-            'nama'    => $request->nama,
-            'nip'     => $request->nip,
-            'email'   => $request->email,
-            'no_hp'   => $request->no_hp,
-            'alamat'  => $request->alamat,
+            'user_id'              => $user->id,
+            'nama'                 => $request->nama,
+            'nip'                  => $request->nip,
+            'email'                => $request->email,
+            'jenis_kelamin'        => $request->jenis_kelamin ?? 'L',
+            'tempat_lahir'         => $request->tempat_lahir,
+            'tanggal_lahir'        => $request->tanggal_lahir,
+            'agama'                => $request->agama,
+            'no_hp'                => $request->no_hp,
+            'alamat'               => $request->alamat,
+            'status'               => $request->status ?? 'aktif',
+            'nik'                  => $request->nik,
+            'npwp'                 => $request->npwp,
+            'nuptk'                => $request->nuptk,
+            'status_kepegawaian'   => $request->status_kepegawaian,
+            'tugas_tambahan'       => $request->tugas_tambahan,
+            'sk_cpns'              => $request->sk_cpns,
+            'tanggal_cpns'         => $request->tanggal_cpns,
+            'sk_pengangkatan'      => $request->sk_pengangkatan,
+            'tmt_pengangkatan'     => $request->tmt_pengangkatan,
+            'lembaga_pengangkatan' => $request->lembaga_pengangkatan,
+            'pangkat_golongan'     => $request->pangkat_golongan,
         ]);
 
         if (auth()->check()) {
@@ -81,11 +113,27 @@ class GuruController extends Controller
     public function update(Request $request, Guru $guru)
     {
         $request->validate([
-            'nama'   => 'required|string|max:150',
-            'nip'    => 'nullable|string|max:30|unique:gurus,nip,' . $guru->id,
-            'email'  => 'nullable|email|max:150|unique:gurus,email,' . $guru->id . '|unique:users,email,' . ($guru->user_id ?? 0),
-            'no_hp'  => 'nullable|string|max:20',
-            'alamat' => 'nullable|string',
+            'nama'               => 'required|string|max:150',
+            'nip'                => 'nullable|string|max:30|unique:gurus,nip,' . $guru->id,
+            'email'              => 'nullable|email|max:150|unique:gurus,email,' . $guru->id . '|unique:users,email,' . ($guru->user_id ?? 0),
+            'jenis_kelamin'      => 'nullable|in:L,P',
+            'tempat_lahir'       => 'nullable|string|max:100',
+            'tanggal_lahir'      => 'nullable|date',
+            'agama'              => 'nullable|string|max:50',
+            'no_hp'              => 'nullable|string|max:20',
+            'alamat'             => 'nullable|string',
+            'status'             => 'nullable|string|max:50',
+            'nik'                => 'nullable|string|max:20',
+            'npwp'               => 'nullable|string|max:30',
+            'nuptk'              => 'nullable|string|max:30',
+            'status_kepegawaian' => 'nullable|string|max:100',
+            'tugas_tambahan'     => 'nullable|string|max:150',
+            'sk_cpns'            => 'nullable|string|max:100',
+            'tanggal_cpns'       => 'nullable|date',
+            'sk_pengangkatan'    => 'nullable|string|max:100',
+            'tmt_pengangkatan'   => 'nullable|date',
+            'lembaga_pengangkatan' => 'nullable|string|max:150',
+            'pangkat_golongan'   => 'nullable|string|max:50',
         ], [
             'nama.required' => 'Nama guru wajib diisi.',
             'nip.unique'    => 'NIP sudah terdaftar.',
@@ -93,7 +141,12 @@ class GuruController extends Controller
             'email.email'   => 'Format email tidak valid.',
         ]);
 
-        $guru->update($request->only('nama', 'nip', 'email', 'no_hp', 'alamat'));
+        $guru->update($request->only([
+            'nama', 'nip', 'email', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir',
+            'agama', 'no_hp', 'alamat', 'status', 'nik', 'npwp', 'nuptk',
+            'status_kepegawaian', 'tugas_tambahan', 'sk_cpns', 'tanggal_cpns',
+            'sk_pengangkatan', 'tmt_pengangkatan', 'lembaga_pengangkatan', 'pangkat_golongan'
+        ]));
 
         if ($guru->user) {
             $nameParts = explode(' ', trim($request->nama), 2);
@@ -244,9 +297,24 @@ class GuruController extends Controller
         $file = $request->file('file');
 
         try {
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+            $filePath = $file->getRealPath();
+            if (empty($filePath) || !file_exists($filePath)) {
+                $filePath = $file->getPathname();
+            }
+            if (empty($filePath) || !file_exists($filePath)) {
+                $tempName = 'temp_import_guru_' . uniqid() . '.' . ($file->getClientOriginalExtension() ?: 'xlsx');
+                $tempPath = storage_path('app/' . $tempName);
+                $file->move(storage_path('app'), $tempName);
+                $filePath = $tempPath;
+            }
+
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
             $worksheet   = $spreadsheet->getActiveSheet();
             $rows        = $worksheet->toArray();
+
+            if (isset($tempPath) && file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Gagal membaca file Excel: ' . $e->getMessage()]);
         }

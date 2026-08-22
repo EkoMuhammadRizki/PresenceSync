@@ -426,9 +426,24 @@ class SiswaController extends Controller
         $file = $request->file('file');
         
         try {
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+            $filePath = $file->getRealPath();
+            if (empty($filePath) || !file_exists($filePath)) {
+                $filePath = $file->getPathname();
+            }
+            if (empty($filePath) || !file_exists($filePath)) {
+                $tempName = 'temp_import_siswa_' . uniqid() . '.' . ($file->getClientOriginalExtension() ?: 'xlsx');
+                $tempPath = storage_path('app/' . $tempName);
+                $file->move(storage_path('app'), $tempName);
+                $filePath = $tempPath;
+            }
+
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
             $worksheet = $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
+
+            if (isset($tempPath) && file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Gagal membaca file Excel: ' . $e->getMessage()]);
         }
