@@ -205,18 +205,40 @@
                     <div class="flex-grow-1">
                         <span class="text-muted fw-bold d-block fs-7">Status Kepegawaian & Golongan</span>
                         <span class="text-gray-800 fw-bolder fs-6">
-                            {{ $guru->status_kepegawaian ?? '-' }} {{ $guru->pangkat_golongan ? '(' . $guru->pangkat_golongan . ')' : '' }}
+                            @if($guru->status_kepegawaian && $guru->pangkat_golongan && $guru->pangkat_golongan !== '-')
+                                {{ $guru->status_kepegawaian }} ({{ $guru->pangkat_golongan }})
+                            @elseif($guru->status_kepegawaian)
+                                {{ $guru->status_kepegawaian }}
+                            @elseif($guru->pangkat_golongan && $guru->pangkat_golongan !== '-')
+                                {{ $guru->pangkat_golongan }}
+                            @else
+                                -
+                            @endif
                         </span>
                     </div>
                 </div>
 
-                <!-- NIK, NUPTK, NPWP -->
+                <!-- NIK -->
                 <div class="d-flex align-items-center mb-7">
                     <div class="flex-grow-1">
-                        <span class="text-muted fw-bold d-block fs-7">Identitas Pegawai (NIK / NUPTK / NPWP)</span>
-                        <span class="text-gray-800 fw-bolder fs-6">
-                            NIK: {{ $guru->nik ?? '-' }} • NUPTK: {{ $guru->nuptk ?? '-' }} • NPWP: {{ $guru->npwp ?? '-' }}
-                        </span>
+                        <span class="text-muted fw-bold d-block fs-7">NIK (Nomor Induk Kependudukan)</span>
+                        <span class="text-gray-800 fw-bolder fs-6">{{ $guru->nik ?: '-' }}</span>
+                    </div>
+                </div>
+
+                <!-- NUPTK -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">NUPTK</span>
+                        <span class="text-gray-800 fw-bolder fs-6">{{ $guru->nuptk ?: '-' }}</span>
+                    </div>
+                </div>
+
+                <!-- NPWP -->
+                <div class="d-flex align-items-center mb-7">
+                    <div class="flex-grow-1">
+                        <span class="text-muted fw-bold d-block fs-7">NPWP</span>
+                        <span class="text-gray-800 fw-bolder fs-6">{{ $guru->npwp ?: '-' }}</span>
                     </div>
                 </div>
 
