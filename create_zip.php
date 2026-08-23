@@ -44,8 +44,12 @@ $files = [
     'resources/views/profile/guru.blade.php',
     'resources/views/pages/account/settings/_profile-details.blade.php',
     'resources/views/pages/absensi/dashboard.blade.php',
-    'resources/views/auth/layout.blade.php',
+    'app/Http/Controllers/Absensi/MataPelajaranController.php',
+    'app/Models/MataPelajaran.php',
+    'routes/web.php',
+    'resources/views/pages/absensi/mata-pelajaran.blade.php',
     'database/migrations/2026_08_21_000001_add_details_to_gurus_table.php',
+    'database/migrations/2026_08_23_000001_add_tingkat_to_mata_pelajarans_table.php',
 ];
 
 foreach ($files as $file) {

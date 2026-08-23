@@ -112,13 +112,6 @@
                                 </div>
                                 <div class="fw-bold fs-7 text-gray-400">Perempuan</div>
                             </div>
-                            <!--Stat Jadwal Mapel-->
-                            <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-4 mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="fs-4 fw-bolder text-success">{{ $totalJadwal }}</div>
-                                </div>
-                                <div class="fw-bold fs-7 text-gray-400">Jadwal Mapel</div>
-                            </div>
                         </div>
                     </div>
                     <!--end::Stats Summary-->
@@ -137,11 +130,6 @@
                 <li class="nav-item">
                     <a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#tab_daftar_siswa">
                         Daftar Siswa ({{ $totalSiswa }})
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-active-primary pb-4" data-bs-toggle="tab" href="#tab_jadwal_pelajaran">
-                        Jadwal Pelajaran ({{ $totalJadwal }})
                     </a>
                 </li>
             </ul>
@@ -330,50 +318,6 @@
             </div>
         </div>
         <!--end::Tab Pane - Daftar Siswa-->
-
-        <!--begin::Tab Pane - Jadwal Pelajaran-->
-        <div class="tab-pane fade" id="tab_jadwal_pelajaran" role="tabpanel">
-            <div class="card">
-                <div class="card-header border-0 pt-6">
-                    <div class="card-title">
-                        <h3 class="fw-bolder">Jadwal Pelajaran Kelas {{ $kelas->nama }}</h3>
-                    </div>
-                </div>
-                <div class="card-body py-4">
-                    <div class="table-responsive">
-                        <table class="table align-middle table-row-dashed fs-6 gy-5 w-100" id="kt_table_jadwal_kelas" style="width: 100%;">
-                            <thead>
-                                <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                                    <th class="min-w-90px">Hari</th>
-                                    <th class="min-w-120px">Jam Pelajaran</th>
-                                    <th class="min-w-180px">Mata Pelajaran</th>
-                                    <th class="min-w-180px">Guru Pengampu</th>
-                                    <th class="min-w-90px">Ruangan</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-gray-600 fw-bold">
-                                @forelse ($kelas->jadwalPelajarans as $jadwal)
-                                    <tr>
-                                        <td><span class="badge badge-light-primary fw-bolder">{{ ucfirst($jadwal->hari ?? '-') }}</span></td>
-                                        <td>{{ $jadwal->jam_mulai ?? '-' }} - {{ $jadwal->jam_selesai ?? '-' }}</td>
-                                        <td><span class="text-gray-800 fw-bolder">{{ $jadwal->mataPelajaran->nama ?? '-' }}</span></td>
-                                        <td>{{ $jadwal->mataPelajaran->guru->nama ?? '-' }}</td>
-                                        <td>{{ $jadwal->ruangan ?? 'Kelas ' . $kelas->nama }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-8">
-                                            Belum ada jadwal pelajaran untuk kelas ini.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--end::Tab Pane - Jadwal Pelajaran-->
     </div>
     <!--end::Tab Content-->
 

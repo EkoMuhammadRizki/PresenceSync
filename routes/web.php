@@ -102,7 +102,8 @@ Route::middleware('auth')->group(function () {
     Route::post('absensi/master/siswa/{siswa}/mark-keluar', [\App\Http\Controllers\Absensi\SiswaController::class, 'markKeluar'])->name('siswa.mark-keluar');
     Route::post('absensi/master/siswa/{siswa}/mark-aktif', [\App\Http\Controllers\Absensi\SiswaController::class, 'markAktif'])->name('siswa.mark-aktif');
     Route::post('absensi/bulk-delete', [\App\Http\Controllers\Absensi\BulkDeleteController::class, 'destroy'])->name('bulk-delete');
-    Route::resource('absensi/master/siswa', \App\Http\Controllers\Absensi\SiswaController::class)->names('siswa');
+    Route::get('absensi/master/mata-pelajaran/download-template', [\App\Http\Controllers\Absensi\MataPelajaranController::class, 'downloadTemplate'])->name('mata-pelajaran.download-template');
+    Route::post('absensi/master/mata-pelajaran/import', [\App\Http\Controllers\Absensi\MataPelajaranController::class, 'import'])->name('mata-pelajaran.import');
     Route::resource('absensi/master/mata-pelajaran', \App\Http\Controllers\Absensi\MataPelajaranController::class)->names('mata-pelajaran');
     Route::resource('absensi/master/jadwal-pelajaran', \App\Http\Controllers\Absensi\JadwalPelajaranController::class)->names('jadwal-pelajaran');
     Route::resource('absensi/master/aturan-jam', \App\Http\Controllers\Absensi\AturanJamController::class)->names('aturan-jam');

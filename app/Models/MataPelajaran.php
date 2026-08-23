@@ -14,6 +14,7 @@ class MataPelajaran extends Model
         'guru_id',
         'nama',
         'kode',
+        'tingkat',
     ];
 
     public function guru(): BelongsTo
