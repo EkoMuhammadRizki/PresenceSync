@@ -1,8 +1,15 @@
 <x-base-layout>
 @include('pages.absensi._partials.toolbar', [
+    'customBreadcrumbs' => [
+        ['title' => 'Home', 'path' => 'index', 'active' => false],
+        ['title' => 'Master Data', 'path' => '', 'active' => false],
+        ['title' => 'Kelas', 'path' => 'absensi/master/kelas/pembagian', 'active' => false],
+        ['title' => 'Pembagian Kelas', 'path' => 'absensi/master/kelas/pembagian', 'active' => false],
+        ['title' => $kelas->nama, 'path' => '', 'active' => true],
+    ],
     'toolbarActions' => '
         <a href="' . route('pembagian-kelas.index') . '" class="btn btn-sm btn-light">
-            ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' Kembali
+            ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' Kembali ke Pembagian Kelas
         </a>'
 ])
 

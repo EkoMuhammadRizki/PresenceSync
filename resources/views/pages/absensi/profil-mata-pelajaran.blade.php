@@ -1,5 +1,16 @@
 <x-base-layout>
-@include('pages.absensi._partials.toolbar')
+@include('pages.absensi._partials.toolbar', [
+    'customBreadcrumbs' => [
+        ['title' => 'Home', 'path' => 'index', 'active' => false],
+        ['title' => 'Master Data', 'path' => '', 'active' => false],
+        ['title' => 'Mata Pelajaran', 'path' => 'absensi/master/mata-pelajaran', 'active' => false],
+        ['title' => $mataPelajaran->nama, 'path' => '', 'active' => true],
+    ],
+    'toolbarActions' => '
+        <a href="' . theme()->getPageUrl('absensi/master/mata-pelajaran') . '" class="btn btn-sm btn-light">
+            ' . theme()->getSvgIcon("icons/duotune/arrows/arr063.svg", "svg-icon-4") . ' Kembali ke Data Mata Pelajaran
+        </a>'
+])
 
 <!--begin::Navbar Card-->
 <div class="card mb-5 mb-xl-10">
