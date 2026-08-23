@@ -35,7 +35,6 @@
                         <div class="symbol-label fs-1 fw-boldest bg-light-primary text-primary" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem !important; border-radius: 12px;">
                             {{ $kelas->nama }}
                         </div>
-                        <div class="position-absolute translate-middle bottom-0 start-100 mb-6 bg-success rounded-circle border border-4 border-white h-20px w-20px"></div>
                     </div>
                 </div>
                 <!--end::Pic-->

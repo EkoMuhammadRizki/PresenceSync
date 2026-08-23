@@ -10,7 +10,6 @@
             <div class="me-7 mb-4">
                 <div class="symbol symbol-100px symbol-lg-160px symbol-fixed position-relative">
                     <div class="symbol-label fs-1 bg-light-info text-info fw-bolder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">{{ substr($mataPelajaran->nama, 0, 1) }}</div>
-                    <div class="position-absolute translate-middle bottom-0 start-100 mb-6 bg-{{ $mataPelajaran->guru_id ? 'success' : 'warning' }} rounded-circle border border-4 border-white h-20px w-20px"></div>
                 </div>
             </div>
             <!--end::Pic-->

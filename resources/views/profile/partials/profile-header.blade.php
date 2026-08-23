@@ -43,7 +43,6 @@
                             {{ $initial }}
                         </div>
                     @endif
-                    <div class="position-absolute translate-middle bottom-0 start-100 mb-6 bg-success rounded-circle border border-4 border-white h-20px w-20px"></div>
                 </div>
             </div>
             <!--end::Pic-->
