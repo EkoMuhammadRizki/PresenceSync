@@ -219,6 +219,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Siswa Dashboard Routes
+    Route::get('absensi/siswa/profil', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'profil'])->name('siswa.profil');
     Route::post('absensi/siswa/profil', [\App\Http\Controllers\Absensi\SiswaDashboardController::class, 'updateProfil'])->name('siswa.profil.update');
 });
 
