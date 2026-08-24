@@ -128,10 +128,10 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getRoleAttribute()
     {
-        if ($this->siswa()->exists()) {
+        if ($this->siswa()->exists() || str_ends_with($this->email, '@siswa.internal')) {
             return 'Siswa';
         }
-        if ($this->guru()->exists()) {
+        if ($this->guru()->exists() || str_ends_with($this->email, '@guru.internal')) {
             if ($this->hasRole('kesiswaan')) {
                 return 'Kesiswaan';
             }
@@ -153,11 +153,15 @@ class User extends Authenticatable implements MustVerifyEmail
             return ucwords(str_replace(['-', '_'], ' ', $firstRole->name));
         }
 
-        return 'Admin'; // Default fallback
+        if (str_contains(strtolower($this->email), 'admin')) {
+            return 'Admin';
+        }
+
+        return 'Pengguna';
     }
 
     /**
-     * Get username derived from email
+     * Get username derived from name/email
      *
      * @return string
      */
@@ -168,6 +172,12 @@ class User extends Authenticatable implements MustVerifyEmail
         }
         if ($this->guru) {
             return $this->guru->nama;
+        }
+        if (str_contains(strtolower($this->email), 'admin')) {
+            return strtolower(\Illuminate\Support\Str::before($this->email, '@'));
+        }
+        if (!empty(trim($this->first_name))) {
+            return trim($this->name);
         }
         return strtolower(\Illuminate\Support\Str::before($this->email, '@'));
     }
