@@ -41,4 +41,9 @@ return [
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
         'redirect'      => '/auth/redirect/facebook',
     ],
+
+    'hosting_sync' => [
+        'url'    => env('HOSTING_SYNC_URL', 'https://siap-sman1ciparay.com/sync/receive-database'),
+        'secret' => env('HOSTING_SYNC_SECRET', '80666dc99520035d6bb10d85eeee90e89f839dfbc51bbf3f'),
+    ],
 ];

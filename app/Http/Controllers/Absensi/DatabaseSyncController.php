@@ -14,19 +14,19 @@ class DatabaseSyncController extends Controller
      */
     public function sendToHosting(Request $request)
     {
-        $mysqldumpPath = env('MYSQLDUMP_PATH', 'mysqldump');
+        $mysqldumpPath = env('MYSQLDUMP_PATH', 'C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysqldump.exe');
         $dbHost        = env('DB_HOST', '127.0.0.1');
         $dbPort        = env('DB_PORT', '3306');
         $dbName        = env('DB_DATABASE', 'presencesync');
         $dbUser        = env('DB_USERNAME', 'root');
         $dbPass        = env('DB_PASSWORD', '');
-        $hostingUrl    = env('HOSTING_SYNC_URL');
-        $syncSecret    = env('HOSTING_SYNC_SECRET');
+        $hostingUrl    = config('services.hosting_sync.url', env('HOSTING_SYNC_URL', 'https://siap-sman1ciparay.com/sync/receive-database'));
+        $syncSecret    = config('services.hosting_sync.secret', env('HOSTING_SYNC_SECRET', '80666dc99520035d6bb10d85eeee90e89f839dfbc51bbf3f'));
 
         if (!$hostingUrl || !$syncSecret) {
             return response()->json([
                 'success' => false,
-                'message' => 'Konfigurasi HOSTING_SYNC_URL atau HOSTING_SYNC_SECRET belum diisi di file .env',
+                'message' => 'Konfigurasi HOSTING_SYNC_URL atau HOSTING_SYNC_SECRET belum diisi.',
             ], 500);
         }
 
@@ -55,6 +55,13 @@ class DatabaseSyncController extends Controller
         // Kirim file SQL ke hosting
         try {
             $response = Http::timeout(120)
+                ->withOptions([
+                    'verify' => false,
+                    'curl'   => [
+                        CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_SSL_VERIFYHOST => 0,
+                    ],
+                ])
                 ->withHeaders(['X-Sync-Secret' => $syncSecret])
                 ->attach('sql_file', file_get_contents($sqlPath), 'db_sync.sql')
                 ->post($hostingUrl);

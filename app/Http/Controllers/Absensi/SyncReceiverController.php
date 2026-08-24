@@ -16,7 +16,7 @@ class SyncReceiverController extends Controller
     public function receive(Request $request)
     {
         // 1. Verifikasi secret key
-        $syncSecret = env('HOSTING_SYNC_SECRET');
+        $syncSecret = config('services.hosting_sync.secret', env('HOSTING_SYNC_SECRET', '80666dc99520035d6bb10d85eeee90e89f839dfbc51bbf3f'));
         $sentSecret = $request->header('X-Sync-Secret');
 
         if (!$syncSecret || $sentSecret !== $syncSecret) {

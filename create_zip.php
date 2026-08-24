@@ -53,6 +53,8 @@ $files = [
     'app/Http/Controllers/Absensi/FingerprintController.php',
     'app/Http/Controllers/Absensi/AdmsController.php',
     'app/Http/Controllers/Absensi/DatabaseSyncController.php',
+    'app/Http/Controllers/Absensi/SyncReceiverController.php',
+    'config/services.php',
     'database/migrations/2026_08_21_000001_add_details_to_gurus_table.php',
     'database/migrations/2026_08_23_000001_add_tingkat_to_mata_pelajarans_table.php',
 ];
