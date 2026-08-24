@@ -434,9 +434,9 @@ class FingerprintService
 
         $uniquePins = array_unique($pins);
 
-        // 3. Preload master data dalam 1 batch
+        // 3. Preload master data dalam 1 batch (Case-Insensitive Hari Lookup)
         $semester = Semester::where('status', 'aktif')->first();
-        $aturanJams = AturanJam::where('is_aktif', true)->get()->keyBy('hari');
+        $aturanJams = AturanJam::where('is_aktif', true)->get()->keyBy(fn($a) => strtolower(trim($a->hari)));
 
         $siswas = Siswa::whereIn('fingerprint_id', $uniquePins)
             ->orWhereIn('id', $uniquePins)
@@ -533,14 +533,14 @@ class FingerprintService
 
                 $scanDate = $logItem['scan_date'];
                 $scanTimeHis = $logItem['scan_his'];
-                $hari = $logItem['hari'];
+                $hari = strtolower(trim($logItem['hari']));
                 $aturanJam = $aturanJams->get($hari);
 
                 $status = 'hadir';
-                if ($aturanJam) {
-                    $jamMasukAturan = Carbon::createFromFormat('H:i:s', $aturanJam->jam_masuk);
-                    $jamMasukDevice = Carbon::createFromFormat('H:i:s', $scanTimeHis);
-                    if ($jamMasukDevice->gt($jamMasukAturan)) {
+                if ($aturanJam && !empty($aturanJam->jam_masuk)) {
+                    $jamMasukAturan = strlen($aturanJam->jam_masuk) === 5 ? ($aturanJam->jam_masuk . ':00') : $aturanJam->jam_masuk;
+                    $jamScan = strlen($scanTimeHis) === 5 ? ($scanTimeHis . ':00') : $scanTimeHis;
+                    if ($jamScan > $jamMasukAturan) {
                         $status = 'terlambat';
                     }
                 }
@@ -643,20 +643,19 @@ class FingerprintService
                 return 'skipped';
             }
 
-            // Cari aturan jam berdasarkan hari scan
-            $hariScan = strtolower($syncLog->scan_time->locale('id')->isoFormat('dddd'));
+            // Cari aturan jam berdasarkan hari scan (Case-Insensitive)
+            $hariScan = strtolower(trim($syncLog->scan_time->locale('id')->isoFormat('dddd')));
             $aturanJam = AturanJam::where('is_aktif', true)
-                ->where('hari', $hariScan)
+                ->whereRaw('LOWER(TRIM(hari)) = ?', [$hariScan])
                 ->first();
 
             // Tentukan status: hadir atau terlambat
             $status = 'hadir';
-            if ($aturanJam) {
-                $jamMasukDevice  = Carbon::createFromFormat('H:i:s', $scanTime);
-                $jamMasukAturan  = Carbon::createFromFormat('H:i:s', $aturanJam->jam_masuk);
-                $batasLate       = $jamMasukAturan->copy(); // toleransi dihapus
+            if ($aturanJam && !empty($aturanJam->jam_masuk)) {
+                $jamMasukAturan = strlen($aturanJam->jam_masuk) === 5 ? ($aturanJam->jam_masuk . ':00') : $aturanJam->jam_masuk;
+                $jamScan        = strlen($scanTime) === 5 ? ($scanTime . ':00') : $scanTime;
 
-                if ($jamMasukDevice->gt($batasLate)) {
+                if ($jamScan > $jamMasukAturan) {
                     $status = 'terlambat';
                 }
             }

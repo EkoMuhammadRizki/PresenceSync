@@ -117,7 +117,7 @@ class AdmsController extends Controller
 
         // 3. PRELOAD SEMUA DATA MASTER DALAM 1 BATCH (Super Fast In-Memory Lookup)
         $semester = \App\Models\Semester::where('status', 'aktif')->first();
-        $aturanJams = \App\Models\AturanJam::where('is_aktif', true)->get()->keyBy('hari');
+        $aturanJams = \App\Models\AturanJam::where('is_aktif', true)->get()->keyBy(fn($a) => strtolower(trim($a->hari)));
 
         // Preload Siswa yang relevan dalam 1 query
         $siswas = \App\Models\Siswa::whereIn('fingerprint_id', $uniquePins)
@@ -216,14 +216,14 @@ class AdmsController extends Controller
 
                 $scanDate = $logItem['scan_date'];
                 $scanTimeHis = $logItem['scan_his'];
-                $hari = $logItem['hari'];
+                $hari = strtolower(trim($logItem['hari']));
                 $aturanJam = $aturanJams->get($hari);
 
                 $status = 'hadir';
-                if ($aturanJam) {
-                    $jamMasukAturan = Carbon::createFromFormat('H:i:s', $aturanJam->jam_masuk);
-                    $jamMasukDevice = Carbon::createFromFormat('H:i:s', $scanTimeHis);
-                    if ($jamMasukDevice->gt($jamMasukAturan)) {
+                if ($aturanJam && !empty($aturanJam->jam_masuk)) {
+                    $jamMasukAturan = strlen($aturanJam->jam_masuk) === 5 ? ($aturanJam->jam_masuk . ':00') : $aturanJam->jam_masuk;
+                    $jamScan = strlen($scanTimeHis) === 5 ? ($scanTimeHis . ':00') : $scanTimeHis;
+                    if ($jamScan > $jamMasukAturan) {
                         $status = 'terlambat';
                     }
                 }
