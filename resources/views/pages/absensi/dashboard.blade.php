@@ -1145,17 +1145,21 @@
             title: 'Sinkronkan Database ke Hosting?',
             html: `
                 <div class="text-start">
-                    <p class="text-gray-700 mb-3">Proses ini akan <strong>menimpa seluruh database hosting</strong> dengan data dari lokal.</p>
-                    <div class="alert alert-warning d-flex align-items-center p-4">
-                        <i class="bi bi-exclamation-triangle-fill fs-3 text-warning me-3"></i>
-                        <div class="text-warning fw-bold fs-7">Pastikan Anda yakin! Data hosting yang tidak ada di lokal akan hilang.</div>
+                    <p class="text-gray-700 mb-3">Sistem akan menyelaraskan data lokal ke hosting secara <strong>Smart Merge (Aman & Non-Destructive)</strong>.</p>
+                    <div class="alert alert-light-success d-flex align-items-center p-3 mb-2 rounded border border-success">
+                        <i class="bi bi-shield-check fs-2 text-success me-3"></i>
+                        <div class="text-gray-800 fs-7"><strong>Data Hosting Aman:</strong> Data di hosting yang tidak ada di lokal (seperti riwayat absensi atau data siswa tambahan) <strong>tidak akan terhapus</strong>.</div>
+                    </div>
+                    <div class="alert alert-light-primary d-flex align-items-center p-3 rounded border border-primary">
+                        <i class="bi bi-cloud-arrow-up fs-2 text-primary me-3"></i>
+                        <div class="text-gray-800 fs-7"><strong>Data Lokal Bertambah:</strong> Data baru dari lokal akan otomatis dimasukkan ke hosting.</div>
                     </div>
                 </div>`,
-            icon: 'warning',
+            icon: 'question',
             showCancelButton: true,
             confirmButtonText: '<i class="bi bi-cloud-upload me-1"></i> Ya, Sinkronkan Sekarang!',
             cancelButtonText: 'Batal',
-            confirmButtonColor: '#f59e0b',
+            confirmButtonColor: '#009ef7',
             cancelButtonColor: '#6c757d',
             reverseButtons: true,
         }).then((result) => {
@@ -1186,17 +1190,36 @@
             btnText.innerHTML = '<i class="bi bi-cloud-upload me-2"></i>Sinkronkan DB ke Hosting';
 
             if (data.success) {
+                let summaryHtml = '';
+                if (data.summary) {
+                    summaryHtml = `
+                        <div class="d-flex justify-content-center gap-3 my-4">
+                            <div class="bg-light-success p-3 rounded text-center min-w-125px border border-success">
+                                <span class="fs-2 fw-bolder text-success d-block">+${data.summary.new_inserted || 0}</span>
+                                <span class="fs-8 fw-bold text-gray-700">Data Baru Masuk</span>
+                            </div>
+                            <div class="bg-light-primary p-3 rounded text-center min-w-125px border border-primary">
+                                <span class="fs-2 fw-bolder text-primary d-block">${data.summary.already_existing || 0}</span>
+                                <span class="fs-8 fw-bold text-gray-700">Data Diperbarui</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 fs-7">${data.summary.details || data.message}</p>
+                    `;
+                } else {
+                    summaryHtml = `<p class="text-gray-700 my-3">${data.message}</p>`;
+                }
+
                 Swal.fire({
-                    title: 'Berhasil! 🎉',
-                    text: data.message,
+                    title: 'Sinkronisasi Berhasil!',
+                    html: summaryHtml,
                     icon: 'success',
-                    confirmButtonText: 'Oke',
+                    confirmButtonText: 'Selesai',
                     confirmButtonColor: '#50cd89',
                 });
             } else {
                 Swal.fire({
                     title: 'Sinkronisasi Gagal',
-                    html: `<p>${data.message}</p>${data.detail ? '<pre class="text-start fs-8 text-danger bg-light p-3 rounded mt-3" style="max-height:150px;overflow:auto">' + data.detail + '</pre>' : ''}`,
+                    html: `<p class="text-danger fw-bold">${data.message}</p>${data.detail ? '<pre class="text-start fs-8 text-danger bg-light p-3 rounded mt-3" style="max-height:150px;overflow:auto">' + data.detail + '</pre>' : ''}`,
                     icon: 'error',
                     confirmButtonText: 'Tutup',
                 });
@@ -1207,7 +1230,7 @@
             btnText.innerHTML = '<i class="bi bi-cloud-upload me-2"></i>Sinkronkan DB ke Hosting';
             Swal.fire({
                 title: 'Koneksi Gagal',
-                text: 'Tidak dapat terhubung ke server. Pastikan koneksi internet Anda aktif.',
+                text: 'Tidak dapat terhubung ke server hosting. Pastikan koneksi internet Anda aktif.',
                 icon: 'error',
             });
         });

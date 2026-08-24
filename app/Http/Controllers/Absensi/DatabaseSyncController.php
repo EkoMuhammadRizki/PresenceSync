@@ -4,24 +4,46 @@ namespace App\Http\Controllers\Absensi;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class DatabaseSyncController extends Controller
 {
     /**
-     * Kirim database lokal ke hosting via HTTP.
+     * Tabel-tabel yang disinkronkan ke hosting
+     */
+    protected array $syncTables = [
+        'settings',
+        'semesters',
+        'tahun_ajarans',
+        'roles',
+        'permissions',
+        'kelas',
+        'mata_pelajarans',
+        'aturan_jams',
+        'fingerprint_devices',
+        'users',
+        'user_infos',
+        'model_has_roles',
+        'gurus',
+        'siswas',
+        'parent_profiles',
+        'jadwal_pelajarans',
+        'fingerprint_sync_logs',
+        'kehadirans',
+        'kehadiran_mata_pelajarans',
+        'kehadiran_mata_pelajaran_details',
+        'pengaduans',
+    ];
+
+    /**
+     * Kirim dataset database lokal ke hosting via HTTP (Smart Merge Payload).
      */
     public function sendToHosting(Request $request)
     {
-        $mysqldumpPath = env('MYSQLDUMP_PATH', 'C:/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysqldump.exe');
-        $dbHost        = env('DB_HOST', '127.0.0.1');
-        $dbPort        = env('DB_PORT', '3306');
-        $dbName        = env('DB_DATABASE', 'presencesync');
-        $dbUser        = env('DB_USERNAME', 'root');
-        $dbPass        = env('DB_PASSWORD', '');
-        $hostingUrl    = config('services.hosting_sync.url', env('HOSTING_SYNC_URL', 'https://siap-sman1ciparay.com/sync/receive-database'));
-        $syncSecret    = config('services.hosting_sync.secret', env('HOSTING_SYNC_SECRET', '80666dc99520035d6bb10d85eeee90e89f839dfbc51bbf3f'));
+        $hostingUrl = config('services.hosting_sync.url', env('HOSTING_SYNC_URL', 'https://siap-sman1ciparay.com/sync/receive-database'));
+        $syncSecret = config('services.hosting_sync.secret', env('HOSTING_SYNC_SECRET', '80666dc99520035d6bb10d85eeee90e89f839dfbc51bbf3f'));
 
         if (!$hostingUrl || !$syncSecret) {
             return response()->json([
@@ -30,31 +52,37 @@ class DatabaseSyncController extends Controller
             ], 500);
         }
 
-        // Buat file SQL sementara di storage/app
-        $sqlPath = storage_path('app/db_sync_export.sql');
-
-        // Build perintah mysqldump
-        $passOption = $dbPass ? "-p{$dbPass}" : '';
-        $cmd = "\"{$mysqldumpPath}\" -h {$dbHost} -P {$dbPort} -u {$dbUser} {$passOption} --single-transaction --no-tablespaces {$dbName}";
-
-        // Jalankan mysqldump
-        $output = [];
-        $returnCode = 0;
-        exec("{$cmd} > \"{$sqlPath}\" 2>&1", $output, $returnCode);
-
-        if ($returnCode !== 0 || !file_exists($sqlPath) || filesize($sqlPath) < 100) {
-            $errorMsg = implode("\n", $output);
-            Log::error("DB Sync: mysqldump gagal. Code: {$returnCode}. Output: {$errorMsg}");
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengekspor database lokal. Pastikan mysqldump tersedia dan konfigurasi DB sudah benar.',
-                'detail'  => $errorMsg,
-            ], 500);
-        }
-
-        // Kirim file SQL ke hosting
         try {
-            $response = Http::timeout(120)
+            // 1. Kumpulkan data dari tabel-tabel lokal
+            $exportData = [];
+            $totalRecords = 0;
+
+            foreach ($this->syncTables as $table) {
+                try {
+                    $rows = DB::table($table)->get()->map(function ($row) {
+                        return (array) $row;
+                    })->toArray();
+
+                    $exportData[$table] = $rows;
+                    $totalRecords += count($rows);
+                } catch (\Throwable $e) {
+                    $exportData[$table] = [];
+                }
+            }
+
+            // 2. Encode JSON dan kompresi dengan gzip
+            $jsonPayload = json_encode([
+                'version'       => '2.0',
+                'source'        => config('app.url', 'http://127.0.0.1:8000'),
+                'exported_at'   => now()->toDateTimeString(),
+                'total_records' => $totalRecords,
+                'data'          => $exportData,
+            ], JSON_UNESCAPED_UNICODE);
+
+            $compressed = gzencode($jsonPayload, 9);
+
+            // 3. Kirim ke hosting via HTTP Multipart
+            $response = Http::timeout(180)
                 ->withOptions([
                     'verify' => false,
                     'curl'   => [
@@ -63,29 +91,27 @@ class DatabaseSyncController extends Controller
                     ],
                 ])
                 ->withHeaders(['X-Sync-Secret' => $syncSecret])
-                ->attach('sql_file', file_get_contents($sqlPath), 'db_sync.sql')
+                ->attach('sync_payload', $compressed, 'dataset.json.gz')
                 ->post($hostingUrl);
 
-            // Hapus file sementara
-            @unlink($sqlPath);
-
             if ($response->successful()) {
-                $data = $response->json();
+                $resData = $response->json();
                 return response()->json([
                     'success' => true,
-                    'message' => $data['message'] ?? 'Database berhasil disinkronkan ke hosting!',
+                    'message' => $resData['message'] ?? 'Database berhasil disinkronkan ke hosting!',
+                    'summary' => $resData['summary'] ?? null,
                 ]);
             } else {
                 Log::error("DB Sync: Hosting menolak request. Status: {$response->status()}. Body: {$response->body()}");
+                $errJson = $response->json();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Hosting menolak sinkronisasi. Status: ' . $response->status(),
+                    'message' => $errJson['message'] ?? ('Hosting menolak sinkronisasi. Status: ' . $response->status()),
                     'detail'  => $response->body(),
                 ], 500);
             }
-        } catch (\Exception $e) {
-            @unlink($sqlPath);
-            Log::error("DB Sync: Exception - " . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error("DB Sync Exception: " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal terhubung ke hosting: ' . $e->getMessage(),
