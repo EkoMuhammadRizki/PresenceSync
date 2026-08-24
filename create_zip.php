@@ -50,6 +50,7 @@ $files = [
     'resources/views/pages/absensi/mata-pelajaran.blade.php',
     'resources/views/pages/absensi/profil-mata-pelajaran.blade.php',
     'resources/views/pages/absensi/fingerprint-log-data.blade.php',
+    'app/Http/Controllers/Absensi/FingerprintController.php',
     'app/Http/Controllers/Absensi/AdmsController.php',
     'app/Http/Controllers/Absensi/DatabaseSyncController.php',
     'database/migrations/2026_08_21_000001_add_details_to_gurus_table.php',

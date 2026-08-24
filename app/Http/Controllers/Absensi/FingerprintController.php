@@ -255,29 +255,13 @@ class FingerprintController extends Controller
      */
     public function logsView(Request $request)
     {
-        // Auto Sync dari mesin fisik (jika terjangkau)
-        try {
-            $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
-            foreach ($activeDevices as $dev) {
-                $this->service->syncAndProcess($dev);
-            }
-        } catch (\Throwable $e) {}
-
-        // Proses log ADMS yang masih pending & fix status verifikasi ke Sidik Jari (1)
-        try {
-            FingerprintSyncLog::where('verified', 0)->update(['verified' => 1]);
-
-            $pendingLogs = FingerprintSyncLog::where('is_processed', false)->get();
-            foreach ($pendingLogs as $pLog) {
-                $this->service->processSyncLog($pLog);
-            }
-        } catch (\Throwable $e) {}
-
+        // 1. Ambil input filter
         $deviceId  = $request->input('device_id');
         $kelasId   = $request->input('kelas_id');
         $search    = $request->input('search');
         $dateRange = $request->input('date_range');
 
+        // 2. Query log scan dengan index & eager loading optimal
         $query = FingerprintSyncLog::with(['device', 'kehadiran'])
             ->orderByDesc('scan_time');
 
@@ -340,16 +324,23 @@ class FingerprintController extends Controller
             }
         }
 
+        // 3. Paginate data (hanya 15 log per halaman)
         $logs = $query->paginate(15)->withQueryString();
         $devices = FingerprintDevice::orderBy('nama')->get();
         $kelases = \App\Models\Kelas::orderBy('nama')->get();
 
-        $siswasMap = Siswa::with('kelas')
-            ->whereNotNull('fingerprint_id')
-            ->where('fingerprint_id', '!=', '')
-            ->get()
-            ->keyBy('fingerprint_id');
+        // 4. Eager load siswa HANYA untuk 15 baris yang sedang tampil (Super Cepat!)
+        $pageUids = $logs->pluck('fingerprint_uid')->filter()->unique()->toArray();
+        $siswasMap = collect();
+        if (!empty($pageUids)) {
+            $siswasMap = Siswa::with('kelas')
+                ->whereIn('fingerprint_id', $pageUids)
+                ->orWhereIn('id', $pageUids)
+                ->get()
+                ->keyBy(fn($s) => $s->fingerprint_id ?: $s->id);
+        }
 
+        // 5. Statistik cepat
         $stats = [
             'total_logs'     => FingerprintSyncLog::count(),
             'today_logs'     => FingerprintSyncLog::whereDate('scan_time', Carbon::today())->count(),
@@ -364,24 +355,17 @@ class FingerprintController extends Controller
     }
 
     /**
-     * AJAX: Auto Sync Otomatis untuk background polling
+     * AJAX: Realtime Auto Detection (Super Fast DB Check)
      */
     public function autoSync()
     {
-        $devices = FingerprintDevice::where('is_aktif', true)->get();
-        $totalNew = 0;
-        $processed = 0;
-
-        foreach ($devices as $device) {
-            $stats = $this->service->syncAndProcess($device);
-            $totalNew  += $stats['new'] ?? 0;
-            $processed += $stats['processed'] ?? 0;
-        }
+        // Cek log yang baru masuk via ADMS dalam 5 detik terakhir
+        $recentCount = FingerprintSyncLog::where('created_at', '>=', now()->subSeconds(5))->count();
 
         return response()->json([
             'success'   => true,
-            'new_logs'  => $totalNew,
-            'processed' => $processed,
+            'new_logs'  => $recentCount,
+            'processed' => $recentCount,
             'timestamp' => now()->format('H:i:s'),
         ]);
     }
@@ -401,7 +385,7 @@ class FingerprintController extends Controller
     }
 
     /**
-     * Hapus semua log scan fingerprint
+     * Hapus semua log scan fingerprint (Instant Clean)
      */
     public function clearLogs(Request $request)
     {
@@ -414,27 +398,26 @@ class FingerprintController extends Controller
 
         $logIds = $query->pluck('id');
 
-        \App\Models\Kehadiran::whereIn('fingerprint_log_id', $logIds)
-            ->update(['fingerprint_log_id' => null]);
+        if ($logIds->isNotEmpty()) {
+            \App\Models\Kehadiran::whereIn('fingerprint_log_id', $logIds)
+                ->update(['fingerprint_log_id' => null]);
+            $count = $query->delete();
+        } else {
+            $count = 0;
+        }
 
-        $count = $query->delete();
+        // Antrekan perintah CLEAR LOG ke mesin ADMS secara non-blocking
+        \App\Http\Controllers\Absensi\AdmsController::queueCommand('CLEAR LOG');
 
-        // Bersihkan memori log pada mesin fingerprint fisik agar tidak di-sync kembali oleh autoSync
-        $devices = $deviceId 
-            ? FingerprintDevice::where('id', $deviceId)->get() 
-            : FingerprintDevice::where('is_aktif', true)->get();
-
-        foreach ($devices as $device) {
-            try {
-                $this->service->clearAttendanceLogs($device);
-            } catch (\Throwable $e) {
-                // Jika mesin offline, abaikan error koneksi
-            }
-            $device->update(['total_synced_logs' => $device->syncLogs()->count()]);
+        // Reset counter device
+        if ($deviceId) {
+            FingerprintDevice::where('id', $deviceId)->update(['total_synced_logs' => 0]);
+        } else {
+            FingerprintDevice::query()->update(['total_synced_logs' => 0]);
         }
 
         return redirect()->back()
-            ->with('success', "Sebanyak {$count} log scan fingerprint berhasil dibersihkan dari database dan mesin.");
+            ->with('success', "Sebanyak {$count} log scan fingerprint berhasil dibersihkan dari sistem.");
     }
 
     /**
