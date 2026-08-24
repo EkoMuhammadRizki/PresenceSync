@@ -151,6 +151,8 @@ class BulkDeleteController extends Controller
                             'code' => 'Kode: ' . ($mp->kode ?? '-'),
                         ];
                     }
+                    $mp->delete();
+                }
             } elseif ($type === 'kehadiran') {
                 $kehadirans = Kehadiran::whereIn('id', $ids)->with('siswa')->get();
                 $deletedCount = $kehadirans->count();
