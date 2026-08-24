@@ -474,7 +474,7 @@ class FingerprintService
         $existingKehadirans = Kehadiran::whereIn('siswa_id', $siswaIds)
             ->whereIn('tanggal', $dates)
             ->get()
-            ->keyBy(fn($k) => $k->siswa_id . '_' . $k->tanggal);
+            ->keyBy(fn($k) => $k->siswa_id . '_' . ($k->tanggal instanceof \Carbon\Carbon ? $k->tanggal->format('Y-m-d') : substr((string)$k->tanggal, 0, 10)));
 
         DB::beginTransaction();
         try {
@@ -564,11 +564,15 @@ class FingerprintService
                 } else {
                     if ($scanTimeHis > $kehadiran->jam_masuk) {
                         $batasAwalPulang = $aturanJam ? ($aturanJam->batas_awal_pulang ?? 0) : 0;
-                        $jamMasukLog = Carbon::createFromFormat('H:i:s', $kehadiran->jam_masuk);
-                        $jamScan = Carbon::createFromFormat('H:i:s', $scanTimeHis);
-                        $jamBatasPulang = $jamMasukLog->copy()->addMinutes($batasAwalPulang);
+                        try {
+                            $jamMasukLog = Carbon::parse($kehadiran->jam_masuk);
+                            $jamScan = Carbon::parse($scanTimeHis);
+                            $jamBatasPulang = $jamMasukLog->copy()->addMinutes($batasAwalPulang);
 
-                        if ($jamScan->gte($jamBatasPulang)) {
+                            if ($jamScan->gte($jamBatasPulang)) {
+                                $kehadiran->update(['jam_pulang' => $scanTimeHis]);
+                            }
+                        } catch (\Throwable $te) {
                             $kehadiran->update(['jam_pulang' => $scanTimeHis]);
                         }
                     }
