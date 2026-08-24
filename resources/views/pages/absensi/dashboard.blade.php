@@ -1,6 +1,12 @@
 <x-base-layout>
 @php $showPanduan = $showPanduan ?? false; @endphp
-@include('pages.absensi._partials.toolbar')
+@include('pages.absensi._partials.toolbar', [
+    'toolbarActions' => (auth()->user() && auth()->user()->hasRole('admin')) ? '
+        <button type="button" id="btn-sync-database" class="btn btn-sm btn-warning fw-bold text-white shadow-sm" onclick="confirmSyncDatabase()">
+            <i class="bi bi-cloud-upload me-1 text-white"></i>
+            <span id="sync-btn-text">Sinkronkan DB ke Hosting</span>
+        </button>' : ''
+])
 
 <!-- Extra Styles for Dashboard Visualizations -->
 @push('styles')
