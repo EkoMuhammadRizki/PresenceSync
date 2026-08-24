@@ -77,13 +77,6 @@ return array(
 
         // Kehadiran Siswa (Only visible for Siswa)
         array(
-            'title' => 'Edit Profil Orang Tua',
-            'path'  => 'absensi/siswa/profil',
-            'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/communication/com006.svg", "svg-icon-2"),
-            'role'  => ['siswa'],
-        ),
-
-        array(
             'title' => 'Kehadiran',
             'path'  => 'absensi/siswa/kehadiran',
             'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen014.svg", "svg-icon-2"),

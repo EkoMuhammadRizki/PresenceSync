@@ -14,7 +14,13 @@
                 <div class="fw-bolder d-flex align-items-center fs-5">
                     {{ auth()->user()->name }}
                 </div>
-                <a href="#" class="fw-bold text-muted text-hover-primary fs-7">{{ auth()->user()->email }}</a>
+                @php
+                    $displayIdentifier = auth()->user()->email;
+                    if (str_ends_with($displayIdentifier, '@siswa.internal')) {
+                        $displayIdentifier = auth()->user()->siswa->nis ?? str_replace('@siswa.internal', '', $displayIdentifier);
+                    }
+                @endphp
+                <span class="fw-bold text-muted fs-7">{{ $displayIdentifier }}</span>
             </div>
             <!--end::Username-->
         </div>
@@ -32,6 +38,16 @@
         </a>
     </div>
     <!--end::Menu item-->
+
+    @if(auth()->user()->hasRole('siswa') || auth()->user()->siswa)
+    <!--begin::Menu item-->
+    <div class="menu-item px-5">
+        <a href="{{ url('absensi/siswa/profil') }}" class="menu-link px-5" data-ajax="false">
+            {{ __('Edit Profil Orang Tua') }}
+        </a>
+    </div>
+    <!--end::Menu item-->
+    @endif
 
     <!--begin::Menu item-->
     <div class="menu-item px-5">
