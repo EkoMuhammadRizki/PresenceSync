@@ -23,9 +23,9 @@ use Illuminate\Support\Facades\Log;
 class FingerprintService
 {
     /**
-     * Timeout koneksi ke device (detik)
+     * Timeout koneksi ke device (detik) - Dipercepat agar tidak memblokir web request
      */
-    private int $timeout = 5;
+    private int $timeout = 1;
 
     // =========================================================================
     // CORE: Komunikasi SOAP ke Device
@@ -377,7 +377,7 @@ class FingerprintService
     // =========================================================================
 
     /**
-     * Sync penuh: tarik log dari device → simpan ke fingerprint_sync_logs → proses jadi kehadiran.
+     * Sync penuh: tarik log dari device → simpan ke fingerprint_sync_logs → proses jadi kehadiran (Batch High-Performance).
      * Return: array stats ['fetched', 'new', 'processed', 'skipped', 'errors']
      */
     public function syncAndProcess(FingerprintDevice $device, bool $clearAfterSync = false): array
@@ -397,61 +397,202 @@ class FingerprintService
             return array_merge($stats, ['error_message' => '']);
         }
 
-        // 2. Simpan log mentah ke fingerprint_sync_logs
+        // 2. Parse semua log di memori
+        $parsedLogs = [];
+        $pins = [];
+
         foreach ($logs as $log) {
             if (empty($log['PIN']) || empty($log['DateTime'])) continue;
 
             try {
                 $scanTime = Carbon::createFromFormat('Y-m-d H:i:s', $log['DateTime']);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 try {
                     $scanTime = Carbon::parse($log['DateTime']);
-                } catch (\Exception $e2) {
+                } catch (\Throwable $e2) {
                     $stats['errors']++;
                     continue;
                 }
             }
 
-            $existing = FingerprintSyncLog::where('fingerprint_device_id', $device->id)
-                ->where('fingerprint_uid', $log['PIN'])
-                ->where('scan_time', $scanTime)
-                ->first();
-
-            if (!$existing) {
-                FingerprintSyncLog::create([
-                    'fingerprint_device_id' => $device->id,
-                    'fingerprint_uid'       => $log['PIN'],
-                    'scan_time'             => $scanTime,
-                    'verified'              => (int) ($log['Verified'] ?? 0),
-                    'status'                => (int) ($log['Status'] ?? 0),
-                    'is_processed'          => false,
-                ]);
-                $stats['new']++;
-            }
+            $pin = (string) $log['PIN'];
+            $parsedLogs[] = [
+                'pin'          => $pin,
+                'scan_time'    => $scanTime,
+                'scan_date'    => $scanTime->toDateString(),
+                'scan_his'     => $scanTime->format('H:i:s'),
+                'hari'         => strtolower($scanTime->locale('id')->isoFormat('dddd')),
+                'verified'     => (int) ($log['Verified'] ?? 1),
+                'status'       => (int) ($log['Status'] ?? 0),
+            ];
+            $pins[] = $pin;
         }
 
-        // 3. Proses log yang belum diproses jadi kehadiran
-        $unprocessed = FingerprintSyncLog::where('fingerprint_device_id', $device->id)
-            ->where('is_processed', false)
-            ->orderBy('scan_time')
+        if (empty($parsedLogs)) {
+            return array_merge($stats, ['error_message' => '']);
+        }
+
+        $uniquePins = array_unique($pins);
+
+        // 3. Preload master data dalam 1 batch
+        $semester = Semester::where('status', 'aktif')->first();
+        $aturanJams = AturanJam::where('is_aktif', true)->get()->keyBy('hari');
+
+        $siswas = Siswa::whereIn('fingerprint_id', $uniquePins)
+            ->orWhereIn('id', $uniquePins)
             ->get();
-
-        foreach ($unprocessed as $syncLog) {
-            $processResult = $this->processSyncLog($syncLog);
-            if ($processResult === 'processed') {
-                $stats['processed']++;
-            } elseif ($processResult === 'skipped') {
-                $stats['skipped']++;
-            } else {
-                $stats['errors']++;
+        
+        $siswaMap = [];
+        $unenrolledSiswaIds = [];
+        foreach ($siswas as $s) {
+            if ($s->fingerprint_id) {
+                $siswaMap[(string)$s->fingerprint_id] = $s;
+            }
+            $siswaMap[(string)$s->id] = $s;
+            if (!$s->is_enrolled) {
+                $unenrolledSiswaIds[] = $s->id;
             }
         }
 
-        // 4. Update device metadata
-        $device->update([
-            'last_synced_at'    => now(),
-            'total_synced_logs' => $device->total_synced_logs + $stats['new'],
-        ]);
+        if (!empty($unenrolledSiswaIds)) {
+            Siswa::whereIn('id', array_unique($unenrolledSiswaIds))->update(['is_enrolled' => true]);
+        }
+
+        // Preload existing logs
+        $minTime = min(array_column($parsedLogs, 'scan_time'));
+        $maxTime = max(array_column($parsedLogs, 'scan_time'));
+
+        $existingSyncLogs = FingerprintSyncLog::where('fingerprint_device_id', $device->id)
+            ->whereIn('fingerprint_uid', $uniquePins)
+            ->whereBetween('scan_time', [$minTime, $maxTime])
+            ->get()
+            ->keyBy(fn($item) => $item->fingerprint_uid . '_' . $item->scan_time->toDateTimeString());
+
+        // Preload existing kehadirans
+        $dates = array_unique(array_column($parsedLogs, 'scan_date'));
+        $siswaIds = $siswas->pluck('id')->toArray();
+        $existingKehadirans = Kehadiran::whereIn('siswa_id', $siswaIds)
+            ->whereIn('tanggal', $dates)
+            ->get()
+            ->keyBy(fn($k) => $k->siswa_id . '_' . $k->tanggal);
+
+        DB::beginTransaction();
+        try {
+            foreach ($parsedLogs as $logItem) {
+                $pin = $logItem['pin'];
+                $scanTimeStr = $logItem['scan_time']->toDateTimeString();
+                $logKey = $pin . '_' . $scanTimeStr;
+
+                $syncLog = $existingSyncLogs->get($logKey);
+
+                if (!$syncLog) {
+                    $syncLog = new FingerprintSyncLog([
+                        'fingerprint_device_id' => $device->id,
+                        'fingerprint_uid'       => $pin,
+                        'scan_time'             => $logItem['scan_time'],
+                        'verified'              => $logItem['verified'],
+                        'status'                => $logItem['status'],
+                        'is_processed'          => false,
+                    ]);
+                    $syncLog->save();
+                    $existingSyncLogs->put($logKey, $syncLog);
+                    $stats['new']++;
+                }
+
+                if ($syncLog->is_processed) {
+                    continue;
+                }
+
+                $siswa = $siswaMap[$pin] ?? null;
+                if (!$siswa) {
+                    $syncLog->update([
+                        'is_processed' => true,
+                        'error_note'   => "Siswa dengan fingerprint_id={$pin} tidak ditemukan",
+                    ]);
+                    $stats['skipped']++;
+                    continue;
+                }
+
+                if (!$siswa->kelas_id) {
+                    $syncLog->update([
+                        'is_processed' => true,
+                        'error_note'   => "Siswa belum memiliki kelas",
+                    ]);
+                    $stats['skipped']++;
+                    continue;
+                }
+
+                if (!$semester) {
+                    $syncLog->update([
+                        'is_processed' => true,
+                        'error_note'   => "Tidak ada semester aktif",
+                    ]);
+                    $stats['skipped']++;
+                    continue;
+                }
+
+                $scanDate = $logItem['scan_date'];
+                $scanTimeHis = $logItem['scan_his'];
+                $hari = $logItem['hari'];
+                $aturanJam = $aturanJams->get($hari);
+
+                $status = 'hadir';
+                if ($aturanJam) {
+                    $jamMasukAturan = Carbon::createFromFormat('H:i:s', $aturanJam->jam_masuk);
+                    $jamMasukDevice = Carbon::createFromFormat('H:i:s', $scanTimeHis);
+                    if ($jamMasukDevice->gt($jamMasukAturan)) {
+                        $status = 'terlambat';
+                    }
+                }
+
+                $kehadiranKey = $siswa->id . '_' . $scanDate;
+                $kehadiran = $existingKehadirans->get($kehadiranKey);
+
+                if (!$kehadiran) {
+                    $kehadiran = Kehadiran::create([
+                        'siswa_id'           => $siswa->id,
+                        'semester_id'        => $semester->id,
+                        'aturan_jam_id'      => $aturanJam?->id,
+                        'tanggal'            => $scanDate,
+                        'jam_masuk'          => $scanTimeHis,
+                        'status'             => $status,
+                        'source'             => 'fingerprint',
+                        'fingerprint_log_id' => $syncLog->id,
+                    ]);
+                    $existingKehadirans->put($kehadiranKey, $kehadiran);
+                    $stats['processed']++;
+                } else {
+                    if ($scanTimeHis > $kehadiran->jam_masuk) {
+                        $batasAwalPulang = $aturanJam ? ($aturanJam->batas_awal_pulang ?? 0) : 0;
+                        $jamMasukLog = Carbon::createFromFormat('H:i:s', $kehadiran->jam_masuk);
+                        $jamScan = Carbon::createFromFormat('H:i:s', $scanTimeHis);
+                        $jamBatasPulang = $jamMasukLog->copy()->addMinutes($batasAwalPulang);
+
+                        if ($jamScan->gte($jamBatasPulang)) {
+                            $kehadiran->update(['jam_pulang' => $scanTimeHis]);
+                        }
+                    }
+                    $stats['processed']++;
+                }
+
+                $syncLog->update([
+                    'is_processed' => true,
+                    'kehadiran_id' => $kehadiran->id,
+                    'error_note'   => null,
+                ]);
+            }
+
+            $device->update([
+                'last_synced_at'    => now(),
+                'total_synced_logs' => $device->total_synced_logs + $stats['new'],
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error("SOAP Batch Ingestion Error: " . $e->getMessage());
+            $stats['errors']++;
+        }
 
         // 5. Opsional: hapus log di device setelah sync berhasil
         if ($clearAfterSync && $stats['new'] > 0) {

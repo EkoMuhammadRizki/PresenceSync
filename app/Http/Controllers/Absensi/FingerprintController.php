@@ -255,13 +255,21 @@ class FingerprintController extends Controller
      */
     public function logsView(Request $request)
     {
-        // 1. Ambil input filter
+        // 1. Tarik log secara cepat dari mesin fisik yang aktif
+        try {
+            $activeDevices = FingerprintDevice::where('is_aktif', true)->get();
+            foreach ($activeDevices as $dev) {
+                $this->service->syncAndProcess($dev);
+            }
+        } catch (\Throwable $e) {}
+
+        // 2. Ambil input filter
         $deviceId  = $request->input('device_id');
         $kelasId   = $request->input('kelas_id');
         $search    = $request->input('search');
         $dateRange = $request->input('date_range');
 
-        // 2. Query log scan dengan index & eager loading optimal
+        // 3. Query log scan dengan index & eager loading optimal
         $query = FingerprintSyncLog::with(['device', 'kehadiran'])
             ->orderByDesc('scan_time');
 
@@ -324,12 +332,12 @@ class FingerprintController extends Controller
             }
         }
 
-        // 3. Paginate data (hanya 15 log per halaman)
+        // 4. Paginate data (hanya 15 log per halaman)
         $logs = $query->paginate(15)->withQueryString();
         $devices = FingerprintDevice::orderBy('nama')->get();
         $kelases = \App\Models\Kelas::orderBy('nama')->get();
 
-        // 4. Eager load siswa HANYA untuk 15 baris yang sedang tampil (Super Cepat!)
+        // 5. Eager load siswa HANYA untuk 15 baris yang sedang tampil (Super Cepat!)
         $pageUids = $logs->pluck('fingerprint_uid')->filter()->unique()->toArray();
         $siswasMap = collect();
         if (!empty($pageUids)) {
@@ -340,7 +348,7 @@ class FingerprintController extends Controller
                 ->keyBy(fn($s) => $s->fingerprint_id ?: $s->id);
         }
 
-        // 5. Statistik cepat
+        // 6. Statistik cepat
         $stats = [
             'total_logs'     => FingerprintSyncLog::count(),
             'today_logs'     => FingerprintSyncLog::whereDate('scan_time', Carbon::today())->count(),
@@ -355,17 +363,26 @@ class FingerprintController extends Controller
     }
 
     /**
-     * AJAX: Realtime Auto Detection (Super Fast DB Check)
+     * AJAX: Realtime Auto Detection & Pull from active devices
      */
     public function autoSync()
     {
-        // Cek log yang baru masuk via ADMS dalam 5 detik terakhir
-        $recentCount = FingerprintSyncLog::where('created_at', '>=', now()->subSeconds(5))->count();
+        $totalNew = 0;
+        $processed = 0;
+
+        try {
+            $devices = FingerprintDevice::where('is_aktif', true)->get();
+            foreach ($devices as $device) {
+                $stats = $this->service->syncAndProcess($device);
+                $totalNew  += $stats['new'] ?? 0;
+                $processed += $stats['processed'] ?? 0;
+            }
+        } catch (\Throwable $e) {}
 
         return response()->json([
             'success'   => true,
-            'new_logs'  => $recentCount,
-            'processed' => $recentCount,
+            'new_logs'  => $totalNew,
+            'processed' => $processed,
             'timestamp' => now()->format('H:i:s'),
         ]);
     }
