@@ -129,7 +129,7 @@
 
         <div class="card-body py-4">
             <div class="table-responsive">
-                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_fingerprint_logs">
+                <table class="table align-middle table-row-dashed fs-6 gy-5" id="table_fingerprint_logs">
                     <thead>
                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                             <th class="w-50px">#</th>
@@ -249,7 +249,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-10">
+                                <td colspan="9" class="text-center py-10">
                                     <div class="d-flex flex-column align-items-center">
                                         {!! theme()->getSvgIcon("icons/duotune/general/gen044.svg", "svg-icon-3x svg-icon-muted mb-3") !!}
                                         <span class="text-gray-600 fw-bold fs-5 mb-1">Belum ada Log Scan Fingerprint</span>
@@ -263,12 +263,12 @@
             </div>
 
             {{-- Pagination Links --}}
-            <div class="d-flex justify-content-between align-items-center pt-5">
-                <span class="text-muted fs-7">
-                    Menampilkan {{ $logs->firstItem() ?? 0 }} - {{ $logs->lastItem() ?? 0 }} dari {{ $logs->total() }} log
-                </span>
-                <div>
-                    {{ $logs->links() }}
+            <div class="d-flex flex-stack flex-wrap pt-5">
+                <div class="fs-6 fw-bold text-gray-700">
+                    Menampilkan {{ $logs->firstItem() ?? 0 }} - {{ $logs->lastItem() ?? 0 }} dari total {{ $logs->total() }} log
+                </div>
+                <div class="d-flex align-items-center">
+                    {{ $logs->links('pagination::bootstrap-4') }}
                 </div>
             </div>
         </div>

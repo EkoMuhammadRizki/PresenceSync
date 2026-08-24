@@ -1,7 +1,16 @@
 <x-base-layout>
-@php $showPanduan = $showPanduan ?? false; @endphp
+@php 
+    $showPanduan = $showPanduan ?? false; 
+    $syncHostingUrl = env('HOSTING_SYNC_URL');
+    $syncHostingHost = $syncHostingUrl ? parse_url($syncHostingUrl, PHP_URL_HOST) : null;
+    $currentHost = request()->getHost();
+    $showSyncBtn = auth()->user() && auth()->user()->hasRole('admin') 
+                    && !empty($syncHostingUrl) 
+                    && !env('IS_HOSTING', false) 
+                    && ($syncHostingHost !== $currentHost);
+@endphp
 @include('pages.absensi._partials.toolbar', [
-    'toolbarActions' => (auth()->user() && auth()->user()->hasRole('admin')) ? '
+    'toolbarActions' => $showSyncBtn ? '
         <button type="button" id="btn-sync-database" class="btn btn-sm btn-warning fw-bold text-white shadow-sm" onclick="confirmSyncDatabase()">
             <i class="bi bi-cloud-upload me-1 text-white"></i>
             <span id="sync-btn-text">Sinkronkan DB ke Hosting</span>
@@ -150,26 +159,6 @@
     }
 </style>
 @endpush
-
-        {{-- ==================== SYNC DATABASE BUTTON (ADMIN ONLY & LOKAL ONLY) ==================== --}}
-        @php
-            $syncHostingUrl = env('HOSTING_SYNC_URL');
-            $syncHostingHost = $syncHostingUrl ? parse_url($syncHostingUrl, PHP_URL_HOST) : null;
-            $currentHost = request()->getHost();
-            $showSyncBtn = auth()->user() && auth()->user()->hasRole('admin') 
-                            && !empty($syncHostingUrl) 
-                            && !env('IS_HOSTING', false) 
-                            && ($syncHostingHost !== $currentHost);
-        @endphp
-
-        @if($showSyncBtn)
-        <div class="d-flex justify-content-end mb-5">
-            <button type="button" id="btn-sync-database" class="btn btn-sm btn-warning fw-bold" onclick="confirmSyncDatabase()">
-                <i class="bi bi-cloud-upload me-2"></i>
-                <span id="sync-btn-text">Sinkronkan DB ke Hosting</span>
-            </button>
-        </div>
-        @endif
 
         <!-- ==================== ROW 1: TOP STATISTICS CARDS ==================== -->
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-5 mb-8">
