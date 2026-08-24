@@ -38,6 +38,48 @@
     </div>
 @endif
 
+@if(session('delete_success'))
+    <div class="alert bg-light-danger border border-danger alert-dismissible fade show p-5 mb-10 position-relative">
+        <div class="d-flex align-items-center mb-3 pe-8">
+            <span class="svg-icon svg-icon-2hx svg-icon-danger me-4">
+                {!! theme()->getSvgIcon("icons/duotune/general/gen040.svg") !!}
+            </span>
+            <div class="d-flex flex-column flex-grow-1">
+                <h4 class="mb-1 text-danger">Hasil Penghapusan Data Kehadiran</h4>
+                <span class="text-gray-700 fs-6">
+                    Sebanyak <strong class="text-danger">{{ session('delete_success')['count'] }} data kehadiran</strong> telah berhasil dihapus.
+                </span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+        @if(!empty(session('delete_success')['items']))
+            <div class="mt-4 pt-3 border-top border-danger border-opacity-25">
+                <a class="btn btn-sm btn-light-danger fw-bolder mb-2" data-bs-toggle="collapse" href="#collapseKehadiranDeleted" role="button" aria-expanded="false">
+                    <i class="bi bi-trash me-1"></i> Lihat Daftar Kehadiran yang Dihapus ({{ session('delete_success')['count'] }} Data)
+                </a>
+                <div class="collapse show" id="collapseKehadiranDeleted">
+                    <div class="card card-body bg-white border border-danger border-opacity-25 py-3 px-4 mt-2" style="max-height: 200px; overflow-y: auto;">
+                        <ul class="list-unstyled mb-0">
+                            @foreach(session('delete_success')['items'] as $idx => $item)
+                                <li class="py-1 border-bottom border-gray-200 d-flex justify-content-between align-items-center fs-7">
+                                    <span class="text-gray-800 fw-bold">{{ $idx + 1 }}. {{ $item['nama'] }}</span>
+                                    <span class="badge badge-light-danger">{{ $item['code'] }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                        @if(session('delete_success')['count'] > count(session('delete_success')['items']))
+                            <div class="text-center text-muted fs-8 pt-2">
+                                ... dan <strong>{{ session('delete_success')['count'] - count(session('delete_success')['items']) }}</strong> data lainnya telah dihapus.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+    </div>
+@endif
+
 <!--begin::Card-->
 <div class="card mt-2">
     <!--begin::Card header-->
@@ -122,14 +164,14 @@
     <!--begin::Card body-->
     <div class="card-body py-4">
         <!--begin::Table-->
-        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_kehadiran">
+        <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_table_kehadiran" data-bulk-type="kehadiran">
             <!--begin::Table head-->
             <thead>
                 <!--begin::Table row-->
                 <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
                     <th class="w-10px pe-2">
                         <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
-                            <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_table_kehadiran .form-check-input" value="1" />
+                            <input class="form-check-input select-all-checkbox" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_table_kehadiran .form-check-input" value="1" />
                         </div>
                     </th>
                     <th class="min-w-125px">Nama Siswa</th>
@@ -149,7 +191,7 @@
                 <tr>
                     <td>
                         <div class="form-check form-check-sm form-check-custom form-check-solid">
-                            <input class="form-check-input" type="checkbox" value="{{ $kh->id }}" />
+                            <input class="form-check-input select-item-checkbox" type="checkbox" value="{{ $kh->id }}" />
                         </div>
                     </td>
                     <td class="d-flex align-items-center">

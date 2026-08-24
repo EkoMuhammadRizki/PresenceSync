@@ -44,6 +44,7 @@ $files = [
     'resources/views/profile/guru.blade.php',
     'resources/views/pages/account/settings/_profile-details.blade.php',
     'resources/views/pages/absensi/dashboard.blade.php',
+    'resources/views/pages/absensi/kehadiran.blade.php',
     'app/Http/Controllers/Absensi/MataPelajaranController.php',
     'app/Models/MataPelajaran.php',
     'routes/web.php',

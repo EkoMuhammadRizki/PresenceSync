@@ -151,8 +151,19 @@ class BulkDeleteController extends Controller
                             'code' => 'Kode: ' . ($mp->kode ?? '-'),
                         ];
                     }
-                    $mp->delete();
+            } elseif ($type === 'kehadiran') {
+                $kehadirans = Kehadiran::whereIn('id', $ids)->with('siswa')->get();
+                $deletedCount = $kehadirans->count();
+                foreach ($kehadirans as $kh) {
+                    if (count($deletedItems) < 100) {
+                        $deletedItems[] = [
+                            'nama' => $kh->siswa->nama ?? 'Siswa',
+                            'code' => 'Tgl: ' . \Carbon\Carbon::parse($kh->tanggal)->format('d M Y') . ' (' . ucfirst($kh->status) . ')',
+                        ];
+                    }
                 }
+                \App\Models\FingerprintSyncLog::whereIn('kehadiran_id', $ids)->update(['kehadiran_id' => null, 'is_processed' => false]);
+                Kehadiran::whereIn('id', $ids)->delete();
             } else {
                 $deletedCount = count($ids);
                 $modelClass::whereIn('id', $ids)->delete();
