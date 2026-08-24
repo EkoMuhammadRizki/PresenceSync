@@ -49,7 +49,8 @@ $files = [
     'routes/web.php',
     'resources/views/pages/absensi/mata-pelajaran.blade.php',
     'resources/views/pages/absensi/profil-mata-pelajaran.blade.php',
-    'resources/views/pages/account/_navbar.blade.php',
+    'app/Http/Controllers/Absensi/AdmsController.php',
+    'app/Http/Controllers/Absensi/DatabaseSyncController.php',
     'database/migrations/2026_08_21_000001_add_details_to_gurus_table.php',
     'database/migrations/2026_08_23_000001_add_tingkat_to_mata_pelajarans_table.php',
 ];

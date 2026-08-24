@@ -45,7 +45,7 @@ class AdmsController extends Controller
     }
 
     /**
-     * Menerima Push Log Absensi Realtime dari mesin ADMS
+     * Menerima Push Log Absensi Realtime dari mesin ADMS (High-Performance Batch Ingestion)
      * POST /iclock/cdata
      */
     public function receiveData(Request $request)
@@ -54,12 +54,11 @@ class AdmsController extends Controller
         $table = $request->query('table', 'ATTLOG');
         $content = $request->getContent();
 
-        Log::info("ADMS Push Data received", [
-            'sn' => $sn,
-            'table' => $table,
-            'body_length' => strlen($content)
-        ]);
+        if (empty($content)) {
+            return response("OK", 200)->header('Content-Type', 'text/plain');
+        }
 
+        // 1. Dapatkan device
         $device = null;
         if ($sn) {
             $device = FingerprintDevice::where('serial_number', $sn)->first();
@@ -67,68 +66,217 @@ class AdmsController extends Controller
         if (!$device) {
             $device = FingerprintDevice::first();
         }
+        $deviceId = $device?->id ?? 1;
 
-        $processedCount = 0;
+        // 2. Parse semua baris scan dalam memori (Zero DB Query pada tahap parsing)
+        $lines = explode("\n", trim($content));
+        $parsedLogs = [];
+        $pins = [];
 
-        if ($content) {
-            $lines = explode("\n", trim($content));
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (empty($line)) continue;
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
 
-                // Format ADMS ATTLOG: PIN \t DateTime \t Status \t Verified
-                // Atau: PIN, DateTime, Status, Verified
-                $cols = preg_split('/[\t,]+/', $line);
-                if (count($cols) >= 2) {
-                    $pin = trim($cols[0]);
-                    $dateTimeStr = trim($cols[1]);
-                    if (isset($cols[2]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', trim($cols[2]))) {
-                        $dateTimeStr .= ' ' . trim($cols[2]);
+            $cols = preg_split('/[\t,]+/', $line);
+            if (count($cols) >= 2) {
+                $pin = trim($cols[0]);
+                $dateTimeStr = trim($cols[1]);
+                if (isset($cols[2]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', trim($cols[2]))) {
+                    $dateTimeStr .= ' ' . trim($cols[2]);
+                }
+
+                try {
+                    $scanTime = Carbon::parse($dateTimeStr);
+                    $verifiedCode = 1;
+                    if (isset($cols[3])) {
+                        $verifiedCode = (int) trim($cols[3]);
+                    } elseif (isset($cols[2]) && !preg_match('/^\d{2}:\d{2}:\d{2}$/', trim($cols[2]))) {
+                        $verifiedCode = (int) trim($cols[2]);
                     }
 
-                    try {
-                        $scanTime = Carbon::parse($dateTimeStr);
-
-                        // Parse verified code dari ADMS data (kolom ke-4 jika ada)
-                        // 0=Password, 1=Fingerprint, 2=Card
-                        $verifiedCode = 1; // Default fingerprint karena mesin sidik jari
-                        if (isset($cols[3])) {
-                            $verifiedCode = (int) trim($cols[3]);
-                        } elseif (isset($cols[2]) && !preg_match('/^\d{2}:\d{2}:\d{2}$/', trim($cols[2]))) {
-                            $verifiedCode = (int) trim($cols[2]);
-                        }
-
-                        // Simpan log ke database
-                        $log = FingerprintSyncLog::firstOrCreate([
-                            'fingerprint_device_id' => $device?->id ?? 1,
-                            'fingerprint_uid'       => $pin,
-                            'scan_time'             => $scanTime,
-                        ], [
-                            'verified'     => 1,
-                            'is_processed' => false,
-                        ]);
-
-                        // Jika record lama memiliki verified = 0, update ke 1
-                        if ($log->verified == 0) {
-                            $log->update(['verified' => 1]);
-                        }
-
-                        if ($log->wasRecentlyCreated || !$log->is_processed) {
-                            $this->fingerprintService->processSyncLog($log);
-                            $processedCount++;
-                        }
-                    } catch (\Throwable $e) {
-                        Log::error("Gagal memproses ADMS line: {$line}", ['error' => $e->getMessage()]);
-                    }
+                    $parsedLogs[] = [
+                        'pin'          => $pin,
+                        'scan_time'    => $scanTime,
+                        'scan_date'    => $scanTime->toDateString(),
+                        'scan_his'     => $scanTime->format('H:i:s'),
+                        'hari'         => strtolower($scanTime->locale('id')->isoFormat('dddd')),
+                        'verified'     => $verifiedCode,
+                    ];
+                    $pins[] = $pin;
+                } catch (\Throwable $e) {
+                    // Skip malformed line
                 }
             }
         }
 
-        if ($device) {
-            $device->update([
-                'last_synced_at' => now(),
-                'total_synced_logs' => FingerprintSyncLog::where('fingerprint_device_id', $device->id)->count(),
-            ]);
+        if (empty($parsedLogs)) {
+            return response("OK: 0", 200)->header('Content-Type', 'text/plain');
+        }
+
+        $uniquePins = array_unique($pins);
+
+        // 3. PRELOAD SEMUA DATA MASTER DALAM 1 BATCH (Super Fast In-Memory Lookup)
+        $semester = \App\Models\Semester::where('status', 'aktif')->first();
+        $aturanJams = \App\Models\AturanJam::where('is_aktif', true)->get()->keyBy('hari');
+
+        // Preload Siswa yang relevan dalam 1 query
+        $siswas = \App\Models\Siswa::whereIn('fingerprint_id', $uniquePins)
+            ->orWhereIn('id', $uniquePins)
+            ->get();
+        
+        $siswaMap = [];
+        $unenrolledSiswaIds = [];
+        foreach ($siswas as $s) {
+            if ($s->fingerprint_id) {
+                $siswaMap[(string)$s->fingerprint_id] = $s;
+            }
+            $siswaMap[(string)$s->id] = $s;
+            if (!$s->is_enrolled) {
+                $unenrolledSiswaIds[] = $s->id;
+            }
+        }
+
+        // Tandai siswa yang baru scan sebagai is_enrolled secara bulk
+        if (!empty($unenrolledSiswaIds)) {
+            \App\Models\Siswa::whereIn('id', array_unique($unenrolledSiswaIds))->update(['is_enrolled' => true]);
+        }
+
+        // Preload existing sync logs untuk batch waktu terkait
+        $minTime = min(array_column($parsedLogs, 'scan_time'));
+        $maxTime = max(array_column($parsedLogs, 'scan_time'));
+        
+        $existingSyncLogs = FingerprintSyncLog::where('fingerprint_device_id', $deviceId)
+            ->whereIn('fingerprint_uid', $uniquePins)
+            ->whereBetween('scan_time', [$minTime, $maxTime])
+            ->get()
+            ->keyBy(fn($item) => $item->fingerprint_uid . '_' . $item->scan_time->toDateTimeString());
+
+        // Preload existing kehadirans untuk siswa & tanggal terkait
+        $dates = array_unique(array_column($parsedLogs, 'scan_date'));
+        $siswaIds = $siswas->pluck('id')->toArray();
+        $existingKehadirans = \App\Models\Kehadiran::whereIn('siswa_id', $siswaIds)
+            ->whereIn('tanggal', $dates)
+            ->get()
+            ->keyBy(fn($k) => $k->siswa_id . '_' . $k->tanggal);
+
+        $processedCount = 0;
+        $newLogsCount = 0;
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            foreach ($parsedLogs as $logItem) {
+                $pin = (string) $logItem['pin'];
+                $scanTimeStr = $logItem['scan_time']->toDateTimeString();
+                $logKey = $pin . '_' . $scanTimeStr;
+
+                $syncLog = $existingSyncLogs->get($logKey);
+
+                if (!$syncLog) {
+                    $syncLog = new FingerprintSyncLog([
+                        'fingerprint_device_id' => $deviceId,
+                        'fingerprint_uid'       => $pin,
+                        'scan_time'             => $logItem['scan_time'],
+                        'verified'              => 1,
+                        'status'                => 0,
+                        'is_processed'          => false,
+                    ]);
+                    $syncLog->save();
+                    $existingSyncLogs->put($logKey, $syncLog);
+                    $newLogsCount++;
+                }
+
+                if ($syncLog->is_processed) {
+                    continue;
+                }
+
+                $siswa = $siswaMap[$pin] ?? null;
+                if (!$siswa) {
+                    $syncLog->update([
+                        'is_processed' => true,
+                        'error_note'   => "Siswa dengan fingerprint_id={$pin} tidak ditemukan",
+                    ]);
+                    continue;
+                }
+
+                if (!$siswa->kelas_id) {
+                    $syncLog->update([
+                        'is_processed' => true,
+                        'error_note'   => "Siswa belum memiliki kelas",
+                    ]);
+                    continue;
+                }
+
+                if (!$semester) {
+                    $syncLog->update([
+                        'is_processed' => true,
+                        'error_note'   => "Tidak ada semester aktif",
+                    ]);
+                    continue;
+                }
+
+                $scanDate = $logItem['scan_date'];
+                $scanTimeHis = $logItem['scan_his'];
+                $hari = $logItem['hari'];
+                $aturanJam = $aturanJams->get($hari);
+
+                $status = 'hadir';
+                if ($aturanJam) {
+                    $jamMasukAturan = Carbon::createFromFormat('H:i:s', $aturanJam->jam_masuk);
+                    $jamMasukDevice = Carbon::createFromFormat('H:i:s', $scanTimeHis);
+                    if ($jamMasukDevice->gt($jamMasukAturan)) {
+                        $status = 'terlambat';
+                    }
+                }
+
+                $kehadiranKey = $siswa->id . '_' . $scanDate;
+                $kehadiran = $existingKehadirans->get($kehadiranKey);
+
+                if (!$kehadiran) {
+                    $kehadiran = \App\Models\Kehadiran::create([
+                        'siswa_id'           => $siswa->id,
+                        'semester_id'        => $semester->id,
+                        'aturan_jam_id'      => $aturanJam?->id,
+                        'tanggal'            => $scanDate,
+                        'jam_masuk'          => $scanTimeHis,
+                        'status'             => $status,
+                        'source'             => 'fingerprint',
+                        'fingerprint_log_id' => $syncLog->id,
+                    ]);
+                    $existingKehadirans->put($kehadiranKey, $kehadiran);
+                    $processedCount++;
+                } else {
+                    // Update jam pulang jika memenuhi batas awal pulang
+                    if ($scanTimeHis > $kehadiran->jam_masuk) {
+                        $batasAwalPulang = $aturanJam ? ($aturanJam->batas_awal_pulang ?? 0) : 0;
+                        $jamMasukLog = Carbon::createFromFormat('H:i:s', $kehadiran->jam_masuk);
+                        $jamScan = Carbon::createFromFormat('H:i:s', $scanTimeHis);
+                        $jamBatasPulang = $jamMasukLog->copy()->addMinutes($batasAwalPulang);
+
+                        if ($jamScan->gte($jamBatasPulang)) {
+                            $kehadiran->update(['jam_pulang' => $scanTimeHis]);
+                        }
+                    }
+                    $processedCount++;
+                }
+
+                $syncLog->update([
+                    'is_processed' => true,
+                    'kehadiran_id' => $kehadiran->id,
+                    'error_note'   => null,
+                ]);
+            }
+
+            if ($device) {
+                $device->update([
+                    'last_synced_at'    => now(),
+                    'total_synced_logs' => $device->total_synced_logs + $newLogsCount,
+                ]);
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            Log::error("ADMS Batch Ingestion Error: " . $e->getMessage());
         }
 
         return response("OK: {$processedCount}", 200)
