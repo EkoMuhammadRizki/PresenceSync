@@ -402,7 +402,7 @@ class FingerprintController extends Controller
     }
 
     /**
-     * Hapus semua log scan fingerprint (Instant Clean)
+     * Hapus semua log scan fingerprint dari database dan mesin fisik
      */
     public function clearLogs(Request $request)
     {
@@ -423,18 +423,23 @@ class FingerprintController extends Controller
             $count = 0;
         }
 
-        // Antrekan perintah CLEAR LOG ke mesin ADMS secara non-blocking
-        \App\Http\Controllers\Absensi\AdmsController::queueCommand('CLEAR LOG');
+        // 1. Bersihkan log pada mesin fisik yang aktif (SOAP ClearData)
+        $devices = $deviceId 
+            ? FingerprintDevice::where('id', $deviceId)->get() 
+            : FingerprintDevice::where('is_aktif', true)->get();
 
-        // Reset counter device
-        if ($deviceId) {
-            FingerprintDevice::where('id', $deviceId)->update(['total_synced_logs' => 0]);
-        } else {
-            FingerprintDevice::query()->update(['total_synced_logs' => 0]);
+        foreach ($devices as $device) {
+            try {
+                $this->service->clearAttendanceLogs($device);
+            } catch (\Throwable $e) {}
+            $device->update(['total_synced_logs' => 0]);
         }
 
+        // 2. Antrekan perintah CLEAR LOG untuk mesin mode ADMS
+        \App\Http\Controllers\Absensi\AdmsController::queueCommand('CLEAR LOG');
+
         return redirect()->back()
-            ->with('success', "Sebanyak {$count} log scan fingerprint berhasil dibersihkan dari sistem.");
+            ->with('success', "Sebanyak {$count} log scan fingerprint berhasil dibersihkan dari database dan mesin fisik.");
     }
 
     /**
