@@ -69,6 +69,22 @@ License: {{ theme()->getOption('product', 'license') }}
             background-color: rgba(114, 57, 234, 0.2);
         }
 
+        /* ─── Avatar & Symbol Image Proportions (Fix Gepeng / Non-Square Distortion) ── */
+        .symbol > img,
+        .symbol-label > img,
+        .symbol.symbol-30px > img,
+        .symbol.symbol-40px > img,
+        .symbol.symbol-50px > img,
+        .symbol.symbol-100px > img,
+        .symbol.symbol-125px > img,
+        .symbol.symbol-160px > img,
+        #kt_header_user_menu_toggle .symbol img,
+        .image-input-wrapper {
+            object-fit: cover !important;
+            object-position: center !important;
+            border-radius: inherit;
+        }
+
         /* Custom Header Styling with Two Sorting/Filtering Buttons */
         .table th {
             position: relative;

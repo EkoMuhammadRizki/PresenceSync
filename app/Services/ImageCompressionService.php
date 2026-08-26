@@ -87,32 +87,33 @@ class ImageCompressionService
             $origWidth = imagesx($srcImage);
             $origHeight = imagesy($srcImage);
 
-            // Resize proporsional ke resolusi ideal avatar (maks 600px)
-            $width = $origWidth;
-            $height = $origHeight;
+            // Center-crop ke rasio 1:1 (kotak) agar proporsi wajah tidak gepeng/terdistorsi
+            $cropSize = min($origWidth, $origHeight);
+            $srcX = (int) max(0, round(($origWidth - $cropSize) / 2));
+            $srcY = (int) max(0, round(($origHeight - $cropSize) / 2));
 
-            if ($width > $maxDimension || $height > $maxDimension) {
-                $ratio = min($maxDimension / $width, $maxDimension / $height);
-                $width = (int) round($width * $ratio);
-                $height = (int) round($height * $ratio);
-            }
+            // Tentukan ukuran akhir (maksimal maxDimension)
+            $targetSize = min($cropSize, $maxDimension);
 
-            // Buat canvas baru truecolor
-            $targetImage = imagecreatetruecolor($width, $height);
+            // Buat canvas baru truecolor kotak 1:1
+            $targetImage = imagecreatetruecolor($targetSize, $targetSize);
 
             // Background putih bersih jika input memiliki transparansi
             $white = imagecolorallocate($targetImage, 255, 255, 255);
             imagefill($targetImage, 0, 0, $white);
 
-            // Resample dengan interpolasi halus
+            // Resample area tengah (center-cropped) dengan interpolasi halus
             imagecopyresampled(
                 $targetImage,
                 $srcImage,
-                0, 0, 0, 0,
-                $width,
-                $height,
-                $origWidth,
-                $origHeight
+                0,
+                0,
+                $srcX,
+                $srcY,
+                $targetSize,
+                $targetSize,
+                $cropSize,
+                $cropSize
             );
 
             // Kompresi ke JPEG kualitas optimal (hanya puluhan KB)

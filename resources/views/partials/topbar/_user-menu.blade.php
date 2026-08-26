@@ -5,7 +5,7 @@
         <div class="menu-content d-flex align-items-center px-3">
             <!--begin::Avatar-->
             <div class="symbol symbol-50px me-5">
-                <img alt="Logo" src="{{ auth()->user()->avatar_url }}"/>
+                <img alt="Logo" src="{{ auth()->user()->avatar_url }}" style="object-fit: cover; object-position: center; width: 100%; height: 100%; border-radius: 0.475rem;"/>
             </div>
             <!--end::Avatar-->
 

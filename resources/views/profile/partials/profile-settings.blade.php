@@ -327,19 +327,15 @@
                 reader.onload = function(ev) {
                     var img = new Image();
                     img.onload = function() {
-                        var canvas = document.createElement('canvas');
-                        var w = img.width, h = img.height;
+                        var size = Math.min(img.width, img.height);
+                        var sx = (img.width - size) / 2;
+                        var sy = (img.height - size) / 2;
+                        var targetSize = Math.min(size, 800);
 
-                        if (w > MAX_WIDTH || h > MAX_HEIGHT) {
-                            var ratio = Math.min(MAX_WIDTH / w, MAX_HEIGHT / h);
-                            w = Math.round(w * ratio);
-                            h = Math.round(h * ratio);
-                        }
-
-                        canvas.width = w;
-                        canvas.height = h;
+                        canvas.width = targetSize;
+                        canvas.height = targetSize;
                         var ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, w, h);
+                        ctx.drawImage(img, sx, sy, size, size, 0, 0, targetSize, targetSize);
 
                         canvas.toBlob(function(blob) {
                             if (blob.size < file.size) {
