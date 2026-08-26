@@ -202,12 +202,11 @@ class SeedDummyAccounts extends Command
             $this->line("  ✓ Siswa: {$nama} (NIS: {$nis} / {$pasLabel}){$sekLabel}");
         }
 
-        // ─── 4. DATA KEHADIRAN (Jun 2026 s/d Hari Ini) ────────────────────────
-        $this->info('📅 Membuat data kehadiran (Jun 2026 s/d Hari Ini)...');
+        // ─── 4. DATA KEHADIRAN 2 BULAN (Jun–Jul 2026) ────────────────────────
+        $this->info('📅 Membuat data kehadiran 2 bulan (Jun–Jul 2026)...');
 
-        $todayDate = Carbon::today()->toDateString();
         $startDate = Carbon::parse('2026-06-01');
-        $endDate   = Carbon::today();
+        $endDate   = Carbon::parse('2026-07-31');
 
         $hariKerja = [];
         $current = $startDate->copy();
@@ -218,12 +217,7 @@ class SeedDummyAccounts extends Command
             $current->addDay();
         }
 
-        // Pastikan tanggal hari ini masuk dalam daftar
-        if (!in_array($todayDate, $hariKerja)) {
-            $hariKerja[] = $todayDate;
-        }
-
-        // Hapus kehadiran lama untuk siswa dummy agar di-refresh bersih
+        // Hapus kehadiran lama untuk siswa dummy & guru agar di-refresh bersih
         $dummySiswaIds = collect($createdSiswas)->pluck('id')->toArray();
         Kehadiran::whereIn('siswa_id', $dummySiswaIds)->delete();
         Kehadiran::where('guru_id', $guru->id)->whereNull('siswa_id')->delete();
@@ -253,48 +247,13 @@ class SeedDummyAccounts extends Command
                 $dayName = Carbon::parse($tgl)->locale('id')->isoFormat('dddd');
                 $aj = AturanJam::where('hari', ucfirst(strtolower($dayName)))->first() ?? $aturanJam;
 
-                if ($tgl === $todayDate) {
-                    // Konfigurasi khusus untuk HARI INI agar dashboard kesiswaan langsung terisi data
-                    switch ($sIdx) {
-                        case 0: // Rina
-                            $status = 'hadir';
-                            $jamMasuk = '06:45:15';
-                            $keterangan = null;
-                            break;
-                        case 1: // Ahmad (Sekretaris)
-                            $status = 'hadir';
-                            $jamMasuk = '06:52:30';
-                            $keterangan = null;
-                            break;
-                        case 2: // Siti
-                            $status = 'terlambat';
-                            $jamMasuk = '07:18:20';
-                            $keterangan = 'Terlambat 18 menit';
-                            break;
-                        case 3: // Deni
-                            $status = 'terlambat';
-                            $jamMasuk = '07:35:45';
-                            $keterangan = 'Terlambat 35 menit';
-                            break;
-                        case 4: // Mega
-                            $status = 'izin';
-                            $jamMasuk = null;
-                            $keterangan = 'Izin keperluan keluarga';
-                            break;
-                        default:
-                            $status = 'hadir';
-                            $jamMasuk = '06:48:00';
-                            $keterangan = null;
-                    }
-                } else {
-                    $status = $statusPool[($idx + $sIdx) % $poolSize];
-                    $jamMasuk = $getJamMasuk($status);
-                    $keterangan = match ($status) {
-                        'izin'  => 'Izin keperluan keluarga',
-                        'sakit' => 'Sakit demam',
-                        default => null,
-                    };
-                }
+                $status = $statusPool[($idx + $sIdx) % $poolSize];
+                $jamMasuk = $getJamMasuk($status);
+                $keterangan = match ($status) {
+                    'izin'  => 'Izin keperluan keluarga',
+                    'sakit' => 'Sakit demam',
+                    default => null,
+                };
 
                 Kehadiran::create([
                     'siswa_id'      => $siswa->id,
@@ -312,7 +271,7 @@ class SeedDummyAccounts extends Command
             }
         }
 
-        // Kehadiran Guru untuk hari ini & hari-hari kerja
+        // Kehadiran Guru untuk hari-hari kerja Jun–Jul 2026
         foreach ($hariKerja as $tgl) {
             $dayName = Carbon::parse($tgl)->locale('id')->isoFormat('dddd');
             $aj = AturanJam::where('hari', ucfirst(strtolower($dayName)))->first() ?? $aturanJam;
@@ -331,7 +290,7 @@ class SeedDummyAccounts extends Command
             $totalKehadiran++;
         }
 
-        $this->line("  ✓ Total {$totalKehadiran} record kehadiran (Siswa & Guru) dibuat hingga hari ini ({$todayDate})");
+        $this->line("  ✓ Total {$totalKehadiran} record kehadiran (Siswa & Guru) dibuat untuk periode Juni–Juli 2026");
 
         // ─── 5. DATA PENGADUAN dari Siswa Sekretaris ─────────────────────────
         $this->info('📢 Membuat data pengaduan...');
@@ -349,7 +308,7 @@ class SeedDummyAccounts extends Command
                     'deskripsi' => 'Ingin melaporkan bahwa beberapa siswa di kelas sering terlambat pada jam pertama. Kami berharap ada penanganan dari pihak sekolah agar kedisiplinan kelas dapat terjaga dengan baik.',
                 ],
                 [
-                    'tanggal'   => '2026-08-15',
+                    'tanggal'   => '2026-07-20',
                     'deskripsi' => 'Fasilitas kipas angin di ruang kelas X IPA 1 rusak sejak seminggu lalu dan belum ada perbaikan. Suasana kelas sangat panas terutama saat jam siang. Mohon segera diperbaiki.',
                 ],
             ];
