@@ -48,7 +48,12 @@ class AdminProfileController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'email'      => 'required|email|max:255|unique:users,email,' . $user->id,
-            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,svg|max:20480',
+            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,svg|max:2048',
+        ], [
+            'avatar.max'      => 'Ukuran foto avatar melebihi batas maksimal 2MB. Silakan pilih foto dengan ukuran lebih kecil.',
+            'avatar.uploaded' => 'Foto avatar gagal diunggah karena melebihi batas ukuran maksimal 2MB. Silakan pilih foto dengan ukuran lebih kecil.',
+            'avatar.image'    => 'File avatar harus berupa gambar yang valid (JPG, JPEG, PNG, WEBP).',
+            'avatar.mimes'    => 'Format foto avatar harus berupa jpeg, png, jpg, webp, gif, atau svg.',
         ]);
 
         if ($validator->fails()) {

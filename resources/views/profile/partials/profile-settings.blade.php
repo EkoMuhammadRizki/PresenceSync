@@ -319,6 +319,19 @@
                 var file = e.target.files[0];
                 if (!file) return;
 
+                // Cek batas ukuran maksimal 2MB (2 * 1024 * 1024 bytes)
+                if (file.size > 2 * 1024 * 1024) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal',
+                        html: '<ul class="text-start mb-0"><li>Foto avatar gagal diunggah karena melebihi batas ukuran maksimal 2MB. Silakan pilih foto dengan ukuran lebih kecil.</li></ul>',
+                        confirmButtonText: 'Perbaiki',
+                        confirmButtonColor: '#F1416C'
+                    });
+                    this.value = '';
+                    return;
+                }
+
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     var img = new Image();

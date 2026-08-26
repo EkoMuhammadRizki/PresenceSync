@@ -128,7 +128,7 @@ class SiswaProfileController extends Controller
             'no_hp'           => 'nullable|regex:/^[0-9]{8,15}$/',
             'no_hp_orang_tua' => 'nullable|regex:/^[0-9]{8,15}$/',
             'alamat'          => 'nullable|string',
-            'avatar'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:20480',
+            'avatar'          => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,svg|max:2048',
         ];
 
         if ($userRole === 'admin' || $userRole === 'guru' || $userRole === 'kesiswaan' || $canStudentEditClass) {
@@ -139,6 +139,10 @@ class SiswaProfileController extends Controller
             'kelas_id.exists'        => 'Kelas tidak valid.',
             'no_hp.regex'            => 'Nomor HP siswa hanya boleh berisi angka (8-15 digit).',
             'no_hp_orang_tua.regex'  => 'Nomor HP orang tua hanya boleh berisi angka (8-15 digit).',
+            'avatar.max'             => 'Ukuran foto avatar melebihi batas maksimal 2MB. Silakan pilih foto dengan ukuran lebih kecil.',
+            'avatar.uploaded'        => 'Foto avatar gagal diunggah karena melebihi batas ukuran maksimal 2MB. Silakan pilih foto dengan ukuran lebih kecil.',
+            'avatar.image'           => 'File avatar harus berupa gambar yang valid (JPG, JPEG, PNG, WEBP).',
+            'avatar.mimes'           => 'Format foto avatar harus berupa jpeg, png, jpg, webp, gif, atau svg.',
         ];
 
         // Admin / Guru / Kesiswaan can update everything
