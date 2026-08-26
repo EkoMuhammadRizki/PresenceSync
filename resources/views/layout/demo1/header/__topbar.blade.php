@@ -69,7 +69,7 @@
         <div class="d-flex align-items-center {{ $itemClass }}" id="kt_header_user_menu_toggle">
             <!--begin::Menu wrapper-->
             <div class="cursor-pointer symbol {{ $userAvatarClass }}" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="{{ (theme()->isRtl() ? "bottom-start" : "bottom-end") }}">
-                <img src="{{ auth()->user()->avatarUrl }}" alt="user" style="object-fit: cover; object-position: center; width: 100%; height: 100%; border-radius: 0.475rem;"/>
+                <img src="{{ auth()->user()->avatarUrl }}" alt="user" style="object-fit: cover; object-position: center; border-radius: 0.475rem;"/>
             </div>
             {{ theme()->getView('partials/topbar/_user-menu') }}
             <!--end::Menu wrapper-->
