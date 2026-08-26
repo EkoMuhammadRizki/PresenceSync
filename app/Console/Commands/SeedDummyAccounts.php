@@ -290,7 +290,88 @@ class SeedDummyAccounts extends Command
             $totalKehadiran++;
         }
 
-        $this->line("  ✓ Total {$totalKehadiran} record kehadiran (Siswa & Guru) dibuat untuk periode Juni–Juli 2026");
+        // ─── Tambahan Khusus HARI INI untuk demo dashboard Guru & Kesiswaan ───
+        $todayDate = Carbon::today()->toDateString();
+        $todayDayName = Carbon::today()->locale('id')->isoFormat('dddd');
+        $ajToday = AturanJam::where('hari', ucfirst(strtolower($todayDayName)))->first() ?? $aturanJam;
+
+        // Siswa 1 (Rina) - Hadir
+        Kehadiran::create([
+            'siswa_id'      => $createdSiswas[0]->id,
+            'guru_id'       => $guru->id,
+            'semester_id'   => $semester->id,
+            'aturan_jam_id' => $ajToday->id,
+            'tanggal'       => $todayDate,
+            'jam_masuk'     => '06:45:15',
+            'jam_pulang'    => '15:30:00',
+            'status'        => 'hadir',
+            'keterangan'    => 'Tepat Waktu',
+            'source'        => 'manual',
+        ]);
+        $totalKehadiran++;
+
+        // Siswa 2 (Ahmad Fauzi) - Hadir
+        Kehadiran::create([
+            'siswa_id'      => $createdSiswas[1]->id,
+            'guru_id'       => $guru->id,
+            'semester_id'   => $semester->id,
+            'aturan_jam_id' => $ajToday->id,
+            'tanggal'       => $todayDate,
+            'jam_masuk'     => '06:52:30',
+            'jam_pulang'    => '15:30:00',
+            'status'        => 'hadir',
+            'keterangan'    => 'Tepat Waktu',
+            'source'        => 'manual',
+        ]);
+        $totalKehadiran++;
+
+        // Siswa 3 (Siti Nurhayati) - Terlambat
+        Kehadiran::create([
+            'siswa_id'      => $createdSiswas[2]->id,
+            'guru_id'       => $guru->id,
+            'semester_id'   => $semester->id,
+            'aturan_jam_id' => $ajToday->id,
+            'tanggal'       => $todayDate,
+            'jam_masuk'     => '07:18:20',
+            'jam_pulang'    => '15:30:00',
+            'status'        => 'terlambat',
+            'keterangan'    => 'Terlambat 18 menit',
+            'source'        => 'manual',
+        ]);
+        $totalKehadiran++;
+
+        // Siswa 4 (Deni Ramadhan) - Izin
+        Kehadiran::create([
+            'siswa_id'      => $createdSiswas[3]->id,
+            'guru_id'       => $guru->id,
+            'semester_id'   => $semester->id,
+            'aturan_jam_id' => $ajToday->id,
+            'tanggal'       => $todayDate,
+            'jam_masuk'     => null,
+            'jam_pulang'    => null,
+            'status'        => 'izin',
+            'keterangan'    => 'Izin urusan keluarga',
+            'source'        => 'manual',
+        ]);
+        $totalKehadiran++;
+
+        // Siswa 5 (Mega Putri Lestari) sengaja TIDAK dibuatkan record hari ini agar berstatus "Belum Absen"
+
+        // Guru (Drs. Budi Santoso) - Hadir hari ini
+        Kehadiran::create([
+            'siswa_id'      => null,
+            'guru_id'       => $guru->id,
+            'semester_id'   => $semester->id,
+            'aturan_jam_id' => $ajToday->id,
+            'tanggal'       => $todayDate,
+            'jam_masuk'     => '06:40:00',
+            'jam_pulang'    => '15:30:00',
+            'status'        => 'hadir',
+            'source'        => 'manual',
+        ]);
+        $totalKehadiran++;
+
+        $this->line("  ✓ Total {$totalKehadiran} record kehadiran (Juni–Juli 2026 + Hari Ini beragam) dibuat");
 
         // ─── 5. DATA PENGADUAN dari Siswa Sekretaris ─────────────────────────
         $this->info('📢 Membuat data pengaduan...');

@@ -154,43 +154,46 @@
                 </h3>
             </div>
             <div class="card-body pt-0">
-                <div class="timeline-label">
-                    @forelse($recentActivities as $act)
-                        <div class="timeline-item">
-                            <div class="timeline-label fw-boldest text-gray-800 fs-7" style="width: 70px;">
-                                {{ $act->jam_masuk ?? \Carbon\Carbon::parse($act->updated_at)->format('H:i') }}
-                            </div>
-                            <div class="timeline-badge">
-                                @if($act->status === 'hadir')
-                                    <i class="fa fa-genderless text-success fs-1"></i>
-                                @elseif($act->status === 'terlambat')
-                                    <i class="fa fa-genderless text-warning fs-1"></i>
-                                @elseif($act->status === 'sakit')
-                                    <i class="fa fa-genderless text-primary fs-1"></i>
-                                @elseif($act->status === 'izin')
-                                    <i class="fa fa-genderless text-info fs-1"></i>
-                                @else
-                                    <i class="fa fa-genderless text-danger fs-1"></i>
-                                @endif
-                            </div>
-                            <div class="timeline-content fw-bold text-gray-800 ps-3">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="fs-7 fw-boldest">{{ $act->siswa ? $act->siswa->nama : 'Siswa' }}</span>
-                                    <span class="badge badge-light-{{ $act->status === 'hadir' ? 'success' : ($act->status === 'terlambat' ? 'warning' : ($act->status === 'sakit' ? 'primary' : 'info')) }} fs-8">
-                                        {{ ucfirst($act->status) }}
-                                    </span>
+                @if($recentActivities->isNotEmpty())
+                    <div class="timeline-label">
+                        @foreach($recentActivities as $act)
+                            <div class="timeline-item">
+                                <div class="timeline-label fw-boldest text-gray-800 fs-7" style="width: 70px;">
+                                    {{ $act->jam_masuk ? \Carbon\Carbon::parse($act->jam_masuk)->format('H:i') : \Carbon\Carbon::parse($act->updated_at)->format('H:i') }}
                                 </div>
-                                <div class="text-gray-500 fs-8 fw-normal mt-1">
-                                    {{ $act->keterangan ?? 'Melakukan presensi masuk' }}
+                                <div class="timeline-badge">
+                                    @if($act->status === 'hadir')
+                                        <i class="fa fa-genderless text-success fs-1"></i>
+                                    @elseif($act->status === 'terlambat')
+                                        <i class="fa fa-genderless text-warning fs-1"></i>
+                                    @elseif($act->status === 'sakit')
+                                        <i class="fa fa-genderless text-primary fs-1"></i>
+                                    @elseif($act->status === 'izin')
+                                        <i class="fa fa-genderless text-info fs-1"></i>
+                                    @else
+                                        <i class="fa fa-genderless text-danger fs-1"></i>
+                                    @endif
+                                </div>
+                                <div class="timeline-content fw-bold text-gray-800 ps-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <span class="fs-7 fw-boldest">{{ $act->siswa ? $act->siswa->nama : 'Siswa' }}</span>
+                                        <span class="badge badge-light-{{ $act->status === 'hadir' ? 'success' : ($act->status === 'terlambat' ? 'warning' : ($act->status === 'sakit' ? 'primary' : ($act->status === 'izin' ? 'info' : 'danger'))) }} fs-8">
+                                            {{ ucfirst($act->status) }}
+                                        </span>
+                                    </div>
+                                    <div class="text-gray-500 fs-8 fw-normal mt-1">
+                                        {{ $act->keterangan ?? ($act->status === 'hadir' ? 'Presensi tepat waktu' : ($act->status === 'terlambat' ? 'Presensi terlambat' : 'Surat keterangan ' . $act->status)) }}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @empty
-                        <div class="text-center text-muted py-8 fs-7">
-                            Belum ada aktivitas presensi siswa tercatat hari ini.
-                        </div>
-                    @endforelse
-                </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center text-muted py-10">
+                        <i class="bi bi-clock-history fs-2x mb-3 text-gray-400 d-block"></i>
+                        <div class="fs-7 text-gray-600 fw-semibold">Belum ada aktivitas presensi siswa tercatat hari ini.</div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
