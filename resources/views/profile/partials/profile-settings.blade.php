@@ -311,43 +311,46 @@
                 this.value = this.value.replace(/[^0-9]/g, '');
             });
 
-            // Image Compression untuk Avatar Upload
-            var MAX_WIDTH = 800;
-            var MAX_HEIGHT = 800;
-            var QUALITY = 0.7;
+            // Image Compression & 1:1 Center-Crop untuk Avatar Upload
+            var MAX_SIZE = 800;
+            var QUALITY = 0.8;
 
             $('input[name="avatar"]').on('change', function(e) {
                 var file = e.target.files[0];
                 if (!file) return;
 
-                // Skip if file is already small enough
-                if (file.size <= 100 * 1024) return;
-
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     var img = new Image();
                     img.onload = function() {
-                        var size = Math.min(img.width, img.height);
-                        var sx = (img.width - size) / 2;
-                        var sy = (img.height - size) / 2;
-                        var targetSize = Math.min(size, 800);
+                        try {
+                            var canvas = document.createElement('canvas');
+                            var size = Math.min(img.width, img.height);
+                            var sx = Math.max(0, (img.width - size) / 2);
+                            var sy = Math.max(0, (img.height - size) / 2);
+                            var targetSize = Math.min(size, MAX_SIZE);
 
-                        canvas.width = targetSize;
-                        canvas.height = targetSize;
-                        var ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, sx, sy, size, size, 0, 0, targetSize, targetSize);
+                            canvas.width = targetSize;
+                            canvas.height = targetSize;
+                            var ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillRect(0, 0, targetSize, targetSize);
+                            ctx.drawImage(img, sx, sy, size, size, 0, 0, targetSize, targetSize);
 
-                        canvas.toBlob(function(blob) {
-                            if (blob.size < file.size) {
-                                var newFile = new File([blob], file.name, {
-                                    type: 'image/jpeg',
-                                    lastModified: Date.now()
-                                });
-                                var dt = new DataTransfer();
-                                dt.items.add(newFile);
-                                e.target.files = dt.files;
-                            }
-                        }, 'image/jpeg', QUALITY);
+                            canvas.toBlob(function(blob) {
+                                if (blob && window.DataTransfer) {
+                                    var newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                                        type: 'image/jpeg',
+                                        lastModified: Date.now()
+                                    });
+                                    var dt = new DataTransfer();
+                                    dt.items.add(newFile);
+                                    e.target.files = dt.files;
+                                }
+                            }, 'image/jpeg', QUALITY);
+                        } catch (err) {
+                            console.warn('Client-side crop skipped, backend will handle crop:', err);
+                        }
                     };
                     img.src = ev.target.result;
                 };

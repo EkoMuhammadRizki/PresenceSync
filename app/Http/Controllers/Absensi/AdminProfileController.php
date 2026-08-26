@@ -48,7 +48,7 @@ class AdminProfileController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name'  => 'required|string|max:255',
             'email'      => 'required|email|max:255|unique:users,email,' . $user->id,
-            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'avatar'     => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,svg|max:20480',
         ]);
 
         if ($validator->fails()) {
