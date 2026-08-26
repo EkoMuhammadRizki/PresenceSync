@@ -175,7 +175,7 @@ class GuruDashboardController extends Controller
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Pengaduan Siswa Kelas ' . $kelas->tingkat . ' ' . $kelas->nama);
+        $sheet->setTitle(mb_substr('Pengaduan ' . $kelas->nama, 0, 31));
 
         // Header
         $sheet->setCellValue('A1', 'No');
