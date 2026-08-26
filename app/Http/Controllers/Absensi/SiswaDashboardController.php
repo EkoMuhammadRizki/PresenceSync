@@ -1099,70 +1099,88 @@ class SiswaDashboardController extends Controller
     {
         $siswa = $this->getSiswaAuth();
         if (!$siswa || !$siswa->is_sekretaris || !$siswa->kelas) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json(['error' => 'Unauthorized: Anda bukan sekretaris kelas'], 403);
         }
 
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'tanggal'   => 'required|date',
             'deskripsi' => 'required|string|max:1000',
-            'bukti'     => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'bukti'     => 'required|file|mimes:jpeg,png,jpg,webp,gif|max:10240',
+        ], [
+            'tanggal.required'   => 'Tanggal pengaduan wajib diisi.',
+            'deskripsi.required' => 'Deskripsi pengaduan wajib diisi.',
+            'bukti.required'     => 'Foto bukti pengaduan wajib diunggah.',
+            'bukti.mimes'        => 'Format bukti harus berupa JPG, PNG, atau WEBP.',
+            'bukti.max'          => 'Ukuran foto bukti maksimal 10MB.',
         ]);
 
-        $file = $request->file('bukti');
-        $extension = strtolower($file->getClientOriginalExtension());
-        $filename = 'bukti_' . uniqid() . '.jpg';
-        
-        $tempPath = $file->getRealPath();
-        
-        // Load image resource
-        $image = null;
-        if (function_exists('imagecreatefromjpeg')) {
-            if ($extension === 'png' && function_exists('imagecreatefrompng')) {
-                $image = @\imagecreatefrompng($tempPath);
-            } elseif ($extension === 'gif' && function_exists('imagecreatefromgif')) {
-                $image = @\imagecreatefromgif($tempPath);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $file = $request->file('bukti');
+            $filename = 'bukti_' . uniqid() . '.jpg';
+            $storagePath = 'pengaduan/' . $filename;
+
+            $realPath = $file->getRealPath() ?: $file->getPathname();
+            $binary = @file_get_contents($realPath);
+            $srcImage = $binary ? @imagecreatefromstring($binary) : null;
+
+            if ($srcImage !== false && $srcImage !== null) {
+                // Auto-rotate foto jika ada orientation EXIF dari kamera HP
+                if (function_exists('exif_read_data') && !empty($realPath) && file_exists($realPath)) {
+                    try {
+                        $exif = @exif_read_data($realPath);
+                        if (!empty($exif['Orientation'])) {
+                            switch ($exif['Orientation']) {
+                                case 8: $srcImage = imagerotate($srcImage, 90, 0); break;
+                                case 3: $srcImage = imagerotate($srcImage, 180, 0); break;
+                                case 6: $srcImage = imagerotate($srcImage, -90, 0); break;
+                            }
+                        }
+                    } catch (\Throwable $e) {}
+                }
+
+                $width = imagesx($srcImage);
+                $height = imagesy($srcImage);
+                $maxDim = 1200;
+                if ($width > $maxDim || $height > $maxDim) {
+                    $ratio = min($maxDim / $width, $maxDim / $height);
+                    $newW = (int) round($width * $ratio);
+                    $newH = (int) round($height * $ratio);
+                    $resized = imagecreatetruecolor($newW, $newH);
+                    imagecopyresampled($resized, $srcImage, 0, 0, 0, 0, $newW, $newH, $width, $height);
+                    imagedestroy($srcImage);
+                    $srcImage = $resized;
+                }
+
+                ob_start();
+                imagejpeg($srcImage, null, 75);
+                $finalData = ob_get_clean();
+                imagedestroy($srcImage);
+
+                \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $finalData);
             } else {
-                $image = @\imagecreatefromjpeg($tempPath);
+                \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $binary ?: file_get_contents($file->getRealPath()));
             }
+
+            \App\Models\Pengaduan::create([
+                'siswa_id'  => $siswa->id,
+                'tanggal'   => $request->tanggal,
+                'deskripsi' => $request->deskripsi,
+                'bukti'     => $storagePath,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pengaduan berhasil ditambahkan',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'Gagal mengunggah foto pengaduan: ' . $e->getMessage()
+            ], 500);
         }
-
-        if ($image) {
-            // Compress by encoding as JPEG with quality = 30-40 (gives around 10-30kb size for photos)
-            // Scale width to max 1000px to conserve memory/storage
-            $width = \imagesx($image);
-            $height = \imagesy($image);
-            if ($width > 1000) {
-                $newWidth = 1000;
-                $newHeight = intval(($height / $width) * 1000);
-                $resized = \imagecreatetruecolor($newWidth, $newHeight);
-                \imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                \imagedestroy($image);
-                $image = $resized;
-            }
-            
-            $tempFile = tempnam(sys_get_temp_dir(), 'pengaduan');
-            \imagejpeg($image, $tempFile, 35);
-            \imagedestroy($image);
-
-            $buktiPath = \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('pengaduan', new \Illuminate\Http\File($tempFile), $filename);
-            @unlink($tempFile);
-        } else {
-            $buktiPath = \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('pengaduan', $file, $filename);
-        }
-
-        $buktiPath = 'pengaduan/' . $filename;
-
-        \App\Models\Pengaduan::create([
-            'siswa_id'  => $siswa->id,
-            'tanggal'   => $request->tanggal,
-            'deskripsi' => $request->deskripsi,
-            'bukti'     => $buktiPath,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pengaduan berhasil ditambahkan',
-        ]);
     }
 
 }

@@ -202,29 +202,12 @@ class SeedDummyAccounts extends Command
             $this->line("  ✓ Siswa: {$nama} (NIS: {$nis} / {$pasLabel}){$sekLabel}");
         }
 
-        // ─── 4. DATA KEHADIRAN 2 BULAN (Jun–Jul 2026) ────────────────────────
-        $this->info('📅 Membuat data kehadiran 2 bulan (Jun–Jul 2026)...');
+        // ─── 4. DATA KEHADIRAN (Jun 2026 s/d Hari Ini) ────────────────────────
+        $this->info('📅 Membuat data kehadiran (Jun 2026 s/d Hari Ini)...');
 
-        // Status distribusi: realistis dengan mayoritas hadir
-        $statusPool = [
-            'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir',  // 8x
-            'terlambat', 'terlambat',                                                    // 2x
-            'izin',                                                                      // 1x
-            'sakit',                                                                     // 1x
-            'alpha',                                                                     // 1x
-        ];
-
-        // Jam masuk dummy sesuai status
-        $getJamMasuk = function (string $status): ?string {
-            return match ($status) {
-                'hadir'     => '06:5' . rand(0, 9) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT),
-                'terlambat' => '07:' . rand(16, 45) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT),
-                default     => null,
-            };
-        };
-
-        $startDate = Carbon::parse('2026-06-02'); // Senin pertama Juni
-        $endDate   = Carbon::parse('2026-07-31');
+        $todayDate = Carbon::today()->toDateString();
+        $startDate = Carbon::parse('2026-06-01');
+        $endDate   = Carbon::today();
 
         $hariKerja = [];
         $current = $startDate->copy();
@@ -235,83 +218,150 @@ class SeedDummyAccounts extends Command
             $current->addDay();
         }
 
-        $totalKehadiran = 0;
-        foreach ($createdSiswas as $siswa) {
-            // Cek apakah sudah ada kehadiran untuk siswa ini
-            $existingCount = Kehadiran::where('siswa_id', $siswa->id)
-                ->whereYear('tanggal', 2026)
-                ->count();
-            if ($existingCount > 0) {
-                $this->line("  ⚠ Kehadiran siswa {$siswa->nama} sudah ada ({$existingCount} record), dilewati.");
-                continue;
-            }
+        // Pastikan tanggal hari ini masuk dalam daftar
+        if (!in_array($todayDate, $hariKerja)) {
+            $hariKerja[] = $todayDate;
+        }
 
-            shuffle($statusPool); // Randomize order per siswa
+        // Hapus kehadiran lama untuk siswa dummy agar di-refresh bersih
+        $dummySiswaIds = collect($createdSiswas)->pluck('id')->toArray();
+        Kehadiran::whereIn('siswa_id', $dummySiswaIds)->delete();
+        Kehadiran::where('guru_id', $guru->id)->whereNull('siswa_id')->delete();
+
+        $statusPool = [
+            'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir',  // 8x
+            'terlambat', 'terlambat',                                                    // 2x
+            'izin',                                                                      // 1x
+            'sakit',                                                                     // 1x
+            'alpha',                                                                     // 1x
+        ];
+
+        $getJamMasuk = function (string $status): ?string {
+            return match ($status) {
+                'hadir'     => '06:' . str_pad((string)rand(30, 58), 2, '0', STR_PAD_LEFT) . ':' . str_pad((string)rand(0, 59), 2, '0', STR_PAD_LEFT),
+                'terlambat' => '07:' . str_pad((string)rand(16, 45), 2, '0', STR_PAD_LEFT) . ':' . str_pad((string)rand(0, 59), 2, '0', STR_PAD_LEFT),
+                default     => null,
+            };
+        };
+
+        $totalKehadiran = 0;
+
+        foreach ($createdSiswas as $sIdx => $siswa) {
             $poolSize = count($statusPool);
 
             foreach ($hariKerja as $idx => $tgl) {
-                $status   = $statusPool[$idx % $poolSize];
-                $jamMasuk = $getJamMasuk($status);
-
-                // Tentukan aturan jam berdasarkan hari
                 $dayName = Carbon::parse($tgl)->locale('id')->isoFormat('dddd');
                 $aj = AturanJam::where('hari', ucfirst(strtolower($dayName)))->first() ?? $aturanJam;
 
-                Kehadiran::create([
-                    'siswa_id'        => $siswa->id,
-                    'guru_id'         => $guru->id,
-                    'semester_id'     => $semester->id,
-                    'aturan_jam_id'   => $aj->id,
-                    'tanggal'         => $tgl,
-                    'jam_masuk'       => $jamMasuk,
-                    'jam_pulang'      => in_array($status, ['hadir', 'terlambat']) ? '15:30:00' : null,
-                    'status'          => $status,
-                    'keterangan'      => match ($status) {
+                if ($tgl === $todayDate) {
+                    // Konfigurasi khusus untuk HARI INI agar dashboard kesiswaan langsung terisi data
+                    switch ($sIdx) {
+                        case 0: // Rina
+                            $status = 'hadir';
+                            $jamMasuk = '06:45:15';
+                            $keterangan = null;
+                            break;
+                        case 1: // Ahmad (Sekretaris)
+                            $status = 'hadir';
+                            $jamMasuk = '06:52:30';
+                            $keterangan = null;
+                            break;
+                        case 2: // Siti
+                            $status = 'terlambat';
+                            $jamMasuk = '07:18:20';
+                            $keterangan = 'Terlambat 18 menit';
+                            break;
+                        case 3: // Deni
+                            $status = 'terlambat';
+                            $jamMasuk = '07:35:45';
+                            $keterangan = 'Terlambat 35 menit';
+                            break;
+                        case 4: // Mega
+                            $status = 'izin';
+                            $jamMasuk = null;
+                            $keterangan = 'Izin keperluan keluarga';
+                            break;
+                        default:
+                            $status = 'hadir';
+                            $jamMasuk = '06:48:00';
+                            $keterangan = null;
+                    }
+                } else {
+                    $status = $statusPool[($idx + $sIdx) % $poolSize];
+                    $jamMasuk = $getJamMasuk($status);
+                    $keterangan = match ($status) {
                         'izin'  => 'Izin keperluan keluarga',
                         'sakit' => 'Sakit demam',
-                        'alpha' => null,
                         default => null,
-                    },
-                    'source'          => 'manual',
+                    };
+                }
+
+                Kehadiran::create([
+                    'siswa_id'      => $siswa->id,
+                    'guru_id'       => $guru->id,
+                    'semester_id'   => $semester->id,
+                    'aturan_jam_id' => $aj->id,
+                    'tanggal'       => $tgl,
+                    'jam_masuk'     => $jamMasuk,
+                    'jam_pulang'    => in_array($status, ['hadir', 'terlambat']) ? '15:30:00' : null,
+                    'status'        => $status,
+                    'keterangan'    => $keterangan,
+                    'source'        => 'manual',
                 ]);
                 $totalKehadiran++;
             }
         }
-        $this->line("  ✓ Total {$totalKehadiran} record kehadiran dibuat");
+
+        // Kehadiran Guru untuk hari ini & hari-hari kerja
+        foreach ($hariKerja as $tgl) {
+            $dayName = Carbon::parse($tgl)->locale('id')->isoFormat('dddd');
+            $aj = AturanJam::where('hari', ucfirst(strtolower($dayName)))->first() ?? $aturanJam;
+
+            Kehadiran::create([
+                'siswa_id'      => null,
+                'guru_id'       => $guru->id,
+                'semester_id'   => $semester->id,
+                'aturan_jam_id' => $aj->id,
+                'tanggal'       => $tgl,
+                'jam_masuk'     => '06:40:00',
+                'jam_pulang'    => '15:30:00',
+                'status'        => 'hadir',
+                'source'        => 'manual',
+            ]);
+            $totalKehadiran++;
+        }
+
+        $this->line("  ✓ Total {$totalKehadiran} record kehadiran (Siswa & Guru) dibuat hingga hari ini ({$todayDate})");
 
         // ─── 5. DATA PENGADUAN dari Siswa Sekretaris ─────────────────────────
         $this->info('📢 Membuat data pengaduan...');
 
         $sekretaris = collect($createdSiswas)->firstWhere('is_sekretaris', true);
         if ($sekretaris) {
-            $existingPengaduan = Pengaduan::where('siswa_id', $sekretaris->id)->count();
-            if ($existingPengaduan === 0) {
-                $pengaduanData = [
-                    [
-                        'tanggal'  => '2026-06-10',
-                        'deskripsi' => 'Mohon perhatian Bapak/Ibu Wali Kelas, terdapat beberapa siswa yang sering tidak membawa alat tulis sehingga mengganggu jalannya pembelajaran. Mohon ada tindakan lebih lanjut.',
-                    ],
-                    [
-                        'tanggal'  => '2026-07-02',
-                        'deskripsi' => 'Ingin melaporkan bahwa beberapa siswa di kelas sering terlambat pada jam pertama. Kami berharap ada penanganan dari pihak sekolah agar kedisiplinan kelas dapat terjaga dengan baik.',
-                    ],
-                    [
-                        'tanggal'  => '2026-07-15',
-                        'deskripsi' => 'Fasilitas kipas angin di ruang kelas X IPA 1 rusak sejak seminggu lalu dan belum ada perbaikan. Suasana kelas sangat panas terutama saat jam siang. Mohon segera diperbaiki.',
-                    ],
-                ];
+            Pengaduan::where('siswa_id', $sekretaris->id)->delete();
+            $pengaduanData = [
+                [
+                    'tanggal'   => '2026-06-10',
+                    'deskripsi' => 'Mohon perhatian Bapak/Ibu Wali Kelas, terdapat beberapa siswa yang sering tidak membawa alat tulis sehingga mengganggu jalannya pembelajaran. Mohon ada tindakan lebih lanjut.',
+                ],
+                [
+                    'tanggal'   => '2026-07-02',
+                    'deskripsi' => 'Ingin melaporkan bahwa beberapa siswa di kelas sering terlambat pada jam pertama. Kami berharap ada penanganan dari pihak sekolah agar kedisiplinan kelas dapat terjaga dengan baik.',
+                ],
+                [
+                    'tanggal'   => '2026-08-15',
+                    'deskripsi' => 'Fasilitas kipas angin di ruang kelas X IPA 1 rusak sejak seminggu lalu dan belum ada perbaikan. Suasana kelas sangat panas terutama saat jam siang. Mohon segera diperbaiki.',
+                ],
+            ];
 
-                foreach ($pengaduanData as $p) {
-                    Pengaduan::create([
-                        'siswa_id'  => $sekretaris->id,
-                        'tanggal'   => $p['tanggal'],
-                        'deskripsi' => $p['deskripsi'],
-                    ]);
-                }
-                $this->line('  ✓ 3 pengaduan dari siswa sekretaris dibuat');
-            } else {
-                $this->line("  ⚠ Pengaduan sudah ada ({$existingPengaduan} record), dilewati.");
+            foreach ($pengaduanData as $p) {
+                Pengaduan::create([
+                    'siswa_id'  => $sekretaris->id,
+                    'tanggal'   => $p['tanggal'],
+                    'deskripsi' => $p['deskripsi'],
+                ]);
             }
+            $this->line('  ✓ 3 pengaduan dari siswa sekretaris dibuat');
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
