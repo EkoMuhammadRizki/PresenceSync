@@ -27,7 +27,10 @@ class AuthenticatedSessionController extends Controller
     public function create(Request $request)
     {
         $lastIdentifier = $request->cookie('last_login_identifier', session('last_login_identifier', ''));
-        $lastPassword   = $request->cookie('last_login_password', session('last_login_password', 'demo'));
+        $lastPassword   = $request->cookie('last_login_password', session('last_login_password', ''));
+        if ($lastPassword === 'demo') {
+            $lastPassword = '';
+        }
         return view('auth.login', compact('lastIdentifier', 'lastPassword'));
     }
 
@@ -49,7 +52,8 @@ class AuthenticatedSessionController extends Controller
 
         $user = auth()->user();
         $identifier = $request->input('identifier');
-        $password   = $request->input('password', 'demo');
+        $password   = $request->input('password', '');
+        $remember   = $request->boolean('remember') || $request->input('remember') === 'on';
 
         // Clear any previous intended URL to prevent wrong dashboard redirects
         $request->session()->forget('url.intended');
@@ -64,8 +68,13 @@ class AuthenticatedSessionController extends Controller
             $redirectUrl = '/absensi/guru/dashboard';
         }
 
-        $cookieId   = cookie('last_login_identifier', $identifier, 60 * 24 * 30);
-        $cookiePass = cookie('last_login_password', $password, 60 * 24 * 30);
+        if ($remember) {
+            $cookieId   = cookie('last_login_identifier', $identifier, 60 * 24 * 30);
+            $cookiePass = cookie('last_login_password', $password, 60 * 24 * 30);
+        } else {
+            $cookieId   = cookie()->forget('last_login_identifier');
+            $cookiePass = cookie()->forget('last_login_password');
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -146,13 +155,22 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        $cookieId   = cookie('last_login_identifier', $lastIdentifier, 60 * 24 * 30);
-        $cookiePass = cookie('last_login_password', 'demo', 60 * 24 * 30);
+        $existingId   = $request->cookie('last_login_identifier', $lastIdentifier);
+        $existingPass = $request->cookie('last_login_password', '');
+        if ($existingPass === 'demo') {
+            $existingPass = '';
+        }
 
-        return redirect('/login')
-            ->withCookie($cookieId)
-            ->withCookie($cookiePass)
-            ->with('last_login_identifier', $lastIdentifier)
-            ->with('last_login_password', 'demo');
+        $redirect = redirect('/login');
+        if (!empty($existingId) && !empty($existingPass)) {
+            $cookieId   = cookie('last_login_identifier', $existingId, 60 * 24 * 30);
+            $cookiePass = cookie('last_login_password', $existingPass, 60 * 24 * 30);
+            $redirect->withCookie($cookieId)
+                     ->withCookie($cookiePass)
+                     ->with('last_login_identifier', $existingId)
+                     ->with('last_login_password', $existingPass);
+        }
+
+        return $redirect;
     }
 }
