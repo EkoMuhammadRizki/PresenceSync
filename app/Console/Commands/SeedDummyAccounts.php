@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class SeedDummyAccounts extends Command
 {
@@ -32,6 +33,11 @@ class SeedDummyAccounts extends Command
         $this->info('🚀 Memulai pembuatan akun dummy...');
 
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
+
+        // ─── Pastikan semua Role tersedia di sistem Spatie ────────────────────
+        foreach (['admin', 'kesiswaan', 'guru', 'siswa'] as $roleName) {
+            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+        }
 
         // ─── Semester & Aturan Jam ────────────────────────────────────────────
         $semester = Semester::where('status', 'aktif')->first();
