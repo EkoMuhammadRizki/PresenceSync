@@ -238,14 +238,15 @@ $(document).ready(function() {
             mpSelect.empty().append('<option value="">-- Pilih Mata Pelajaran --</option>');
 
             if (data.length === 0) {
-                mpSelect.append('<option value="" disabled>Tidak ada jadwal pada hari ini</option>');
+                mpSelect.append('<option value="" disabled>Belum ada mata pelajaran terdaftar untuk tingkat kelas ini</option>');
                 return;
             }
 
             $.each(data, function(i, item) {
+                var label = item.display_label || (item.mata_pelajaran + ' — ' + item.guru);
                 mpSelect.append(
-                    '<option value="' + item.mata_pelajaran_id + '" data-guru="' + item.guru + '" data-jam-mulai="' + item.jam_mulai + '" data-jam-selesai="' + item.jam_selesai + '">' +
-                        item.mata_pelajaran + ' - ' + item.guru +
+                    '<option value="' + item.mata_pelajaran_id + '" data-guru="' + item.guru + '" data-jam-mulai="' + (item.jam_mulai || '') + '" data-jam-selesai="' + (item.jam_selesai || '') + '">' +
+                        label +
                     '</option>'
                 );
             });

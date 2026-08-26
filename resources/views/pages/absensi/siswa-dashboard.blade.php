@@ -105,10 +105,10 @@
                 </h3>
                 <div class="card-toolbar">
                     @if (!$hasCheckedInToday)
-                        <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#modal_izin">
+                        <button type="button" class="btn btn-warning btn-sm me-2" onclick="openModalSafe('modal_izin')">
                             <i class="bi bi-file-earmark-text me-1"></i> Ajukan Izin
                         </button>
-                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modal_presensi">
+                        <button type="button" class="btn btn-success btn-sm" onclick="openModalSafe('modal_presensi')">
                             <i class="bi bi-camera me-1"></i> Presensi Sekarang
                         </button>
                     @else
@@ -218,5 +218,367 @@
     </div>
 </div>
 <!--end::Row 2-->
+
+<!--begin::Modal Presensi Sekarang-->
+<div class="modal fade" id="modal_presensi" tabindex="-1" aria-labelledby="modal_presensi_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('siswa.presensi') }}" id="form_presensi">
+                @csrf
+                <div class="modal-header bg-success">
+                    <h5 class="modal-title text-white fw-bolder" id="modal_presensi_label">
+                        <i class="bi bi-camera text-white me-2"></i> Presensi Sekarang
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info d-flex align-items-center p-5 mb-6">
+                        <i class="bi bi-info-circle-fill text-info fs-3 me-3"></i>
+                        <div class="fs-7">
+                            Pastikan <strong>kamera</strong> dan <strong>GPS</strong> pada perangkat Anda telah diaktifkan. Foto wajah dan lokasi Anda akan direkam sebagai bukti kehadiran.
+                        </div>
+                    </div>
+
+                    {{-- Kamera --}}
+                    <div class="mb-6 text-center">
+                        <label class="form-label fw-bold fs-6 mb-3">Ambil Foto Kehadiran</label>
+                        <div class="position-relative mx-auto" style="max-width: 480px;">
+                            <video id="presensi_video" class="w-100 rounded border" autoplay playsinline style="display:none;"></video>
+                            <canvas id="presensi_canvas" class="w-100 rounded border" style="display:none;"></canvas>
+                            <img id="presensi_preview" class="w-100 rounded border" style="display:none;" alt="Preview Foto"/>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-center gap-3">
+                            <button type="button" class="btn btn-primary btn-sm" id="presensi_btn_start_cam">
+                                <i class="bi bi-camera me-1"></i> Buka Kamera
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" id="presensi_btn_capture" style="display:none;">
+                                <i class="bi bi-camera-fill me-1"></i> Ambil Foto
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm" id="presensi_btn_retake" style="display:none;">
+                                <i class="bi bi-arrow-repeat me-1"></i> Ulangi
+                            </button>
+                        </div>
+                        <input type="hidden" name="foto_base64" id="presensi_foto_base64">
+                    </div>
+
+                    {{-- Lokasi GPS --}}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-6">Lokasi GPS</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="flex-grow-1">
+                                <input type="text" id="presensi_lokasi_display" class="form-control form-control-solid" readonly placeholder="Menunggu lokasi GPS..." />
+                            </div>
+                            <button type="button" class="btn btn-light-primary btn-sm" id="presensi_btn_gps">
+                                <i class="bi bi-geo-alt-fill me-1"></i> Ambil Lokasi
+                            </button>
+                        </div>
+                        <input type="hidden" name="latitude" id="presensi_latitude">
+                        <input type="hidden" name="longitude" id="presensi_longitude">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success" id="presensi_btn_submit" disabled>
+                        <i class="bi bi-check-circle me-1"></i> Kirim Presensi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!--end::Modal Presensi Sekarang-->
+
+<!--begin::Modal Ajukan Izin-->
+<div class="modal fade" id="modal_izin" tabindex="-1" aria-labelledby="modal_izin_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('siswa.izin') }}" id="form_izin">
+                @csrf
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-white fw-bolder" id="modal_izin_label">
+                        <i class="bi bi-file-earmark-text text-white me-2"></i> Ajukan Izin / Sakit
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning d-flex align-items-center p-5 mb-6">
+                        <i class="bi bi-exclamation-triangle-fill text-warning fs-3 me-3"></i>
+                        <div class="fs-7">
+                            Silakan isi formulir berikut untuk mengajukan izin atau sakit. <strong>Foto bukti</strong> dan <strong>lokasi GPS</strong> wajib disertakan.
+                        </div>
+                    </div>
+
+                    {{-- Jenis Izin --}}
+                    <div class="mb-5">
+                        <label class="form-label fw-bold fs-6 required">Jenis Izin</label>
+                        <select name="status" class="form-select form-select-solid" required id="izin_status">
+                            <option value="">-- Pilih Jenis --</option>
+                            <option value="izin">Izin</option>
+                            <option value="sakit">Sakit</option>
+                        </select>
+                    </div>
+
+                    {{-- Keterangan --}}
+                    <div class="mb-5">
+                        <label class="form-label fw-bold fs-6 required">Alasan / Keterangan</label>
+                        <textarea name="keterangan" class="form-control form-control-solid" rows="3" maxlength="500" required placeholder="Jelaskan alasan izin/sakit Anda..." id="izin_keterangan"></textarea>
+                        <div class="form-text">Maksimal 500 karakter.</div>
+                    </div>
+
+                    {{-- Kamera --}}
+                    <div class="mb-6 text-center">
+                        <label class="form-label fw-bold fs-6 mb-3">Ambil Foto Bukti</label>
+                        <div class="position-relative mx-auto" style="max-width: 480px;">
+                            <video id="izin_video" class="w-100 rounded border" autoplay playsinline style="display:none;"></video>
+                            <canvas id="izin_canvas" class="w-100 rounded border" style="display:none;"></canvas>
+                            <img id="izin_preview" class="w-100 rounded border" style="display:none;" alt="Preview Foto"/>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-center gap-3">
+                            <button type="button" class="btn btn-primary btn-sm" id="izin_btn_start_cam">
+                                <i class="bi bi-camera me-1"></i> Buka Kamera
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" id="izin_btn_capture" style="display:none;">
+                                <i class="bi bi-camera-fill me-1"></i> Ambil Foto
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm" id="izin_btn_retake" style="display:none;">
+                                <i class="bi bi-arrow-repeat me-1"></i> Ulangi
+                            </button>
+                        </div>
+                        <input type="hidden" name="foto_base64" id="izin_foto_base64">
+                    </div>
+
+                    {{-- Lokasi GPS --}}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-6">Lokasi GPS</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="flex-grow-1">
+                                <input type="text" id="izin_lokasi_display" class="form-control form-control-solid" readonly placeholder="Menunggu lokasi GPS..." />
+                            </div>
+                            <button type="button" class="btn btn-light-primary btn-sm" id="izin_btn_gps">
+                                <i class="bi bi-geo-alt-fill me-1"></i> Ambil Lokasi
+                            </button>
+                        </div>
+                        <input type="hidden" name="latitude" id="izin_latitude">
+                        <input type="hidden" name="longitude" id="izin_longitude">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning" id="izin_btn_submit" disabled>
+                        <i class="bi bi-send me-1"></i> Kirim Pengajuan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!--end::Modal Ajukan Izin-->
+
+{{-- begin::Scripts for Camera & GPS --}}
+@push('scripts')
+<script>
+// Safe modal opener - works with SPA navigation
+function openModalSafe(modalId) {
+    var el = document.getElementById(modalId);
+    if (el) {
+        var modal = bootstrap.Modal.getOrCreateInstance(el);
+        modal.show();
+    } else {
+        console.error('Modal #' + modalId + ' not found in DOM.');
+    }
+}
+
+(function() {
+
+    // ========== HELPER FUNCTIONS ==========
+    function initCamera(videoEl, canvasEl, previewEl, btnStart, btnCapture, btnRetake, hiddenInput, onCaptureCallback) {
+        let stream = null;
+
+        btnStart.addEventListener('click', function() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    videoEl.srcObject = stream;
+                    videoEl.style.display = 'block';
+                    previewEl.style.display = 'none';
+                    canvasEl.style.display = 'none';
+                    btnStart.style.display = 'none';
+                    btnCapture.style.display = 'inline-block';
+                    btnRetake.style.display = 'none';
+                })
+                .catch(function(err) {
+                    Swal.fire('Error', 'Tidak dapat mengakses kamera: ' + err.message, 'error');
+                });
+        });
+
+        btnCapture.addEventListener('click', function() {
+            canvasEl.width = videoEl.videoWidth;
+            canvasEl.height = videoEl.videoHeight;
+            canvasEl.getContext('2d').drawImage(videoEl, 0, 0);
+            var dataUrl = canvasEl.toDataURL('image/jpeg', 0.8);
+            hiddenInput.value = dataUrl;
+            previewEl.src = dataUrl;
+            previewEl.style.display = 'block';
+            videoEl.style.display = 'none';
+            btnCapture.style.display = 'none';
+            btnRetake.style.display = 'inline-block';
+            // Stop camera
+            if (stream) {
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                stream = null;
+            }
+            if (onCaptureCallback) onCaptureCallback();
+        });
+
+        btnRetake.addEventListener('click', function() {
+            hiddenInput.value = '';
+            previewEl.style.display = 'none';
+            btnRetake.style.display = 'none';
+            btnStart.style.display = 'inline-block';
+            btnStart.click();
+            if (onCaptureCallback) onCaptureCallback();
+        });
+
+        // Cleanup stream when modal is hidden
+        return function stopStream() {
+            if (stream) {
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                stream = null;
+            }
+            videoEl.style.display = 'none';
+            previewEl.style.display = 'none';
+            canvasEl.style.display = 'none';
+            btnStart.style.display = 'inline-block';
+            btnCapture.style.display = 'none';
+            btnRetake.style.display = 'none';
+        };
+    }
+
+    function initGPS(btnGps, displayInput, latInput, lngInput, onSuccessCallback) {
+        btnGps.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                Swal.fire('Error', 'Geolocation tidak didukung oleh browser Anda.', 'error');
+                return;
+            }
+            displayInput.value = 'Mengambil lokasi...';
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    latInput.value = position.coords.latitude;
+                    lngInput.value = position.coords.longitude;
+                    displayInput.value = position.coords.latitude.toFixed(6) + ', ' + position.coords.longitude.toFixed(6);
+                    if (onSuccessCallback) onSuccessCallback();
+                },
+                function(err) {
+                    displayInput.value = 'Gagal mendapatkan lokasi';
+                    Swal.fire('Error', 'Gagal mendapatkan lokasi GPS: ' + err.message, 'error');
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        });
+    }
+
+    // ========== PRESENSI MODAL ==========
+    var presensiModal = document.getElementById('modal_presensi');
+    if (presensiModal) {
+        var presensiSubmitBtn = document.getElementById('presensi_btn_submit');
+
+        function checkPresensiReady() {
+            var hasFoto = document.getElementById('presensi_foto_base64').value !== '';
+            var hasLat = document.getElementById('presensi_latitude').value !== '';
+            var hasLng = document.getElementById('presensi_longitude').value !== '';
+            presensiSubmitBtn.disabled = !(hasFoto && hasLat && hasLng);
+        }
+
+        var stopPresensiCam = initCamera(
+            document.getElementById('presensi_video'),
+            document.getElementById('presensi_canvas'),
+            document.getElementById('presensi_preview'),
+            document.getElementById('presensi_btn_start_cam'),
+            document.getElementById('presensi_btn_capture'),
+            document.getElementById('presensi_btn_retake'),
+            document.getElementById('presensi_foto_base64'),
+            checkPresensiReady
+        );
+
+        initGPS(
+            document.getElementById('presensi_btn_gps'),
+            document.getElementById('presensi_lokasi_display'),
+            document.getElementById('presensi_latitude'),
+            document.getElementById('presensi_longitude'),
+            checkPresensiReady
+        );
+
+        presensiModal.addEventListener('hidden.bs.modal', function() {
+            stopPresensiCam();
+            document.getElementById('presensi_foto_base64').value = '';
+            document.getElementById('presensi_latitude').value = '';
+            document.getElementById('presensi_longitude').value = '';
+            document.getElementById('presensi_lokasi_display').value = '';
+            presensiSubmitBtn.disabled = true;
+        });
+
+        // Auto-fetch GPS on modal open
+        presensiModal.addEventListener('shown.bs.modal', function() {
+            document.getElementById('presensi_btn_gps').click();
+        });
+    }
+
+    // ========== IZIN MODAL ==========
+    var izinModal = document.getElementById('modal_izin');
+    if (izinModal) {
+        var izinSubmitBtn = document.getElementById('izin_btn_submit');
+
+        function checkIzinReady() {
+            var hasStatus = document.getElementById('izin_status').value !== '';
+            var hasKet = document.getElementById('izin_keterangan').value.trim() !== '';
+            var hasFoto = document.getElementById('izin_foto_base64').value !== '';
+            var hasLat = document.getElementById('izin_latitude').value !== '';
+            var hasLng = document.getElementById('izin_longitude').value !== '';
+            izinSubmitBtn.disabled = !(hasStatus && hasKet && hasFoto && hasLat && hasLng);
+        }
+
+        var stopIzinCam = initCamera(
+            document.getElementById('izin_video'),
+            document.getElementById('izin_canvas'),
+            document.getElementById('izin_preview'),
+            document.getElementById('izin_btn_start_cam'),
+            document.getElementById('izin_btn_capture'),
+            document.getElementById('izin_btn_retake'),
+            document.getElementById('izin_foto_base64'),
+            checkIzinReady
+        );
+
+        initGPS(
+            document.getElementById('izin_btn_gps'),
+            document.getElementById('izin_lokasi_display'),
+            document.getElementById('izin_latitude'),
+            document.getElementById('izin_longitude'),
+            checkIzinReady
+        );
+
+        // Listen for form field changes to enable submit
+        document.getElementById('izin_status').addEventListener('change', checkIzinReady);
+        document.getElementById('izin_keterangan').addEventListener('input', checkIzinReady);
+
+        izinModal.addEventListener('hidden.bs.modal', function() {
+            stopIzinCam();
+            document.getElementById('form_izin').reset();
+            document.getElementById('izin_foto_base64').value = '';
+            document.getElementById('izin_latitude').value = '';
+            document.getElementById('izin_longitude').value = '';
+            document.getElementById('izin_lokasi_display').value = '';
+            izinSubmitBtn.disabled = true;
+        });
+
+        // Auto-fetch GPS on modal open
+        izinModal.addEventListener('shown.bs.modal', function() {
+            document.getElementById('izin_btn_gps').click();
+        });
+    }
+
+})();
+</script>
+@endpush
+{{-- end::Scripts for Camera & GPS --}}
 
 </x-base-layout>

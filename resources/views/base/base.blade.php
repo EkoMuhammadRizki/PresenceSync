@@ -593,6 +593,23 @@ License: {{ theme()->getOption('product', 'license') }}
     }
 </script>
 
+{{-- Bootstrap Modal safety patch: prevent crash when data-bs-target points to non-existent element --}}
+<script>
+    document.addEventListener('click', function(e) {
+        var trigger = e.target.closest('[data-bs-toggle="modal"]');
+        if (!trigger) return;
+        var targetSelector = trigger.getAttribute('data-bs-target') || trigger.getAttribute('href');
+        if (targetSelector) {
+            var targetEl = document.querySelector(targetSelector);
+            if (!targetEl) {
+                e.stopPropagation();
+                e.preventDefault();
+                console.warn('Bootstrap Modal: target element "' + targetSelector + '" not found in DOM. Click ignored.');
+            }
+        }
+    }, true); // 'true' = capture phase, fires BEFORE Bootstrap's delegated handler
+</script>
+
 <!-- Inject sleek top loading progress bar element -->
 <div id="top-loading-bar"></div>
 

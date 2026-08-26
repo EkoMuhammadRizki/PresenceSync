@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Guru;
 use App\Models\MataPelajaran;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class MataPelajaranController extends Controller
 {
     public function index()
     {
-        $mataPelajarans = MataPelajaran::with('guru')->orderBy('tingkat')->orderBy('nama')->get();
+        $mataPelajarans = MataPelajaran::with('guru')->orderBy('nama')->get();
         $gurus          = Guru::orderBy('nama')->get();
         return view('pages.absensi.mata-pelajaran', compact('mataPelajarans', 'gurus'));
     }
@@ -25,17 +29,22 @@ class MataPelajaranController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama'          => 'required|string|max:150',
-            'kode'          => 'required|string|max:50|unique:mata_pelajarans,kode',
-            'tingkat'       => 'nullable|string|max:20',
-            'guru_id'       => 'nullable|exists:gurus,id',
+            'nama'    => 'required|string|max:150',
+            'guru_id' => 'nullable|exists:gurus,id',
+            'kode'    => 'nullable|string|max:50',
         ], [
             'nama.required' => 'Nama mata pelajaran wajib diisi.',
-            'kode.required' => 'Kode mata pelajaran wajib diisi.',
-            'kode.unique'   => 'Kode mata pelajaran sudah digunakan.',
         ]);
 
-        MataPelajaran::create($request->only('nama', 'kode', 'tingkat', 'guru_id'));
+        $kode = !empty($request->kode) 
+            ? strtoupper(trim($request->kode)) 
+            : $this->generateCleanKode($request->nama);
+
+        MataPelajaran::create([
+            'nama'    => $request->nama,
+            'kode'    => $kode,
+            'guru_id' => $request->guru_id,
+        ]);
 
         return redirect()->route('mata-pelajaran.index')
             ->with('success', 'Mata pelajaran berhasil ditambahkan.');
@@ -44,15 +53,22 @@ class MataPelajaranController extends Controller
     public function update(Request $request, MataPelajaran $mataPelajaran)
     {
         $request->validate([
-            'nama'          => 'required|string|max:150',
-            'kode'          => 'required|string|max:50|unique:mata_pelajarans,kode,' . $mataPelajaran->id,
-            'tingkat'       => 'nullable|string|max:20',
-            'guru_id'       => 'nullable|exists:gurus,id',
+            'nama'    => 'required|string|max:150',
+            'guru_id' => 'nullable|exists:gurus,id',
+            'kode'    => 'nullable|string|max:50',
         ], [
-            'kode.unique' => 'Kode mata pelajaran sudah digunakan.',
+            'nama.required' => 'Nama mata pelajaran wajib diisi.',
         ]);
 
-        $mataPelajaran->update($request->only('nama', 'kode', 'tingkat', 'guru_id'));
+        $kode = !empty($request->kode) 
+            ? strtoupper(trim($request->kode)) 
+            : $this->generateCleanKode($request->nama);
+
+        $mataPelajaran->update([
+            'nama'    => $request->nama,
+            'kode'    => $kode,
+            'guru_id' => $request->guru_id,
+        ]);
 
         return redirect()->route('mata-pelajaran.index')
             ->with('success', 'Mata pelajaran berhasil diperbarui.');
@@ -66,18 +82,16 @@ class MataPelajaranController extends Controller
     }
 
     /**
-     * Download Excel template for importing mata pelajaran
+     * Download Excel template for importing mata pelajaran (Template Kosong)
      */
     public function downloadTemplate(Request $request)
     {
-        $isEmpty = $request->has('empty');
-
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Template Matpel');
 
-        // Headers exactly as requested
-        $headers = ['kd_matpel', 'nama_matpel', 'tingkat'];
+        // Headers: id_matpel, kd_matpel, nama_matpel, nama_guru
+        $headers = ['id_matpel', 'kd_matpel', 'nama_matpel', 'nama_guru'];
         $colIndex = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($colIndex . '1', $header);
@@ -88,63 +102,29 @@ class MataPelajaranController extends Controller
         $headerStyle = [
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'fillType'   => Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '009EF7']
             ],
             'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical'   => Alignment::VERTICAL_CENTER,
             ]
         ];
-        $sheet->getStyle('A1:C1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A1:D1')->applyFromArray($headerStyle);
         $sheet->getRowDimension(1)->setRowHeight(25);
 
-        if (!$isEmpty) {
-            $existing = MataPelajaran::all();
-            if ($existing->isNotEmpty()) {
-                $row = 2;
-                foreach ($existing as $m) {
-                    $sheet->setCellValue('A' . $row, $m->kode);
-                    $sheet->setCellValue('B' . $row, $m->nama);
-                    $sheet->setCellValue('C' . $row, $m->tingkat ?? '10');
-                    $row++;
-                }
-            } else {
-                $samples = [
-                    ['BIN-10', 'Bahasa Indonesia', '10'],
-                    ['BIN-11', 'Bahasa Indonesia', '11'],
-                    ['BIN-12', 'Bahasa Indonesia', '12'],
-                    ['BIG-10', 'Bahasa Inggris', '10'],
-                    ['BIG-11', 'Bahasa Inggris', '11'],
-                    ['BIG-12', 'Bahasa Inggris', '12'],
-                    ['MTK-10', 'Matematika', '10'],
-                    ['MTK-11', 'Matematika', '11'],
-                    ['MTK-12', 'Matematika', '12'],
-                    ['FIS-10', 'Fisika', '10'],
-                    ['KIM-10', 'Kimia', '10'],
-                    ['BIO-10', 'Biologi', '10'],
-                ];
-                $row = 2;
-                foreach ($samples as $s) {
-                    $sheet->setCellValue('A' . $row, $s[0]);
-                    $sheet->setCellValue('B' . $row, $s[1]);
-                    $sheet->setCellValue('C' . $row, $s[2]);
-                    $row++;
-                }
-            }
-        }
-
-        foreach (range('A', 'C') as $col) {
+        // Template kosong tanpa data baris contoh
+        foreach (range('A', 'D') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
         $filename = 'template_import_matpel.xlsx';
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
         }, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Type'  => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Cache-Control' => 'max-age=0',
         ]);
     }
@@ -163,7 +143,7 @@ class MataPelajaranController extends Controller
         ]);
 
         $file = $request->file('file');
-        
+
         try {
             $filePath = $file->getRealPath();
             if (empty($filePath) || !file_exists($filePath)) {
@@ -202,8 +182,9 @@ class MataPelajaranController extends Controller
                 $clean = strtolower(trim((string)$cell));
                 $clean = preg_replace('/[^a-z0-9]/', '', $clean);
                 if (in_array($clean, [
-                    'kdmatpel', 'namamatpel', 'tingkat', 'kode', 'nama', 'kodematpel',
-                    'kodemapel', 'namamapel', 'matapelajarannama', 'matapelajaran', 'mapel'
+                    'idmatpel', 'kdmatpel', 'namamatpel', 'kode', 'nama', 'kodematpel',
+                    'kodemapel', 'namamapel', 'matapelajarannama', 'matapelajaran', 'mapel',
+                    'guru', 'namaguru', 'gurupengampu', 'pengampu', 'no'
                 ])) {
                     $matchCount++;
                 }
@@ -247,14 +228,24 @@ class MataPelajaranController extends Controller
             return null;
         };
 
-        // Normalisasi tingkat
-        $normalizeTingkat = function ($raw) {
-            if (!$raw) return 'Semua';
-            $s = strtoupper(trim((string)$raw));
-            if (in_array($s, ['10', 'X', 'KELAS 10', 'KELAS X', 'TINGKAT 10', 'SEPULUH'])) return '10';
-            if (in_array($s, ['11', 'XI', 'KELAS 11', 'KELAS XI', 'TINGKAT 11', 'SEBELAS'])) return '11';
-            if (in_array($s, ['12', 'XII', 'KELAS 12', 'KELAS XII', 'TINGKAT 12', 'DUA BELAS'])) return '12';
-            return $raw;
+        // Cache all gurus for fast matching
+        $allGurus = Guru::all();
+        $findGuruId = function ($rawGuru) use ($allGurus) {
+            if (empty($rawGuru)) return null;
+            $clean = strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', '', $rawGuru)));
+            if (empty($clean)) return null;
+
+            // 1. Exact match
+            foreach ($allGurus as $g) {
+                $gClean = strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', '', $g->nama)));
+                if ($gClean === $clean) return $g->id;
+            }
+            // 2. Partial match
+            foreach ($allGurus as $g) {
+                $gClean = strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', '', $g->nama)));
+                if (str_contains($gClean, $clean) || str_contains($clean, $gClean)) return $g->id;
+            }
+            return null;
         };
 
         $successCount = 0;
@@ -263,45 +254,53 @@ class MataPelajaranController extends Controller
         $skippedNames = [];
 
         foreach ($dataRows as $row) {
-            $kode = $getVal($row, 'kd_matpel', 'kd_mapel', 'kode', 'kode_matpel', 'kode_mapel', 'kd_mata_pelajaran', 'kode_mata_pelajaran');
-            $nama = $getVal($row, 'nama_matpel', 'nama_mapel', 'nama', 'nama_mata_pelajaran', 'mata_pelajaran', 'matpel', 'mapel');
-            $rawTingkat = $getVal($row, 'tingkat', 'tingkat_kelas', 'kelas', 'level', 'tingkatan');
+            $rawKode = $getVal($row, 'kd_matpel', 'kd_mapel', 'kode', 'kode_matpel', 'kode_mapel', 'kd_mata_pelajaran');
+            $nama    = $getVal($row, 'nama_matpel', 'nama_mapel', 'nama', 'nama_mata_pelajaran', 'mata_pelajaran', 'matpel', 'mapel');
+            $rawGuru = $getVal($row, 'nama_guru', 'guru', 'guru_pengampu', 'pengampu', 'nama_guru_pengampu');
 
-            if (empty($kode) || empty($nama)) {
+            if (empty($nama)) {
                 $skipCount++;
                 if (count($skippedNames) < 100) {
                     $skippedNames[] = [
-                        'nama'   => $nama ?: '(Nama Kosong)',
-                        'kode'   => $kode ?: '(Kode Kosong)',
-                        'alasan' => 'Kolom kode atau nama mata pelajaran kosong',
+                        'nama'   => '(Nama Kosong)',
+                        'kode'   => $rawKode ?: '-',
+                        'alasan' => 'Kolom nama mata pelajaran kosong',
                     ];
                 }
                 continue;
             }
 
-            $tingkat = $normalizeTingkat($rawTingkat);
+            $kode = !empty($rawKode) 
+                ? strtoupper(trim($rawKode)) 
+                : $this->generateCleanKode($nama);
 
-            $existing = MataPelajaran::where('kode', $kode)->first();
+            $guruId = $findGuruId($rawGuru);
+
+            // Cek apakah data mapel dengan nama dan guru ini sudah ada
+            $existing = MataPelajaran::where('nama', $nama)
+                ->when($guruId, fn($q) => $q->where('guru_id', $guruId), fn($q) => $q->whereNull('guru_id'))
+                ->first();
+
             if ($existing) {
                 $existing->update([
-                    'nama'    => $nama,
-                    'tingkat' => $tingkat,
+                    'kode'    => $kode,
+                    'guru_id' => $guruId ?: $existing->guru_id,
                 ]);
             } else {
                 MataPelajaran::create([
                     'kode'    => $kode,
                     'nama'    => $nama,
-                    'tingkat' => $tingkat,
-                    'guru_id' => null,
+                    'guru_id' => $guruId,
                 ]);
             }
 
             $successCount++;
             if (count($importedNames) < 100) {
+                $guruName = $rawGuru ?: ($guruId ? Guru::find($guruId)?->nama : '-');
                 $importedNames[] = [
-                    'kode'    => $kode,
-                    'nama'    => $nama,
-                    'tingkat' => $tingkat,
+                    'kode' => $kode,
+                    'nama' => $nama,
+                    'guru' => $guruName ?: '-',
                 ];
             }
         }
@@ -314,5 +313,60 @@ class MataPelajaranController extends Controller
                 'skipped_names'  => $skippedNames,
             ]);
     }
-}
 
+    /**
+     * Helper to generate clean, short subject code (e.g. BIO, KIM, MAT, PAI, PJOK, PPKN, BIN, BIG)
+     */
+    private function generateCleanKode(string $nama): string
+    {
+        $clean = trim($nama);
+        $lower = strtolower($clean);
+
+        // Standard predefined map
+        $map = [
+            'biologi'                                      => 'BIO',
+            'kimia'                                        => 'KIM',
+            'matematika'                                   => 'MAT',
+            'fisika'                                       => 'FIS',
+            'informatika'                                  => 'INF',
+            'geografi'                                     => 'GEO',
+            'sosiologi'                                    => 'SOS',
+            'sejarah'                                      => 'SEJ',
+            'ekonomi'                                      => 'EKO',
+            'bahasa indonesia'                             => 'BIN',
+            'bahasa inggris'                               => 'BIG',
+            'bahasa sunda'                                 => 'BSN',
+            'pendidikan agama islam dan budi pekerti'      => 'PAI',
+            'pendidikan agama dan budi pekerti'            => 'PAB',
+            'pendidikan jasmani, olahraga, dan kesehatan'  => 'PJOK',
+            'pendidikan pancasila'                         => 'PPKN',
+            'pendidikan kewarganegaraan'                   => 'PKN',
+            'prakarya dan kewirausahaan'                   => 'PKWU',
+            'seni budaya'                                  => 'SBD',
+            'bimbingan konseling'                          => 'BK',
+            'antropologi'                                  => 'ANT',
+        ];
+
+        foreach ($map as $key => $code) {
+            if ($lower === $key || str_starts_with($lower, $key)) {
+                return $code;
+            }
+        }
+
+        // Generic fallback: take first letter of each word if multiple words, or first 3 letters
+        $words = preg_split('/\s+/', $clean);
+        if (count($words) >= 2) {
+            $prefix = '';
+            foreach ($words as $w) {
+                $prefix .= strtoupper(substr($w, 0, 1));
+            }
+            if (strlen($prefix) > 4) {
+                $prefix = substr($prefix, 0, 4);
+            }
+        } else {
+            $prefix = strtoupper(substr($words[0], 0, 3));
+        }
+
+        return preg_replace('/[^A-Z0-9]/', '', $prefix) ?: 'MPL';
+    }
+}

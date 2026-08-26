@@ -12,6 +12,7 @@ use App\Models\Semester;
 use App\Models\Siswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -256,12 +257,8 @@ class SiswaDashboardController extends Controller
             $imageData = explode(',', $fotoBase64);
             $image = base64_decode($imageData[1] ?? '');
             if ($image) {
-                $filename = 'presensi_' . $siswa->id . '_' . $today . '.jpg';
-                $path = storage_path('app/public/presensi/' . $filename);
-                if (!file_exists(dirname($path))) {
-                    mkdir(dirname($path), 0755, true);
-                }
-                file_put_contents($path, $image);
+                $filename = 'presensi_' . $siswa->id . '_' . $today . '_' . time() . '.jpg';
+                Storage::disk('public')->put('presensi/' . $filename, $image);
                 $fotoPath = 'presensi/' . $filename;
             }
         }
@@ -351,12 +348,8 @@ class SiswaDashboardController extends Controller
             $imageData = explode(',', $fotoBase64);
             $image = base64_decode($imageData[1] ?? '');
             if ($image) {
-                $filename = 'izin_' . $siswa->id . '_' . $today . '.jpg';
-                $path = storage_path('app/public/presensi/' . $filename);
-                if (!file_exists(dirname($path))) {
-                    mkdir(dirname($path), 0755, true);
-                }
-                file_put_contents($path, $image);
+                $filename = 'izin_' . $siswa->id . '_' . $today . '_' . time() . '.jpg';
+                Storage::disk('public')->put('presensi/' . $filename, $image);
                 $fotoPath = 'presensi/' . $filename;
             }
         }
@@ -645,14 +638,19 @@ class SiswaDashboardController extends Controller
             return response()->json(['error' => 'Parameter tanggal wajib diisi'], 400);
         }
 
-        $mataPelajarans = \App\Models\MataPelajaran::with('guru')->orderBy('nama')->get();
+        $mataPelajarans = \App\Models\MataPelajaran::with('guru')
+            ->orderBy('nama')
+            ->get();
 
         return response()->json($mataPelajarans->map(function ($mp) {
+            $guruNama = $mp->guru->nama ?? 'Tanpa Guru';
             return [
                 'id'                     => $mp->id,
                 'mata_pelajaran_id'      => $mp->id,
                 'mata_pelajaran'         => $mp->nama,
-                'guru'                   => $mp->guru->nama ?? '-',
+                'kode'                   => $mp->kode,
+                'guru'                   => $guruNama,
+                'display_label'          => $mp->nama . ' — ' . $guruNama,
                 'jam_mulai'              => null,
                 'jam_selesai'            => null,
             ];
