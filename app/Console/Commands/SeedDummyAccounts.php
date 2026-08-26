@@ -57,11 +57,8 @@ class SeedDummyAccounts extends Command
         // ─── 1. AKUN KESISWAAN ────────────────────────────────────────────────
         $this->info('📋 Membuat akun Kesiswaan...');
 
-        $existingKesiswaan = User::where('email', 'kesiswaan@sman1ciparay.com')->first();
-        if ($existingKesiswaan) {
-            $this->line('  ⚠ Akun kesiswaan sudah ada, dilewati.');
-            $userKesiswaan = $existingKesiswaan;
-        } else {
+        $userKesiswaan = User::where('email', 'kesiswaan@sman1ciparay.com')->first();
+        if (!$userKesiswaan) {
             $userKesiswaan = User::create([
                 'first_name'        => 'Tim',
                 'last_name'         => 'Kesiswaan',
@@ -69,7 +66,6 @@ class SeedDummyAccounts extends Command
                 'password'          => Hash::make('kesiswaan123'),
                 'email_verified_at' => now(),
             ]);
-            $userKesiswaan->assignRole('kesiswaan');
 
             $info = new UserInfo();
             $info->company = 'SMAN 1 Ciparay - Bagian Kesiswaan';
@@ -79,17 +75,19 @@ class SeedDummyAccounts extends Command
             $info->save();
 
             $this->line('  ✓ Akun kesiswaan@sman1ciparay.com (kesiswaan123) dibuat');
+        } else {
+            $this->line('  ⚠ Akun kesiswaan sudah ada, dilewati.');
+        }
+
+        if (!$userKesiswaan->hasRole('kesiswaan')) {
+            $userKesiswaan->assignRole('kesiswaan');
         }
 
         // ─── 2. AKUN GURU (dengan Wali Kelas) ────────────────────────────────
         $this->info('👨‍🏫 Membuat akun Guru...');
 
-        $existingGuruUser = User::where('email', 'budi.santoso@sman1ciparay.com')->first();
-        if ($existingGuruUser) {
-            $this->line('  ⚠ Akun guru sudah ada, mengambil data existing.');
-            $userGuru = $existingGuruUser;
-            $guru     = Guru::where('user_id', $userGuru->id)->first();
-        } else {
+        $userGuru = User::where('email', 'budi.santoso@sman1ciparay.com')->first();
+        if (!$userGuru) {
             $userGuru = User::create([
                 'first_name'        => 'Budi',
                 'last_name'         => 'Santoso',
@@ -97,7 +95,6 @@ class SeedDummyAccounts extends Command
                 'password'          => Hash::make('guru123'),
                 'email_verified_at' => now(),
             ]);
-            $userGuru->assignRole('guru');
 
             $infoGuru = new UserInfo();
             $infoGuru->company = 'SMAN 1 Ciparay';
@@ -105,7 +102,14 @@ class SeedDummyAccounts extends Command
             $infoGuru->country = 'ID';
             $infoGuru->user()->associate($userGuru);
             $infoGuru->save();
+        }
 
+        if (!$userGuru->hasRole('guru')) {
+            $userGuru->assignRole('guru');
+        }
+
+        $guru = Guru::where('user_id', $userGuru->id)->orWhere('nip', '198501012010011001')->first();
+        if (!$guru) {
             $guru = Guru::create([
                 'user_id'            => $userGuru->id,
                 'nama'               => 'Drs. Budi Santoso, M.Pd',
@@ -123,6 +127,8 @@ class SeedDummyAccounts extends Command
             ]);
 
             $this->line('  ✓ Guru: Drs. Budi Santoso, M.Pd (NIP: 198501012010011001 / guru123) dibuat');
+        } else {
+            $this->line('  ⚠ Akun guru sudah ada, mengambil data existing.');
         }
 
         // ─── Mata Pelajaran untuk Guru ────────────────────────────────────────
@@ -161,51 +167,58 @@ class SeedDummyAccounts extends Command
 
         $createdSiswas = [];
         foreach ($siswaData as [$nama, $nis, $jk, $isSek, $pasLabel]) {
-            $existingSiswa = Siswa::where('nis', $nis)->first();
-            if ($existingSiswa) {
-                $this->line("  ⚠ Siswa NIS {$nis} sudah ada, dilewati.");
-                $createdSiswas[] = $existingSiswa;
-                continue;
-            }
-
-            // Buat user untuk siswa
             $firstName = explode(' ', $nama)[0];
             $lastName  = implode(' ', array_slice(explode(' ', $nama), 1)) ?: '-';
             $email     = strtolower(str_replace(' ', '.', $nama)) . '@siap.siswa';
 
-            $userSiswa = User::create([
-                'first_name'        => $firstName,
-                'last_name'         => $lastName,
-                'email'             => $email,
-                'password'          => Hash::make($pasLabel),
-                'email_verified_at' => now(),
-            ]);
-            $userSiswa->assignRole('siswa');
+            // Ambil atau buat User
+            $userSiswa = User::where('email', $email)->first();
+            if (!$userSiswa) {
+                $userSiswa = User::create([
+                    'first_name'        => $firstName,
+                    'last_name'         => $lastName,
+                    'email'             => $email,
+                    'password'          => Hash::make($pasLabel),
+                    'email_verified_at' => now(),
+                ]);
+            }
 
-            $infoSiswa = new UserInfo();
-            $infoSiswa->user()->associate($userSiswa);
-            $infoSiswa->save();
+            if (!$userSiswa->hasRole('siswa')) {
+                $userSiswa->assignRole('siswa');
+            }
 
-            $siswa = Siswa::create([
-                'user_id'       => $userSiswa->id,
-                'kelas_id'      => $kelas->id,
-                'nama'          => $nama,
-                'nis'           => $nis,
-                'nisn'          => '00' . $nis,
-                'jenis_kelamin' => $jk,
-                'tempat_lahir'  => 'Bandung',
-                'tanggal_lahir' => '2007-06-15',
-                'agama'         => 'Islam',
-                'alamat'        => 'Jl. Contoh No. ' . rand(1, 100) . ', Ciparay',
-                'no_hp'         => '08' . rand(1000000000, 9999999999),
-                'nama_orang_tua'=> 'Orang Tua ' . $firstName,
-                'status'        => 'aktif',
-                'is_sekretaris' => $isSek,
-            ]);
+            if (!UserInfo::where('user_id', $userSiswa->id)->exists()) {
+                $infoSiswa = new UserInfo();
+                $infoSiswa->user()->associate($userSiswa);
+                $infoSiswa->save();
+            }
+
+            $siswa = Siswa::where('nis', $nis)->orWhere('user_id', $userSiswa->id)->first();
+            if (!$siswa) {
+                $siswa = Siswa::create([
+                    'user_id'       => $userSiswa->id,
+                    'kelas_id'      => $kelas->id,
+                    'nama'          => $nama,
+                    'nis'           => $nis,
+                    'nisn'          => '00' . $nis,
+                    'jenis_kelamin' => $jk,
+                    'tempat_lahir'  => 'Bandung',
+                    'tanggal_lahir' => '2007-06-15',
+                    'agama'         => 'Islam',
+                    'alamat'        => 'Jl. Contoh No. ' . rand(1, 100) . ', Ciparay',
+                    'no_hp'         => '08' . rand(1000000000, 9999999999),
+                    'nama_orang_tua'=> 'Orang Tua ' . $firstName,
+                    'status'        => 'aktif',
+                    'is_sekretaris' => $isSek,
+                ]);
+
+                $sekLabel = $isSek ? ' [SEKRETARIS]' : '';
+                $this->line("  ✓ Siswa: {$nama} (NIS: {$nis} / {$pasLabel}){$sekLabel}");
+            } else {
+                $this->line("  ⚠ Siswa NIS {$nis} sudah ada, dilewati.");
+            }
 
             $createdSiswas[] = $siswa;
-            $sekLabel = $isSek ? ' [SEKRETARIS]' : '';
-            $this->line("  ✓ Siswa: {$nama} (NIS: {$nis} / {$pasLabel}){$sekLabel}");
         }
 
         // ─── 4. DATA KEHADIRAN 2 BULAN (Jun–Jul 2026) ────────────────────────
