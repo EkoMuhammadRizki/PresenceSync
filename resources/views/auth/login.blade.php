@@ -32,7 +32,7 @@
             <!--end::Label-->
 
             <!--begin::Input-->
-            <input class="form-control form-control-lg form-control-solid" type="text" name="identifier" autocomplete="off" placeholder="Masukkan NIS atau NIP" value="{{ old('identifier') }}" required autofocus/>
+            <input class="form-control form-control-lg form-control-solid" type="text" name="identifier" autocomplete="off" placeholder="Masukkan NIS atau NIP" value="{{ old('identifier', $lastIdentifier ?? '') }}" required autofocus/>
             <!--end::Input-->
         </div>
         <!--end::Input group-->
@@ -49,7 +49,7 @@
 
             <!--begin::Input wrapper-->
             <div class="position-relative mb-2" data-kt-password-meter="true">
-                <input class="form-control form-control-lg form-control-solid" type="password" name="password" autocomplete="new-password" placeholder="Masukkan Password" value="" required/>
+                <input class="form-control form-control-lg form-control-solid" type="password" name="password" id="password_field" autocomplete="new-password" placeholder="Masukkan Password" value="" required/>
                 <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
                     <i class="bi bi-eye-slash fs-2"></i>
                     <i class="bi bi-eye fs-2 d-none"></i>
@@ -62,7 +62,7 @@
         <!--begin::Input group - Remember-->
         <div class="fv-row mb-6">
             <label class="form-check form-check-custom form-check-solid">
-                <input class="form-check-input" type="checkbox" name="remember"/>
+                <input class="form-check-input" type="checkbox" name="remember" id="remember_me_checkbox" {{ !empty($lastIdentifier) ? 'checked' : '' }}/>
                 <span class="form-check-label fw-bold text-gray-700 fs-6">{{ __('Ingat saya') }}</span>
             </label>
         </div>
@@ -84,10 +84,28 @@
 @section('scripts')
     <script>
     (function () {
+        // ── Ingat Saya: isi password dari cookie jika checkbox tercentang ──
+        var savedIdentifier = '{{ addslashes($lastIdentifier ?? '') }}';
+        var savedPassword   = '{{ addslashes($lastPassword ?? '') }}';
+        var isRemembered    = savedIdentifier !== '';
+
+        if (isRemembered && savedPassword !== '' && savedPassword !== 'demo') {
+            document.getElementById('password_field').value = savedPassword;
+        }
+
         function initLoginHandler() {
             if (typeof $ === 'undefined' || typeof Swal === 'undefined') {
                 return setTimeout(initLoginHandler, 50);
             }
+
+            // Jika remember checkbox diubah ke unchecked, hapus isian password
+            $('#remember_me_checkbox').on('change', function () {
+                if (!this.checked) {
+                    $('#password_field').val('');
+                } else if (savedPassword !== '' && savedPassword !== 'demo') {
+                    $('#password_field').val(savedPassword);
+                }
+            });
 
             $('#kt_sign_in_form').off('submit').on('submit', function (e) {
                 e.preventDefault();
