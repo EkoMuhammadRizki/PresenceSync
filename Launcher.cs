@@ -12,7 +12,7 @@ namespace SiapPresenceSync
         {
             try
             {
-                string url = "https://presencesync.test/";
+                string url = "https://siapsman1ciparay.test/";
                 
                 // Buka browser default ke URL PresenceSync
                 ProcessStartInfo psi = new ProcessStartInfo
