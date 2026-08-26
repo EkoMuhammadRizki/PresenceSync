@@ -160,6 +160,7 @@
         </div>
         <div class="card-toolbar my-0">
             <div class="d-flex flex-wrap gap-2">
+                @if(auth()->user() && auth()->user()->hasRole('admin'))
                 <form id="form_post_ke_mesin" action="{{ route('siswa.push-to-devices') }}" method="POST" class="d-inline">
                     @csrf
                     <input type="hidden" name="selected_ids" id="post_selected_ids" value="" />
@@ -172,6 +173,7 @@
                         @endif
                     </button>
                 </form>
+                @endif
 
                 <a href="{{ route('siswa.download-template', ['empty' => 1]) }}" class="btn btn-light-warning btn-sm btn-md-md">
                     {!! theme()->getSvgIcon("icons/duotune/files/fil021.svg", "svg-icon-2") !!}
@@ -299,11 +301,13 @@
                                         Detail
                                     </a>
                                 </div>
+                                @if(auth()->user() && auth()->user()->hasRole('admin'))
                                 <div class="menu-item px-3">
                                     <a href="#" class="menu-link px-3 text-info fw-bold" onclick="confirmPostSingleSiswa('{{ $item->id }}', '{{ addslashes($item->nama) }}')">
                                         Post ke Mesin
                                     </a>
                                 </div>
+                                @endif
                                 <div class="menu-item px-3">
                                     <a href="#" class="menu-link px-3 btn-edit"
                                        data-id="{{ $item->id }}"
@@ -487,6 +491,7 @@
     </div>
 </div>
 
+@if(auth()->user() && auth()->user()->hasRole('admin'))
 <!-- Modal Post ke Mesin (Pilih Kelas & Lingkup - Compact & No Scroll) -->
 <div class="modal fade" id="modal_post_ke_mesin" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered mw-650px">
@@ -659,6 +664,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- Modal Ubah Siswa -->
 <div class="modal fade" id="modal_ubah_siswa" tabindex="-1" aria-hidden="true">
