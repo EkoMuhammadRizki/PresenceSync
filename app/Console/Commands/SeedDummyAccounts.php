@@ -54,6 +54,35 @@ class SeedDummyAccounts extends Command
             return self::FAILURE;
         }
 
+        // ─── 0. AKUN ADMIN ───────────────────────────────────────────────────
+        $this->info('👑 Membuat akun Admin...');
+
+        $userAdmin = User::where('email', 'admin@sman1ciparay.com')->first();
+        if (!$userAdmin) {
+            $userAdmin = User::create([
+                'first_name'        => 'Administrator',
+                'last_name'         => 'SIAP',
+                'email'             => 'admin@sman1ciparay.com',
+                'password'          => Hash::make('admin123'),
+                'email_verified_at' => now(),
+            ]);
+
+            $infoAdmin = new UserInfo();
+            $infoAdmin->company = 'SMAN 1 Ciparay - Administrator';
+            $infoAdmin->phone   = '081234567899';
+            $infoAdmin->country = 'ID';
+            $infoAdmin->user()->associate($userAdmin);
+            $infoAdmin->save();
+
+            $this->line('  ✓ Akun admin@sman1ciparay.com (admin123) dibuat');
+        } else {
+            $this->line('  ⚠ Akun admin sudah ada, dilewati.');
+        }
+
+        if (!$userAdmin->hasRole('admin')) {
+            $userAdmin->assignRole('admin');
+        }
+
         // ─── 1. AKUN KESISWAAN ────────────────────────────────────────────────
         $this->info('📋 Membuat akun Kesiswaan...');
 
@@ -236,10 +265,37 @@ class SeedDummyAccounts extends Command
             $current->addDay();
         }
 
-        // Hapus kehadiran lama untuk siswa dummy & guru agar di-refresh bersih
-        $dummySiswaIds = collect($createdSiswas)->pluck('id')->toArray();
-        Kehadiran::whereIn('siswa_id', $dummySiswaIds)->delete();
-        Kehadiran::where('guru_id', $guru->id)->whereNull('siswa_id')->delete();
+        // Target Siswa: Dummy siswa + sampel 1-2 siswa per kelas aktif lainnya (jika ada)
+        $targetSiswas = collect($createdSiswas);
+        $otherClasses = Kelas::where('status', 'aktif')->where('id', '!=', $kelas->id)->get();
+        foreach ($otherClasses as $c) {
+            $sampleSiswa = Siswa::where('kelas_id', $c->id)->where('status', 'aktif')->take(2)->get();
+            foreach ($sampleSiswa as $ss) {
+                if (!$targetSiswas->contains('id', $ss->id)) {
+                    $targetSiswas->push($ss);
+                }
+            }
+        }
+
+        // Target Guru: Drs. Budi Santoso + sampel guru lainnya jika ada
+        $targetGurus = collect([$guru]);
+        $otherGurus = Guru::where('id', '!=', $guru->id)->take(10)->get();
+        foreach ($otherGurus as $og) {
+            $targetGurus->push($og);
+        }
+
+        // Hapus kehadiran lama pada rentang Jun-Jul 2026 untuk target siswa & guru agar bersih & tidak duplikat
+        $allTargetSiswaIds = $targetSiswas->pluck('id')->toArray();
+        $allTargetGuruIds = $targetGurus->pluck('id')->toArray();
+
+        Kehadiran::whereIn('siswa_id', $allTargetSiswaIds)
+            ->whereBetween('tanggal', ['2026-06-01', '2026-07-31'])
+            ->delete();
+
+        Kehadiran::whereIn('guru_id', $allTargetGuruIds)
+            ->whereNull('siswa_id')
+            ->whereBetween('tanggal', ['2026-06-01', '2026-07-31'])
+            ->delete();
 
         $statusPool = [
             'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir', 'hadir',  // 8x
@@ -259,7 +315,7 @@ class SeedDummyAccounts extends Command
 
         $totalKehadiran = 0;
 
-        foreach ($createdSiswas as $sIdx => $siswa) {
+        foreach ($targetSiswas as $sIdx => $targetSiswa) {
             $poolSize = count($statusPool);
 
             foreach ($hariKerja as $idx => $tgl) {
@@ -275,7 +331,7 @@ class SeedDummyAccounts extends Command
                 };
 
                 Kehadiran::create([
-                    'siswa_id'      => $siswa->id,
+                    'siswa_id'      => $targetSiswa->id,
                     'guru_id'       => $guru->id,
                     'semester_id'   => $semester->id,
                     'aturan_jam_id' => $aj->id,
@@ -291,30 +347,39 @@ class SeedDummyAccounts extends Command
         }
 
         // Kehadiran Guru untuk hari-hari kerja Jun–Jul 2026
-        foreach ($hariKerja as $tgl) {
-            $dayName = Carbon::parse($tgl)->locale('id')->isoFormat('dddd');
-            $aj = AturanJam::where('hari', ucfirst(strtolower($dayName)))->first() ?? $aturanJam;
+        foreach ($targetGurus as $gIdx => $targetGuru) {
+            foreach ($hariKerja as $hIdx => $tgl) {
+                $dayName = Carbon::parse($tgl)->locale('id')->isoFormat('dddd');
+                $aj = AturanJam::where('hari', ucfirst(strtolower($dayName)))->first() ?? $aturanJam;
 
-            Kehadiran::create([
-                'siswa_id'      => null,
-                'guru_id'       => $guru->id,
-                'semester_id'   => $semester->id,
-                'aturan_jam_id' => $aj->id,
-                'tanggal'       => $tgl,
-                'jam_masuk'     => '06:40:00',
-                'jam_pulang'    => '15:30:00',
-                'status'        => 'hadir',
-                'source'        => 'manual',
-            ]);
-            $totalKehadiran++;
+                $gStatus = (($hIdx + $gIdx) % 15 === 0) ? 'terlambat' : 'hadir';
+                $gJamMasuk = ($gStatus === 'terlambat') ? '07:15:00' : '06:40:00';
+
+                Kehadiran::create([
+                    'siswa_id'      => null,
+                    'guru_id'       => $targetGuru->id,
+                    'semester_id'   => $semester->id,
+                    'aturan_jam_id' => $aj->id,
+                    'tanggal'       => $tgl,
+                    'jam_masuk'     => $gJamMasuk,
+                    'jam_pulang'    => '15:30:00',
+                    'status'        => $gStatus,
+                    'source'        => 'manual',
+                ]);
+                $totalKehadiran++;
+            }
         }
 
-        // ─── Tambahan Khusus HARI INI untuk demo dashboard Guru & Kesiswaan ───
+        // ─── Tambahan Khusus HARI INI untuk demo dashboard Admin, Guru & Kesiswaan ───
         $todayDate = Carbon::today()->toDateString();
         $todayDayName = Carbon::today()->locale('id')->isoFormat('dddd');
         $ajToday = AturanJam::where('hari', ucfirst(strtolower($todayDayName)))->first() ?? $aturanJam;
 
-        // Siswa 1 (Rina) - Hadir
+        // Bersihkan data hari ini untuk target siswa & guru agar fresh
+        Kehadiran::whereIn('siswa_id', $allTargetSiswaIds)->whereDate('tanggal', $todayDate)->delete();
+        Kehadiran::whereIn('guru_id', $allTargetGuruIds)->whereNull('siswa_id')->whereDate('tanggal', $todayDate)->delete();
+
+        // 1. Siswa 1 (Rina) - Hadir
         Kehadiran::create([
             'siswa_id'      => $createdSiswas[0]->id,
             'guru_id'       => $guru->id,
@@ -329,7 +394,7 @@ class SeedDummyAccounts extends Command
         ]);
         $totalKehadiran++;
 
-        // Siswa 2 (Ahmad Fauzi) - Hadir
+        // 2. Siswa 2 (Ahmad Fauzi) - Hadir
         Kehadiran::create([
             'siswa_id'      => $createdSiswas[1]->id,
             'guru_id'       => $guru->id,
@@ -344,7 +409,7 @@ class SeedDummyAccounts extends Command
         ]);
         $totalKehadiran++;
 
-        // Siswa 3 (Siti Nurhayati) - Terlambat
+        // 3. Siswa 3 (Siti Nurhayati) - Terlambat (18 menit)
         Kehadiran::create([
             'siswa_id'      => $createdSiswas[2]->id,
             'guru_id'       => $guru->id,
@@ -359,9 +424,24 @@ class SeedDummyAccounts extends Command
         ]);
         $totalKehadiran++;
 
-        // Siswa 4 (Deni Ramadhan) - Izin
+        // 4. Siswa 4 (Deni Ramadhan) - Terlambat (35 menit)
         Kehadiran::create([
             'siswa_id'      => $createdSiswas[3]->id,
+            'guru_id'       => $guru->id,
+            'semester_id'   => $semester->id,
+            'aturan_jam_id' => $ajToday->id,
+            'tanggal'       => $todayDate,
+            'jam_masuk'     => '07:35:10',
+            'jam_pulang'    => '15:30:00',
+            'status'        => 'terlambat',
+            'keterangan'    => 'Terlambat 35 menit',
+            'source'        => 'manual',
+        ]);
+        $totalKehadiran++;
+
+        // 5. Siswa 5 (Mega Putri Lestari) - Izin
+        Kehadiran::create([
+            'siswa_id'      => $createdSiswas[4]->id,
             'guru_id'       => $guru->id,
             'semester_id'   => $semester->id,
             'aturan_jam_id' => $ajToday->id,
@@ -374,7 +454,29 @@ class SeedDummyAccounts extends Command
         ]);
         $totalKehadiran++;
 
-        // Siswa 5 (Mega Putri Lestari) sengaja TIDAK dibuatkan record hari ini agar berstatus "Belum Absen"
+        // 6. Buat kehadiran hari ini untuk sampel siswa kelas lain (jika ada)
+        foreach ($targetSiswas->slice(5) as $extraIdx => $extraSiswa) {
+            $extraStatus = ($extraIdx % 4 === 0) ? 'terlambat' : (($extraIdx % 5 === 0) ? 'sakit' : 'hadir');
+            $extraJamMasuk = match($extraStatus) {
+                'hadir'     => '06:' . str_pad((string)rand(35, 55), 2, '0', STR_PAD_LEFT) . ':00',
+                'terlambat' => '07:' . str_pad((string)rand(10, 40), 2, '0', STR_PAD_LEFT) . ':00',
+                default     => null,
+            };
+
+            Kehadiran::create([
+                'siswa_id'      => $extraSiswa->id,
+                'guru_id'       => $guru->id,
+                'semester_id'   => $semester->id,
+                'aturan_jam_id' => $ajToday->id,
+                'tanggal'       => $todayDate,
+                'jam_masuk'     => $extraJamMasuk,
+                'jam_pulang'    => in_array($extraStatus, ['hadir', 'terlambat']) ? '15:30:00' : null,
+                'status'        => $extraStatus,
+                'keterangan'    => ($extraStatus === 'terlambat') ? 'Terlambat check-in' : null,
+                'source'        => 'manual',
+            ]);
+            $totalKehadiran++;
+        }
 
         // Guru (Drs. Budi Santoso) - Hadir hari ini
         Kehadiran::create([
@@ -389,6 +491,22 @@ class SeedDummyAccounts extends Command
             'source'        => 'manual',
         ]);
         $totalKehadiran++;
+
+        // Guru lain yang hadir hari ini
+        foreach ($targetGurus->slice(1) as $extraGuru) {
+            Kehadiran::create([
+                'siswa_id'      => null,
+                'guru_id'       => $extraGuru->id,
+                'semester_id'   => $semester->id,
+                'aturan_jam_id' => $ajToday->id,
+                'tanggal'       => $todayDate,
+                'jam_masuk'     => '06:' . str_pad((string)rand(35, 55), 2, '0', STR_PAD_LEFT) . ':00',
+                'jam_pulang'    => '15:30:00',
+                'status'        => 'hadir',
+                'source'        => 'manual',
+            ]);
+            $totalKehadiran++;
+        }
 
         $this->line("  ✓ Total {$totalKehadiran} record kehadiran (Juni–Juli 2026 + Hari Ini beragam) dibuat");
 
@@ -430,6 +548,10 @@ class SeedDummyAccounts extends Command
         $this->info('╔══════════════════════════════════════════════════════════════╗');
         $this->info('║              ✅ AKUN DUMMY BERHASIL DIBUAT!                  ║');
         $this->info('╠══════════════════════════════════════════════════════════════╣');
+        $this->info('║  ADMIN                                                       ║');
+        $this->info('║    Email    : admin@sman1ciparay.com                         ║');
+        $this->info('║    Password : admin123                                       ║');
+        $this->info('╠══════════════════════════════════════════════════════════════╣');
         $this->info('║  KESISWAAN                                                   ║');
         $this->info('║    Email    : kesiswaan@sman1ciparay.com                     ║');
         $this->info('║    Password : kesiswaan123                                   ║');
@@ -444,8 +566,9 @@ class SeedDummyAccounts extends Command
         $this->info('║    NIS      : 2024100103 s/d 2024100105 (siswa lainnya)     ║');
         $this->info('║    Password : siswa123 (semua)                               ║');
         $this->info('╠══════════════════════════════════════════════════════════════╣');
-        $this->info('║  DATA DUMMY                                                  ║');
-        $this->info('║    Kehadiran : Jun–Jul 2026 (variasi hadir/izin/sakit/alpha) ║');
+        $this->info('║  DATA DUMMY STATISTIK                                        ║');
+        $this->info('║    Kehadiran : Jun–Jul 2026 (Admin, Kesiswaan, Guru, Siswa)   ║');
+        $this->info('║    Hari Ini  : Hadir, Terlambat, Izin (semua kelas aktif)    ║');
         $this->info('║    Pengaduan : 3 pengaduan dari sekretaris kelas             ║');
         $this->info('╚══════════════════════════════════════════════════════════════╝');
 

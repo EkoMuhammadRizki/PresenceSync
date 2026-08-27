@@ -241,7 +241,8 @@ New-NetFirewallRule -DisplayName "Laragon HTTP & HTTPS" -Direction Inbound -Loca
 
 | Role | Identifier / Email / NIP / NIS | Password | Keterangan |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@demo.com` | `demo` | Hak akses penuh admin sistem |
+| **Admin** | `admin@sman1ciparay.com` | `admin123` | Hak akses penuh admin sistem |
+| **Admin (Backup)** | `admin@demo.com` | `demo` | Akun default starter admin |
 | **Kesiswaan** | `kesiswaan@sman1ciparay.com` | `kesiswaan123` | Dashboard tren kehadiran & rekap |
 | **Guru (Wali)** | `198501012010011001` | `guru123` | Drs. Budi Santoso (Wali X IPA 1) |
 | **Siswa (Sekretaris)** | `2024100102` | `siswa123` | Ahmad Fauzi (Sekretaris Kelas) |
