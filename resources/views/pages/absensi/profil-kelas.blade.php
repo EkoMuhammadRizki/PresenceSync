@@ -384,8 +384,8 @@
                 dom: '<"table-responsive"tr><"row"<"col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start"li><"col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end"p>>',
                 info: true,
                 order: [[2, 'asc']],
-                pageLength: 20,
-                lengthMenu: [[10, 20, 50, -1], [10, 20, 50, "Semua"]],
+                pageLength: 10,
+                lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "Semua"]],
                 lengthChange: true,
                 columnDefs: [{ orderable: false, targets: [0, 6] }]
             });

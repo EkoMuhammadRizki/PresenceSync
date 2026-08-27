@@ -1048,8 +1048,8 @@
                         dom: "<'table-responsive'tr><'row px-5 py-3'<'col-sm-12 col-md-5 d-flex align-items-center justify-content-center justify-content-md-start'li><'col-sm-12 col-md-7 d-flex align-items-center justify-content-center justify-content-md-end'p>>",
                         info: true,
                         order: [[1, 'desc']],
-                        pageLength: 5,
-                        lengthMenu: [5, 10, 25, 50],
+                        pageLength: 10,
+                        lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "Semua"]],
                         language: {
                             emptyTable: "Belum ada data pengaduan",
                             info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",

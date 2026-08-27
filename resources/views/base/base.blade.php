@@ -376,8 +376,8 @@ License: {{ theme()->getOption('product', 'license') }}
 <script>
     if (window.jQuery && $.fn.dataTable) {
         $.extend(true, $.fn.dataTable.defaults, {
-            pageLength: 5,
-            lengthMenu: [5, 10, 25, 50, 100],
+            pageLength: 10,
+            lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "Semua"]],
             language: {
                 search: "Cari:",
                 lengthMenu: "_MENU_",
