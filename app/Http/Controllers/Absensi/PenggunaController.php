@@ -31,7 +31,7 @@ class PenggunaController extends Controller
             'username' => 'required|string|max:100',
             'email'    => 'required|email|max:150|unique:users,email',
             'password' => 'required|string|min:6',
-            'role'     => 'required|in:admin,kesiswaan,orang_tua',
+            'role'     => 'required|in:admin,kesiswaan',
         ], [
             'username.required' => 'Username wajib diisi.',
             'email.required'    => 'Email wajib diisi.',
@@ -80,7 +80,7 @@ class PenggunaController extends Controller
 
         // Only allow changing roles if they are not Siswa or Guru
         if (!$pengguna->siswa && !$pengguna->guru) {
-            $rules['role'] = 'required|in:admin,kesiswaan,orang_tua';
+            $rules['role'] = 'required|in:admin,kesiswaan';
         }
 
         $request->validate($rules, [

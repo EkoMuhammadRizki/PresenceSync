@@ -200,7 +200,6 @@
                             <option value="">Pilih peran...</option>
                             <option value="admin">Admin</option>
                             <option value="kesiswaan">Kesiswaan</option>
-                            <option value="orang_tua">Orang Tua</option>
                         </select>
                     </div>
                     <div class="text-center pt-5">
@@ -248,7 +247,6 @@
                         <select name="role" class="form-select form-select-solid fw-bolder" data-control="select2" data-dropdown-parent="#modal_ubah_pengguna" data-placeholder="Pilih peran...">
                             <option value="admin">Admin</option>
                             <option value="kesiswaan">Kesiswaan</option>
-                            <option value="orang_tua">Orang Tua</option>
                         </select>
                     </div>
                     <div class="fv-row mb-7 d-none" id="ubah_status_wrapper">
