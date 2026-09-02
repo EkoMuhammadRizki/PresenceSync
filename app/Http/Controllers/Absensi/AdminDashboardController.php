@@ -329,6 +329,7 @@ class AdminDashboardController extends Controller
 
             $rows = Kehadiran::whereDate('tanggal', $startDate)
                 ->whereNotNull('guru_id')
+                ->whereNull('siswa_id')
                 ->select('jam_masuk', 'status')
                 ->get();
 
@@ -385,6 +386,7 @@ class AdminDashboardController extends Controller
 
         $teacherAttendances = Kehadiran::whereBetween('tanggal', [$startDate, $endDate])
             ->whereNotNull('guru_id')
+            ->whereNull('siswa_id')
             ->selectRaw("tanggal,
                 sum(case when status in ('hadir', 'terlambat') then 1 else 0 end) as kehadiran,
                 sum(case when status in ('sakit', 'izin', 'alpha') then 1 else 0 end) as ketidakhadiran,

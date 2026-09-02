@@ -812,7 +812,12 @@
 
     window.renderTrendChart = function() {
         var chartEl = document.querySelector("#chart_trend_kehadiran_siswa");
-        if (!chartEl || !window.rawTrendChartData) return;
+        if (!chartEl || !window.rawTrendChartData || window.rawTrendChartData.length === 0) return;
+
+        // Jangan render ke container tersembunyi (0px SVG issue)
+        if (chartEl.offsetWidth === 0 || $(chartEl).is(':hidden')) {
+            return;
+        }
 
         var categories = [];
         var activeSeries = [];
@@ -904,23 +909,15 @@
         if (typeof ApexCharts === 'undefined') return;
 
         try {
-            if (!window.trendChartInstance) {
-                chartEl.innerHTML = '';
-                window.trendChartInstance = new ApexCharts(chartEl, options);
-                window.trendChartInstance.render();
-            } else {
-                window.trendChartInstance.updateOptions(options, true, true);
+            if (window.trendChartInstance) {
+                try { window.trendChartInstance.destroy(); } catch(e) {}
+                window.trendChartInstance = null;
             }
-        } catch(e) {
-            console.error('ApexCharts render error:', e);
-            try {
-                if (window.trendChartInstance) {
-                    window.trendChartInstance.destroy();
-                }
-            } catch(err) {}
             chartEl.innerHTML = '';
             window.trendChartInstance = new ApexCharts(chartEl, options);
             window.trendChartInstance.render();
+        } catch(e) {
+            console.error('ApexCharts Siswa render error:', e);
         }
     };
 
@@ -1021,7 +1018,12 @@
 
     window.renderGuruTrendChart = function() {
         var chartEl = document.querySelector("#chart_trend_kehadiran_guru");
-        if (!chartEl || !window.rawGuruTrendChartData) return;
+        if (!chartEl || !window.rawGuruTrendChartData || window.rawGuruTrendChartData.length === 0) return;
+
+        // Jangan render ke container tersembunyi (0px SVG issue)
+        if (chartEl.offsetWidth === 0 || $(chartEl).is(':hidden')) {
+            return;
+        }
 
         var categories = [];
         var activeSeries = [];
@@ -1113,29 +1115,37 @@
         if (typeof ApexCharts === 'undefined') return;
 
         try {
-            if (!window.guruTrendChartInstance) {
-                chartEl.innerHTML = '';
-                window.guruTrendChartInstance = new ApexCharts(chartEl, options);
-                window.guruTrendChartInstance.render();
-            } else {
-                window.guruTrendChartInstance.updateOptions(options, true, true);
+            if (window.guruTrendChartInstance) {
+                try { window.guruTrendChartInstance.destroy(); } catch(e) {}
+                window.guruTrendChartInstance = null;
             }
-        } catch(e) {
-            console.error('ApexCharts Guru render error:', e);
-            try {
-                if (window.guruTrendChartInstance) {
-                    window.guruTrendChartInstance.destroy();
-                }
-            } catch(err) {}
             chartEl.innerHTML = '';
             window.guruTrendChartInstance = new ApexCharts(chartEl, options);
             window.guruTrendChartInstance.render();
+        } catch(e) {
+            console.error('ApexCharts Guru render error:', e);
         }
     };
 
-    $(document).on('shown.bs.tab', 'a[href="#tab_guru_trend"]', function() {
-        if (typeof window.fetchGuruTrendData === 'function') {
-            window.fetchGuruTrendData();
+    // Re-render chart on tab switch
+    $(document).on('shown.bs.tab', 'a[data-bs-toggle="tab"]', function(e) {
+        var target = $(e.target).attr('href');
+        if (target === '#tab_guru_trend') {
+            setTimeout(function() {
+                if (window.rawGuruTrendChartData && window.rawGuruTrendChartData.length > 0) {
+                    window.renderGuruTrendChart();
+                } else if (typeof window.fetchGuruTrendData === 'function') {
+                    window.fetchGuruTrendData();
+                }
+            }, 50);
+        } else if (target === '#tab_siswa_trend') {
+            setTimeout(function() {
+                if (window.rawTrendChartData && window.rawTrendChartData.length > 0) {
+                    window.renderTrendChart();
+                } else if (typeof window.fetchTrendData === 'function') {
+                    window.fetchTrendData();
+                }
+            }, 50);
         }
     });
 
