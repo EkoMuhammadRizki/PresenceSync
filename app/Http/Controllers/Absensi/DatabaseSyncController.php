@@ -38,6 +38,28 @@ class DatabaseSyncController extends Controller
     ];
 
     /**
+     * Tabel yang boleh dihapus (jika record tidak ada di lokal, hapus juga di hosting).
+     * Tabel absensi (kehadirans, dll) dikecualikan agar data historis hosting tetap aman.
+     */
+    protected array $deletableTables = [
+        'users',
+        'user_infos',
+        'model_has_roles',
+        'gurus',
+        'siswas',
+        'parent_profiles',
+        'kelas',
+        'mata_pelajarans',
+        'aturan_jams',
+        'jadwal_pelajarans',
+        'fingerprint_devices',
+        'pengaduans',
+        'settings',
+        'semesters',
+        'tahun_ajarans',
+    ];
+
+    /**
      * Kirim dataset database lokal ke hosting via HTTP (Smart Merge Payload).
      */
     public function sendToHosting(Request $request)
@@ -54,7 +76,8 @@ class DatabaseSyncController extends Controller
 
         try {
             // 1. Kumpulkan data dari tabel-tabel lokal
-            $exportData = [];
+            $exportData   = [];
+            $localIds     = [];   // id lokal per tabel (untuk deteksi penghapusan)
             $totalRecords = 0;
 
             foreach ($this->syncTables as $table) {
@@ -65,6 +88,18 @@ class DatabaseSyncController extends Controller
 
                     $exportData[$table] = $rows;
                     $totalRecords += count($rows);
+
+                    // Kumpulkan ID lokal untuk tabel yang boleh dihapus
+                    if (in_array($table, $this->deletableTables)) {
+                        if ($table === 'model_has_roles') {
+                            // Composite key — tidak menggunakan kolom 'id'
+                            $localIds[$table] = null; // skip delete detection
+                        } elseif ($table === 'user_infos') {
+                            $localIds[$table] = array_column($rows, 'user_id');
+                        } else {
+                            $localIds[$table] = array_column($rows, 'id');
+                        }
+                    }
                 } catch (\Throwable $e) {
                     $exportData[$table] = [];
                 }
@@ -72,11 +107,12 @@ class DatabaseSyncController extends Controller
 
             // 2. Encode JSON dan kompresi dengan gzip
             $jsonPayload = json_encode([
-                'version'       => '2.0',
+                'version'       => '2.1',
                 'source'        => config('app.url', 'http://127.0.0.1:8000'),
                 'exported_at'   => now()->toDateTimeString(),
                 'total_records' => $totalRecords,
                 'data'          => $exportData,
+                'local_ids'     => $localIds,   // ID yang masih ada di lokal per tabel
             ], JSON_UNESCAPED_UNICODE);
 
             $compressed = gzencode($jsonPayload, 9);

@@ -66,7 +66,15 @@ class SyncReceiverController extends Controller
                 ], 422);
             }
 
-            $data = $payload['data'];
+            $data     = $payload['data'];
+            $localIds = $payload['local_ids'] ?? [];   // ID yang masih ada di lokal
+
+            // Tabel yang boleh dihapus (sama dengan list di DatabaseSyncController)
+            $deletableTables = [
+                'users', 'user_infos', 'gurus', 'siswas', 'parent_profiles',
+                'kelas', 'mata_pelajarans', 'aturan_jams', 'jadwal_pelajarans',
+                'fingerprint_devices', 'pengaduans', 'settings', 'semesters', 'tahun_ajarans',
+            ];
 
             // Urutan tabel untuk menjaga relasi Foreign Key
             $orderedTables = [
@@ -95,13 +103,16 @@ class SyncReceiverController extends Controller
 
             $totalInserted = 0;
             $totalUpdated  = 0;
+            $totalDeleted  = 0;
             $tableStats    = [];
 
             // Nonaktifkan Foreign Key Check sementara saat merge
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
+            // --- LANGKAH 1: Upsert (Insert / Update) ---
             foreach ($orderedTables as $table => $uniqueKeys) {
                 if (!isset($data[$table]) || empty($data[$table])) {
+                    $tableStats[$table] = ['inserted' => 0, 'updated' => 0, 'deleted' => 0];
                     continue;
                 }
 
@@ -147,7 +158,7 @@ class SyncReceiverController extends Controller
                             $matchQuery->update($row);
                             $tableUpdated++;
                         } else {
-                            // Insert data baru (data hosting yang lain tetap ada & tidak dihapus!)
+                            // Insert data baru
                             DB::table($table)->insert($row);
                             $tableInserted++;
                             if (count($uniqueKeys) === 1 && isset($row[$uniqueKeys[0]])) {
@@ -161,16 +172,52 @@ class SyncReceiverController extends Controller
 
                 $totalInserted += $tableInserted;
                 $totalUpdated  += $tableUpdated;
-                $tableStats[$table] = [
-                    'inserted' => $tableInserted,
-                    'updated'  => $tableUpdated,
-                ];
+                $tableStats[$table] = ['inserted' => $tableInserted, 'updated' => $tableUpdated, 'deleted' => 0];
+            }
+
+            // --- LANGKAH 2: Delete record yang tidak ada di lokal ---
+            // Urutan terbalik (child dulu sebelum parent) untuk aman dari FK constraint
+            $deleteOrder = array_reverse($deletableTables);
+
+            foreach ($deleteOrder as $table) {
+                // Hanya jika local_ids dikirim untuk tabel ini
+                if (!array_key_exists($table, $localIds) || $localIds[$table] === null) {
+                    continue;
+                }
+
+                $localTableIds = $localIds[$table];
+                if (empty($localTableIds)) {
+                    // Semua data di hosting untuk tabel ini dihapus (lokal kosong)
+                    $primaryKey = ($table === 'user_infos') ? 'user_id' : 'id';
+                    try {
+                        $deleted = DB::table($table)->delete();
+                        $totalDeleted += $deleted;
+                        if (!isset($tableStats[$table])) $tableStats[$table] = ['inserted' => 0, 'updated' => 0, 'deleted' => 0];
+                        $tableStats[$table]['deleted'] = $deleted;
+                    } catch (\Throwable $e) {
+                        Log::warning("Smart Merge delete-all skip on table {$table}: " . $e->getMessage());
+                    }
+                    continue;
+                }
+
+                // Hapus record di hosting yang ID-nya tidak ada di lokal
+                $primaryKey = ($table === 'user_infos') ? 'user_id' : 'id';
+                try {
+                    $deleted = DB::table($table)
+                        ->whereNotIn($primaryKey, $localTableIds)
+                        ->delete();
+                    $totalDeleted += $deleted;
+                    if (!isset($tableStats[$table])) $tableStats[$table] = ['inserted' => 0, 'updated' => 0, 'deleted' => 0];
+                    $tableStats[$table]['deleted'] = $deleted;
+                } catch (\Throwable $e) {
+                    Log::warning("Smart Merge delete skip on table {$table}: " . $e->getMessage());
+                }
             }
 
             // Aktifkan kembali Foreign Key Check
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-            $summaryText = "{$totalInserted} data baru berhasil ditambahkan, {$totalUpdated} data sudah ada diperbarui.";
+            $summaryText = "{$totalInserted} data baru ditambahkan, {$totalUpdated} data diperbarui, {$totalDeleted} data dihapus.";
             Log::info("Smart Merge Complete: {$summaryText}");
 
             return response()->json([
@@ -179,6 +226,7 @@ class SyncReceiverController extends Controller
                 'summary' => [
                     'new_inserted'     => $totalInserted,
                     'already_existing' => $totalUpdated,
+                    'deleted'          => $totalDeleted,
                     'details'          => $summaryText,
                     'table_stats'      => $tableStats,
                 ],
@@ -193,6 +241,7 @@ class SyncReceiverController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Fallback untuk backward compatibility jika menerima file .sql

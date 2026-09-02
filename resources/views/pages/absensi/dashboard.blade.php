@@ -1202,16 +1202,22 @@
             if (data.success) {
                 let summaryHtml = '';
                 if (data.summary) {
+                    const deletedCount = data.summary.deleted || 0;
                     summaryHtml = `
-                        <div class="d-flex justify-content-center gap-3 my-4">
-                            <div class="bg-light-success p-3 rounded text-center min-w-125px border border-success">
+                        <div class="d-flex justify-content-center gap-3 my-4 flex-wrap">
+                            <div class="bg-light-success p-3 rounded text-center min-w-100px border border-success">
                                 <span class="fs-2 fw-bolder text-success d-block">+${data.summary.new_inserted || 0}</span>
-                                <span class="fs-8 fw-bold text-gray-700">Data Baru Masuk</span>
+                                <span class="fs-8 fw-bold text-gray-700">Data Baru</span>
                             </div>
-                            <div class="bg-light-primary p-3 rounded text-center min-w-125px border border-primary">
+                            <div class="bg-light-primary p-3 rounded text-center min-w-100px border border-primary">
                                 <span class="fs-2 fw-bolder text-primary d-block">${data.summary.already_existing || 0}</span>
-                                <span class="fs-8 fw-bold text-gray-700">Data Diperbarui</span>
+                                <span class="fs-8 fw-bold text-gray-700">Diperbarui</span>
                             </div>
+                            ${deletedCount > 0 ? `
+                            <div class="bg-light-danger p-3 rounded text-center min-w-100px border border-danger">
+                                <span class="fs-2 fw-bolder text-danger d-block">-${deletedCount}</span>
+                                <span class="fs-8 fw-bold text-gray-700">Dihapus</span>
+                            </div>` : ''}
                         </div>
                         <p class="text-gray-600 fs-7">${data.summary.details || data.message}</p>
                     `;
