@@ -1205,10 +1205,9 @@ function calcModalPostCount() {
 }
 
 function confirmPostSingleSiswa(siswaId, siswaNama) {
-    $('#post_selected_ids').val(JSON.stringify([siswaId]));
     Swal.fire({
         title: 'Post Siswa ke Mesin?',
-        html: 'Data siswa <b>' + siswaNama + '</b> akan di-upload & disinkronkan ke seluruh mesin fingerprint yang aktif.',
+        html: 'Data siswa <b>' + siswaNama + '</b> akan di-upload &amp; disinkronkan ke seluruh mesin fingerprint yang aktif.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: '<i class="bi bi-send me-1"></i> Ya, Post ke Mesin',
@@ -1221,7 +1220,25 @@ function confirmPostSingleSiswa(siswaId, siswaNama) {
         reverseButtons: true
     }).then(function(result) {
         if (result.isConfirmed) {
-            document.getElementById('form_post_ke_mesin').submit();
+            // Buat form baru yang terisolasi hanya untuk 1 siswa ini
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("siswa.push-to-devices") }}';
+
+            var csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+
+            var ids = document.createElement('input');
+            ids.type = 'hidden';
+            ids.name = 'selected_ids';
+            ids.value = JSON.stringify([siswaId]);
+            form.appendChild(ids);
+
+            document.body.appendChild(form);
+            form.submit();
         }
     });
 }
